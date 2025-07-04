@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             // Superadmin
             [
                 'name' => 'Admin Utama',
-                'email' => 'superadmin@manpro.app',
+                'email' => 'superadmin@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'SA00',
                 'status' => 'active',
@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
             // Manager
             [
                 'name' => 'Bapak Manajer',
-                'email' => 'manager@manpro.app',
+                'email' => 'manager@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'MG00',
                 'status' => 'active',
@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
             // Leaders
             [
                 'name' => 'Andi (Leader HK)',
-                'email' => 'leader.hk@manpro.app',
+                'email' => 'leader.hk@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK01',
                 'status' => 'active',
@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Tono (Leader Teknisi)',
-                'email' => 'leader.tk@manpro.app',
+                'email' => 'leader.tk@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'TK01',
                 'status' => 'active',
@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
             // Staff
             [
                 'name' => 'Budi (Staff HK)',
-                'email' => 'staff.hk.budi@manpro.app',
+                'email' => 'staff.hk.budi@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK02',
                 'status' => 'active',
@@ -66,7 +66,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Citra (Staff HK)',
-                'email' => 'staff.hk.citra@manpro.app',
+                'email' => 'staff.hk.citra@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK02',
                 'status' => 'active',
@@ -75,7 +75,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Dodi (Staff Teknisi)',
-                'email' => 'staff.tk.dodi@manpro.app',
+                'email' => 'staff.tk.dodi@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'TK02',
                 'status' => 'active',

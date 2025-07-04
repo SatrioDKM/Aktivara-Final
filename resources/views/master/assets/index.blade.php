@@ -1,14 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Manajemen Data Ruangan') }}
+            {{ __('Manajemen Aset') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Komponen Alpine.js Utama -->
-            <div x-data="roomsCRUD()">
+        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
+            <div x-data="assetsCRUD()">
 
                 <!-- Notifikasi Global -->
                 <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
@@ -33,19 +32,18 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700">Daftar Ruangan</h3>
+                            <h3 class="text-lg font-semibold text-gray-700">Daftar Aset</h3>
                             <button @click="openModal()"
                                 class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 active:bg-indigo-600 disabled:opacity-25 transition">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
-                                Tambah Ruangan
+                                Tambah Aset
                             </button>
                         </div>
 
-                        <!-- Tabel Data Ruangan -->
+                        <!-- Tabel Data Aset -->
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -55,13 +53,16 @@
                                             #</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Nama Ruangan</th>
+                                            Nama Aset</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Lantai</th>
+                                            Kategori</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Gedung</th>
+                                            Lokasi</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Stok</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status</th>
@@ -73,31 +74,43 @@
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <template x-if="isLoading">
                                         <tr>
-                                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Memuat data...
+                                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Memuat data...
                                             </td>
                                         </tr>
                                     </template>
-                                    <template x-for="(room, index) in rooms" :key="room.id">
+                                    <template x-for="(asset, index) in assets" :key="asset.id">
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-6 py-4 text-sm text-gray-500" x-text="index + 1"></td>
-                                            <td class="px-6 py-4 text-sm font-medium text-gray-900"
-                                                x-text="room.name_room"></td>
+                                            <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                                <div x-text="asset.name_asset"></div>
+                                                <div class="text-xs text-gray-500"
+                                                    x-text="asset.serial_number ? 'SN: ' + asset.serial_number : ''">
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500" x-text="asset.category"></td>
                                             <td class="px-6 py-4 text-sm text-gray-500"
-                                                x-text="room.floor ? room.floor.name_floor : 'N/A'"></td>
-                                            <td class="px-6 py-4 text-sm text-gray-500"
-                                                x-text="room.floor && room.floor.building ? room.floor.building.name_building : 'N/A'">
+                                                x-text="asset.room ? `${asset.room.floor.building.name_building} / ${asset.room.floor.name_floor} / ${asset.room.name_room}` : 'Gudang'">
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">
+                                                <span x-text="asset.current_stock"></span>
+                                                <span class="text-xs text-gray-400"
+                                                    x-text="'(min: ' + asset.minimum_stock + ')'"></span>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <span
-                                                    :class="room.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                    class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                    <span
-                                                        x-text="room.status === 'active' ? 'Aktif' : 'Tidak Aktif'"></span>
+                                                    class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                    :class="{
+                                                        'bg-green-100 text-green-800': asset.status === 'available',
+                                                        'bg-blue-100 text-blue-800': asset.status === 'in_use',
+                                                        'bg-yellow-100 text-yellow-800': asset.status === 'maintenance',
+                                                        'bg-gray-100 text-gray-800': asset.status === 'disposed'
+                                                      }"
+                                                    x-text="asset.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())">
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 text-center text-sm font-medium">
                                                 <div class="flex items-center justify-center space-x-4">
-                                                    <button @click="editRoom(room)"
+                                                    <button @click="editAsset(asset)"
                                                         class="text-indigo-600 hover:text-indigo-900" title="Edit"><svg
                                                             class="w-5 h-5" fill="none" stroke="currentColor"
                                                             viewBox="0 0 24 24">
@@ -106,7 +119,7 @@
                                                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z">
                                                             </path>
                                                         </svg></button>
-                                                    <button @click="confirmDelete(room.id)"
+                                                    <button @click="confirmDelete(asset.id)"
                                                         class="text-red-600 hover:text-red-900" title="Hapus"><svg
                                                             class="w-5 h-5" fill="none" stroke="currentColor"
                                                             viewBox="0 0 24 24">
@@ -119,10 +132,10 @@
                                             </td>
                                         </tr>
                                     </template>
-                                    <template x-if="!isLoading && rooms.length === 0">
+                                    <template x-if="!isLoading && assets.length === 0">
                                         <tr>
-                                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada data
-                                                ruangan ditemukan.</td>
+                                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada data
+                                                aset ditemukan.</td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -137,52 +150,103 @@
                         <div @click="closeModal()" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
                         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
                         <div
-                            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <form @submit.prevent="saveRoom()">
+                            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                            <form @submit.prevent="saveAsset()">
                                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                                        x-text="isEditMode ? 'Edit Ruangan' : 'Tambah Ruangan Baru'"></h3>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label for="building_filter"
-                                                class="block text-sm font-medium text-gray-700">Filter Gedung</label>
-                                            <select id="building_filter" x-model="filter.building_id"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                <option value="">-- Pilih Gedung --</option>
-                                                <template x-for="building in buildings" :key="building.id">
-                                                    <option :value="building.id" x-text="building.name_building">
-                                                    </option>
-                                                </template>
-                                            </select>
+                                        x-text="isEditMode ? 'Edit Aset' : 'Tambah Aset Baru'"></h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <!-- Kolom Kiri -->
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label for="name_asset"
+                                                    class="block text-sm font-medium text-gray-700">Nama Aset</label>
+                                                <input type="text" id="name_asset" x-model="formData.name_asset"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="category"
+                                                    class="block text-sm font-medium text-gray-700">Kategori</label>
+                                                <input type="text" id="category" x-model="formData.category"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="room_id"
+                                                    class="block text-sm font-medium text-gray-700">Lokasi
+                                                    (Ruangan)</label>
+                                                <select id="room_id" x-model="formData.room_id"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                                    <option value="">-- Tidak ada lokasi (Gudang) --</option>
+                                                    <template x-for="room in rooms" :key="room.id">
+                                                        <option :value="room.id"
+                                                            x-text="`${room.floor.building.name_building} / ${room.floor.name_floor} / ${room.name_room}`">
+                                                        </option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="serial_number"
+                                                    class="block text-sm font-medium text-gray-700">Nomor Seri</label>
+                                                <input type="text" id="serial_number" x-model="formData.serial_number"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                            </div>
+                                            <div>
+                                                <label for="purchase_date"
+                                                    class="block text-sm font-medium text-gray-700">Tanggal
+                                                    Pembelian</label>
+                                                <input type="date" id="purchase_date" x-model="formData.purchase_date"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label for="floor_id"
-                                                class="block text-sm font-medium text-gray-700">Lantai</label>
-                                            <select id="floor_id" x-model="formData.floor_id"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                required :disabled="!filter.building_id">
-                                                <option value="">-- Pilih Lantai --</option>
-                                                <template x-for="floor in filteredFloors" :key="floor.id">
-                                                    <option :value="floor.id" x-text="floor.name_floor"></option>
-                                                </template>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label for="name_room" class="block text-sm font-medium text-gray-700">Nama
-                                                Ruangan</label>
-                                            <input type="text" id="name_room" x-model="formData.name_room"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                required>
-                                        </div>
-                                        <div>
-                                            <label for="status"
-                                                class="block text-sm font-medium text-gray-700">Status</label>
-                                            <select id="status" x-model="formData.status"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                required>
-                                                <option value="active">Aktif</option>
-                                                <option value="inactive">Tidak Aktif</option>
-                                            </select>
+                                        <!-- Kolom Kanan -->
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label for="condition"
+                                                    class="block text-sm font-medium text-gray-700">Kondisi</label>
+                                                <input type="text" id="condition" x-model="formData.condition"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="status"
+                                                    class="block text-sm font-medium text-gray-700">Status</label>
+                                                <select id="status" x-model="formData.status"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                    required>
+                                                    <option value="available">Tersedia (Available)</option>
+                                                    <option value="in_use">Digunakan (In Use)</option>
+                                                    <option value="maintenance">Perawatan (Maintenance)</option>
+                                                    <option value="disposed">Dibuang (Disposed)</option>
+                                                </select>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label for="current_stock"
+                                                        class="block text-sm font-medium text-gray-700">Stok Saat
+                                                        Ini</label>
+                                                    <input type="number" id="current_stock"
+                                                        x-model.number="formData.current_stock" min="0"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                        required>
+                                                </div>
+                                                <div>
+                                                    <label for="minimum_stock"
+                                                        class="block text-sm font-medium text-gray-700">Stok
+                                                        Minimum</label>
+                                                    <input type="number" id="minimum_stock"
+                                                        x-model.number="formData.minimum_stock" min="0"
+                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                        required>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label for="description"
+                                                    class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                                                <textarea id="description" x-model="formData.description" rows="3"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -215,14 +279,14 @@
                                         </svg>
                                     </div>
                                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                        <h3 class="text-lg leading-6 font-medium text-gray-900">Hapus Ruangan</h3>
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900">Hapus Aset</h3>
                                         <p class="mt-2 text-sm text-gray-500">Apakah Anda yakin ingin menghapus data
                                             ini? Tindakan ini tidak dapat dibatalkan.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                <button @click="deleteRoom()"
+                                <button @click="deleteAsset()"
                                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Ya,
                                     Hapus</button>
                                 <button @click="showDeleteModal = false"
@@ -237,66 +301,56 @@
     </div>
 
     <script>
-        function roomsCRUD() {
+        function assetsCRUD() {
             return {
-                rooms: [],
-                buildings: @json($buildings),
-                allFloors: @json($floors),
-                filteredFloors: [],
+                assets: [],
+                rooms: @json($rooms),
                 isLoading: true,
                 showModal: false,
                 isEditMode: false,
-                formData: { id: null, name_room: '', floor_id: '', status: 'active' },
-                filter: { building_id: '' },
+                formData: {
+                    id: null, name_asset: '', room_id: '', category: '', serial_number: '',
+                    purchase_date: '', condition: '', status: 'available',
+                    current_stock: 0, minimum_stock: 0, description: ''
+                },
                 notification: { show: false, message: '', type: 'success' },
                 showDeleteModal: false,
-                roomToDeleteId: null,
+                assetToDeleteId: null,
 
                 async init() {
                     await fetch('/sanctum/csrf-cookie');
-                    this.getRooms();
-
-                    this.$watch('filter.building_id', (value) => {
-                        this.formData.floor_id = '';
-                        if (value) {
-                            this.filteredFloors = this.allFloors.filter(floor => floor.building_id == value);
-                        } else {
-                            this.filteredFloors = [];
-                        }
-                    });
+                    this.getAssets();
                 },
 
-                getRooms() {
+                getAssets() {
                     this.isLoading = true;
-                    fetch('/api/rooms', { headers: { 'Accept': 'application/json' } })
-                    .then(res => res.json()).then(data => { this.rooms = data; this.isLoading = false; })
-                    .catch(err => { console.error(err); this.isLoading = false; });
+                    fetch('/api/assets', { headers: { 'Accept': 'application/json' } })
+                    .then(res => { if (!res.ok) throw new Error('Gagal memuat data.'); return res.json(); })
+                    .then(data => { this.assets = data; this.isLoading = false; })
+                    .catch(err => { this.showNotification(err.message, 'error'); this.isLoading = false; });
                 },
 
                 openModal() {
                     this.isEditMode = false;
-                    this.formData = { id: null, name_room: '', floor_id: '', status: 'active' };
-                    this.filter.building_id = '';
+                    this.formData = {
+                        id: null, name_asset: '', room_id: '', category: '', serial_number: '',
+                        purchase_date: '', condition: '', status: 'available',
+                        current_stock: 0, minimum_stock: 0, description: ''
+                    };
                     this.showModal = true;
                 },
 
                 closeModal() { this.showModal = false; },
 
-                async editRoom(room) {
+                editAsset(asset) {
                     this.isEditMode = true;
-                    this.filter.building_id = room.floor.building_id;
-                    await this.$nextTick();
-                    this.formData = {
-                        id: room.id,
-                        name_room: room.name_room,
-                        floor_id: room.floor_id,
-                        status: room.status
-                    };
+                    // Salin data, pastikan room_id di-set dengan benar (bisa null)
+                    this.formData = { ...asset, room_id: asset.room_id || '' };
                     this.showModal = true;
                 },
 
-                saveRoom() {
-                    const url = this.isEditMode ? `/api/rooms/${this.formData.id}` : '/api/rooms';
+                saveAsset() {
+                    const url = this.isEditMode ? `/api/assets/${this.formData.id}` : '/api/assets';
                     const method = this.isEditMode ? 'PUT' : 'POST';
                     fetch(url, {
                         method: method,
@@ -305,8 +359,8 @@
                     })
                     .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
                     .then(data => {
-                        this.showNotification(this.isEditMode ? 'Ruangan berhasil diperbarui' : 'Ruangan berhasil ditambahkan', 'success');
-                        this.getRooms();
+                        this.showNotification(this.isEditMode ? 'Aset berhasil diperbarui' : 'Aset berhasil ditambahkan', 'success');
+                        this.getAssets();
                         this.closeModal();
                     })
                     .catch(err => {
@@ -317,20 +371,20 @@
                 },
 
                 confirmDelete(id) {
-                    this.roomToDeleteId = id;
+                    this.assetToDeleteId = id;
                     this.showDeleteModal = true;
                 },
 
-                deleteRoom() {
-                    fetch(`/api/rooms/${this.roomToDeleteId}`, {
+                deleteAsset() {
+                    fetch(`/api/assets/${this.assetToDeleteId}`, {
                         method: 'DELETE',
                         headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() }
                     })
-                    .then(res => { if (!res.ok) throw new Error('Gagal menghapus.'); this.showNotification('Ruangan berhasil dihapus', 'success'); this.getRooms(); })
+                    .then(res => { if (!res.ok) throw new Error('Gagal menghapus.'); this.showNotification('Aset berhasil dihapus', 'success'); this.getAssets(); })
                     .catch(err => this.showNotification(err.message, 'error'))
                     .finally(() => {
                         this.showDeleteModal = false;
-                        this.roomToDeleteId = null;
+                        this.assetToDeleteId = null;
                     });
                 },
 

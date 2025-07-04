@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Room;
+use App\Models\User;
 use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,5 +40,10 @@ class Asset extends Model
     public function maintenances()
     {
         return $this->hasMany(AssetsMaintenance::class);
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

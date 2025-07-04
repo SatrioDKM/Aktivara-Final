@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Task;
+use App\Models\TaskType;
+use App\Models\Room;
+use App\Models\Asset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class TaskWorkflowController extends Controller
+{
+    // ===================================================================
+    // METODE UNTUK MENAMPILKAN HALAMAN (VIEW) - Dipanggil dari web.php
+    // ===================================================================
+
+    public function createPage()
+    {
+        $taskTypes = TaskType::orderBy('name_task')->get();
+        $rooms = Room::with('floor.building')->where('status', 'active')->get();
+        $assets = Asset::where('status', 'available')->orderBy('name_asset')->get();
+        return view('tasks.create', compact('taskTypes', 'rooms', 'assets'));
+    }
+
+    public function reviewPage()
+    {
+        return view('tasks.review_list');
+    }
+
+    public function availablePage()
+    {
+        return view('tasks.available');
+    }
+
+    public function myTasksPage()
+    {
+        return view('tasks.my_tasks');
+    }
+
+    public function showPage(Task $task)
+    {
+        $this->authorizeTaskAccess($task);
+        $task->load(['taskType', 'room.floor.building', 'asset', 'creator', 'staff', 'dailyReports.user', 'dailyReports.attachments']);
+        return view('tasks.show', compact('task'));
+    }
+
+    // ===================================================================
+    // METODE UNTUK ENDPOINT API (JSON) - Dipanggil dari api.php
+    // ===================================================================
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'task_type_id' => 'required|exists:task_types,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'asset_id' => 'nullable|exists:assets,id',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
+        ]);
+
+        $task = Task::create($validated + ['created_by' => Auth::id(), 'status' => 'unassigned']);
+        return response()->json($task->load('taskType'), 201);
+    }
+
+    public function showAvailable()
+    {
+        $userDepartment = substr(Auth::user()->role_id, 0, 2);
+        $availableTasks = Task::with(['taskType', 'room.floor.building', 'creator:id,name'])
+            ->where('status', 'unassigned')
+            ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment))
+            ->latest()->get();
+        return response()->json($availableTasks);
+    }
+
+    public function claimTask(Task $task)
+    {
+        try {
+            $claimedTask = DB::transaction(function () use ($task) {
+                $taskToClaim = Task::where('id', $task->id)->where('status', 'unassigned')->lockForUpdate()->firstOrFail();
+                $taskToClaim->update(['user_id' => Auth::id(), 'status' => 'in_progress']);
+                return $taskToClaim;
+            });
+            return response()->json(['message' => 'Tugas berhasil diambil!', 'task' => $claimedTask]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mengambil tugas. Mungkin sudah diambil staff lain.'], 409);
+        }
+    }
+
+    public function myTasks()
+    {
+        $user = Auth::user();
+        $myTasks = Task::with(['taskType', 'room.floor.building'])
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['in_progress', 'rejected'])
+            ->latest()->get();
+        return response()->json($myTasks);
+    }
+
+    public function show(Task $task)
+    {
+        $this->authorizeTaskAccess($task);
+        $task->load(['taskType', 'room.floor.building', 'asset', 'creator', 'staff', 'dailyReports.user', 'dailyReports.attachments']);
+        return response()->json($task);
+    }
+
+    public function showReviewList()
+    {
+        $tasksToReview = Task::with(['taskType', 'staff:id,name', 'room:id,name_room'])
+            ->where('status', 'pending_review')
+            ->where('created_by', Auth::id())
+            ->latest()->get();
+        return response()->json($tasksToReview);
+    }
+
+    public function submitReview(Request $request, Task $task)
+    {
+        $validated = $request->validate(['decision' => 'required|in:completed,rejected', 'review_notes' => 'nullable|string']);
+        if ($task->created_by !== Auth::id()) {
+            abort(403, 'Anda tidak berhak mereview tugas ini.');
+        }
+        $task->update(['status' => $validated['decision']]);
+        return response()->json(['message' => 'Tugas telah direview.', 'task' => $task]);
+    }
+
+    private function authorizeTaskAccess(Task $task)
+    {
+        $user = Auth::user();
+        if (!($user->id === $task->created_by || $user->id === $task->user_id || in_array($user->role_id, ['SA00', 'MG00']))) {
+            abort(403, 'AKSES DITOLAK');
+        }
+    }
+}

@@ -8,9 +8,11 @@ use App\Http\Controllers\AssetController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\AssetMaintenanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,11 +28,15 @@ use App\Http\Controllers\TaskWorkflowController;
 // Endpoint API ini akan dilindungi oleh Sanctum
 // Pastikan pengguna sudah login untuk mengaksesnya
 Route::middleware(['auth:sanctum'])->group(function () {
+    // Endpoint untuk mengambil data statistik dashboard
+    Route::get('/dashboard-stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
+
     Route::apiResource('buildings', BuildingController::class);
     Route::apiResource('floors', FloorController::class);
     Route::apiResource('rooms', RoomController::class);
     Route::apiResource('task-types', TaskTypeController::class);
     Route::apiResource('assets', AssetController::class);
+    Route::apiResource('maintenances', AssetMaintenanceController::class);
     Route::apiResource('users', UserController::class)->middleware('role:SA00');
 
     // --- GRUP ENDPOINT UNTUK ALUR KERJA TUGAS ---

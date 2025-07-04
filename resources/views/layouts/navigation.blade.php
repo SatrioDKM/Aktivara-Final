@@ -18,19 +18,36 @@
                     </x-nav-link>
 
                     @auth
+                    <!-- Menu untuk Staff (xx02) -->
+                    @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02']))
+                    <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
+                        {{ __('Papan Tugas') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                        {{ __('Tugas Saya') }}
+                    </x-nav-link>
+                    @endif
+
+                    <!-- Menu untuk Leader (xx01) -->
+                    @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01']))
+                    <x-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
+                        {{ __('Buat Tugas') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
+                        {{ __('Review Tugas') }}
+                    </x-nav-link>
+                    @endif
+
                     <!-- Menu Dropdown untuk Admin & Manager -->
                     @if(in_array(Auth::user()->role_id, ['SA00', 'MG00']))
                     @php
                     // Cek apakah route saat ini adalah bagian dari manajemen data master
                     $isMasterDataActive = request()->routeIs(['buildings.*', 'floors.*', 'rooms.*', 'task_types.*',
-                    'assets.*']);
+                    'assets.*', 'maintenances.*']);
                     @endphp
-
-                    <!-- PERBAIKAN: Menggunakan div dengan class yang benar untuk alignment -->
                     <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
-                                <!-- Tombol ini sekarang memiliki styling yang sama persis dengan x-nav-link -->
                                 <button
                                     class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                         {{ $isMasterDataActive
@@ -65,6 +82,10 @@
                                 <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
                                     {{ __('Manajemen Aset') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('maintenances.index')"
+                                    :active="request()->routeIs('maintenances.*')">
+                                    {{ __('Maintenance Aset') }}
+                                </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -77,32 +98,13 @@
                     </x-nav-link>
                     @endif
 
-                    <!-- Menu untuk Staff (xx02) -->
-                    @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02']))
-                    <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
-                        {{ __('Papan Tugas') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
-                        {{ __('Tugas Saya') }}
-                    </x-nav-link>
-                    @endif
-
-                    <!-- Menu untuk Leader (xx01) -->
-                    @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01']))
-                    <x-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
-                        {{ __('Buat Tugas') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
-                        {{ __('Review Tugas') }}
-                    </x-nav-link>
-                    @endif
-
                     @endauth
                 </div>
             </div>
 
-            <!-- Settings Dropdown (Profil & Logout) -->
+            <!-- Bagian Kanan Navigasi -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <!-- Dropdown Notifikasi -->
                 <div x-data="notifications()" class="relative me-3">
                     <button @click="toggle" class="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none">
                         <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -149,6 +151,7 @@
                     </div>
                 </div>
 
+                <!-- Dropdown Profil -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
@@ -203,6 +206,26 @@
             </x-responsive-nav-link>
 
             @auth
+            <!-- Menu Responsive untuk Staff -->
+            @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02']))
+            <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
+                {{ __('Papan Tugas') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                {{ __('Tugas Saya') }}
+            </x-responsive-nav-link>
+            @endif
+
+            <!-- Menu Responsive untuk Leader -->
+            @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01']))
+            <x-responsive-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
+                {{ __('Buat Tugas') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
+                {{ __('Review Tugas') }}
+            </x-responsive-nav-link>
+            @endif
+
             <!-- Menu Responsive untuk Admin & Manager -->
             @if(in_array(Auth::user()->role_id, ['SA00', 'MG00']))
             <div class="pt-4 pb-1 border-t border-gray-200">
@@ -210,20 +233,17 @@
                     <div class="font-medium text-base text-gray-800">Data Master</div>
                 </div>
                 <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('buildings.index')">
-                        {{ __('Manajemen Gedung') }}
+                    <x-responsive-nav-link :href="route('buildings.index')">{{ __('Manajemen Gedung') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('floors.index')">
-                        {{ __('Manajemen Lantai') }}
+                    <x-responsive-nav-link :href="route('floors.index')">{{ __('Manajemen Lantai') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('rooms.index')">
-                        {{ __('Manajemen Ruangan') }}
+                    <x-responsive-nav-link :href="route('rooms.index')">{{ __('Manajemen Ruangan') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('task_types.index')">
-                        {{ __('Manajemen Jenis Tugas') }}
+                    <x-responsive-nav-link :href="route('task_types.index')">{{ __('Manajemen Jenis Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
-                        {{ __('Manajemen Aset') }}
+                    <x-responsive-nav-link :href="route('assets.index')">{{ __('Manajemen Aset') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('maintenances.index')">{{ __('Maintenance Aset') }}
                     </x-responsive-nav-link>
                 </div>
             </div>
@@ -235,27 +255,6 @@
                 {{ __('Manajemen Pengguna') }}
             </x-responsive-nav-link>
             @endif
-
-            <!-- Menu untuk Staff (xx02) -->
-            @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02']))
-            <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
-                {{ __('Papan Tugas') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
-                {{ __('Tugas Saya') }}
-            </x-responsive-nav-link>
-            @endif
-
-            <!-- Menu untuk Leader (xx01) -->
-            @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01']))
-            <x-responsive-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
-                {{ __('Buat Tugas') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
-                {{ __('Review Tugas') }}
-            </x-responsive-nav-link>
-            @endif
-
             @endauth
         </div>
 
@@ -295,7 +294,7 @@
                 }
             },
             fetchNotifications() {
-                fetch('{{ route('notifications.index') }}')
+                fetch('{{ route('notifications.index') }}', { headers: { 'Accept': 'application/json' } })
                     .then(res => res.json())
                     .then(data => {
                         this.unread = data.unread;
@@ -308,7 +307,7 @@
                     method: 'POST',
                     headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() }
                 }).then(() => {
-                    this.fetchNotifications(); // Refresh list
+                    this.fetchNotifications();
                 });
             },
             getCsrfToken() {
@@ -316,8 +315,7 @@
             },
             init() {
                 this.fetchNotifications();
-                // Refresh notifikasi setiap 1 menit
-                setInterval(() => this.fetchNotifications(), 60000);
+                setInterval(() => this.fetchNotifications(), 60000); // Refresh notifikasi setiap 1 menit
             }
         }
     }

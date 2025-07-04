@@ -8,16 +8,17 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\AssetMaintenanceController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'viewPage'])
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -38,6 +39,8 @@ Route::middleware(['auth', 'role:SA00,MG00'])->group(function () {
     Route::get('/master/task-types', [TaskTypeController::class, 'viewPage'])->name('task_types.index');
     // Route untuk Aset
     Route::get('/master/assets', [AssetController::class, 'viewPage'])->name('assets.index');
+    // Route untuk Maintenance Aset
+    Route::get('/master/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
 });
 
 // --- GRUP ROUTE UNTUK ADMINISTRASI ---

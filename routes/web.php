@@ -5,6 +5,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\FloorController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
@@ -41,6 +42,8 @@ Route::middleware(['auth', 'role:SA00,MG00'])->group(function () {
     Route::get('/master/assets', [AssetController::class, 'viewPage'])->name('assets.index');
     // Route untuk Maintenance Aset
     Route::get('/master/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
+    // Route untuk Ekspor
+    Route::get('/export/assets', [ExportController::class, 'exportAssets'])->name('export.assets');
 });
 
 // --- GRUP ROUTE UNTUK ADMINISTRASI ---

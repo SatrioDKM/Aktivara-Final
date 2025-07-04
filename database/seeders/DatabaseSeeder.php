@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Database\Seeders\RoleSeeder;
+use Database\Seeders\UserSeeder;
+use Database\Seeders\AssetSeeder;
+use Database\Seeders\LocationSeeder;
+use Database\Seeders\TaskTypeSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +16,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            // 1. Master data yang tidak memiliki dependensi
+            RoleSeeder::class,
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            // 2. User bergantung pada Roles
+            UserSeeder::class,
+
+            // 3. Lokasi bergantung pada User (created_by)
+            LocationSeeder::class,
+
+            // 4. Master data lainnya
+            TaskTypeSeeder::class,
+
+            // 5. Aset bergantung pada Lokasi (Rooms) dan User
+            AssetSeeder::class,
         ]);
     }
 }

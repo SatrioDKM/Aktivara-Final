@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_picture', 255)->nullable();
+            $table->string('telegram_chat_id', 50)->nullable();
+            $table->string('role_id', 10)->nullable()->references('role_id')->on('roles')->onDelete('set null');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -42,7 +46,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::table('users', function (Blueprint $table) {
+            // Hapus constraint sebelum menghapus kolom
+            $table->dropForeign(['FK_role_id']);
+
+            $table->dropColumn([
+                'profile_picture',
+                'telegram_chat_id',
+                'FK_role_id',
+                'status',
+            ]);
+        });
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

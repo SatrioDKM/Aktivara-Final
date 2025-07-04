@@ -162,32 +162,34 @@ Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan lokal A
 
 ### C. Struktur Folder Aplikasi
 
+```
 manpro-app/
 ├── app/
-│ ├── Exports/ # Kelas untuk ekspor data (Maatwebsite/Excel)
-│ ├── Http/
-│ │ ├── Controllers/ # Semua controller aplikasi
-│ │ └── Middleware/ # Middleware kustom (CheckRole.php)
-│ ├── Models/ # Model Eloquent untuk setiap tabel
-│ └── Notifications/ # Kelas notifikasi (In-App & Telegram)
+│   ├── Exports/           # Kelas untuk ekspor data (Maatwebsite/Excel)
+│   ├── Http/
+│   │   ├── Controllers/   # Semua controller aplikasi
+│   │   └── Middleware/    # Middleware kustom (CheckRole.php)
+│   ├── Models/            # Model Eloquent untuk setiap tabel
+│   └── Notifications/     # Kelas notifikasi (In-App & Telegram)
 ├── bootstrap/
-│ └── app.php # Pendaftaran middleware & route API
+│   └── app.php            # Pendaftaran middleware & route API
 ├── database/
-│ ├── migrations/ # Skema database
-│ └── seeders/ # Data awal untuk database
+│   ├── migrations/        # Skema database
+│   └── seeders/           # Data awal untuk database
 ├── resources/
-│ ├── css/
-│ ├── js/
-│ └── views/
-│ ├── admin/ # View untuk fitur administratif (Manajemen Pengguna)
-│ ├── layouts/ # Layout utama (app.blade.php, navigation.blade.php)
-│ ├── maintenance/ # View untuk maintenance aset
-│ ├── master/ # View untuk semua data master
-│ └── tasks/ # View untuk alur kerja tugas
+│   ├── css/
+│   ├── js/
+│   └── views/
+│       ├── admin/         # View untuk fitur administratif (Manajemen Pengguna)
+│       ├── layouts/       # Layout utama (app.blade.php, navigation.blade.php)
+│       ├── maintenance/   # View untuk maintenance aset
+│       ├── master/        # View untuk semua data master
+│       └── tasks/         # View untuk alur kerja tugas
 ├── routes/
-│ ├── api.php # Rute untuk endpoint API (JSON)
-│ └── web.php # Rute untuk menampilkan halaman (Blade)
+│   ├── api.php            # Rute untuk endpoint API (JSON)
+│   └── web.php            # Rute untuk menampilkan halaman (Blade)
 └── ...
+```
 
 ---
 
@@ -196,14 +198,14 @@ manpro-app/
 Setelah menjalankan `db:seed`, Anda dapat login menggunakan akun berikut:
 
 -   **Superadmin:**
-    -   **Email:** `superadmin@manpro.app`
+    -   **Email:** `superadmin@example.com`
     -   **Password:** `password`
 -   **Manager:**
-    -   **Email:** `manager@manpro.app`
+    -   **Email:** `manager@example.com`
     -   **Password:** `password`
 -   **Leader Teknisi:**
-    -   **Email:** `leader.tk@manpro.app`
+    -   **Email:** `leader.tk@example.com`
     -   **Password:** `password`
 -   **Staff Teknisi:**
-    -   **Email:** `staff.tk.dodi@manpro.app`
+    -   **Email:** `staff.tk.dodi@example.com`
     -   **Password:** `password`

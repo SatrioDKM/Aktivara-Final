@@ -7,14 +7,13 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div x-data="createTaskForm()">
+            <div x-data="createTaskForm({
+                buildings: {{ Js::from($buildings) }},
+                floors: {{ Js::from($floors) }},
+                rooms: {{ Js::from($rooms) }}
+            })">
                 <!-- Notifikasi -->
-                <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 transform translate-y-2"
-                    x-transition:enter-end="opacity-100 transform translate-y-0"
-                    x-transition:leave="transition ease-in duration-300"
-                    x-transition:leave-start="opacity-100 transform translate-y-0"
-                    x-transition:leave-end="opacity-0 transform translate-y-2" class="fixed top-5 right-5 z-50">
+                <div x-show="notification.show" x-transition class="fixed top-5 right-5 z-50">
                     <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg"
                         :class="{ 'bg-green-100 text-green-700': notification.type === 'success', 'bg-red-100 text-red-700': notification.type === 'error' }">
                         <span x-text="notification.message"></span>
@@ -29,22 +28,79 @@
                                 <x-text-input id="title" class="block mt-1 w-full" type="text" x-model="formData.title"
                                     required autofocus />
                             </div>
-                            <div>
-                                <x-input-label for="task_type_id" value="Jenis Tugas" />
-                                <select x-model="formData.task_type_id"
-                                    class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
-                                    <option value="">-- Pilih Jenis Tugas --</option>
-                                    @foreach($taskTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name_task }} ({{ $type->departemen }})
-                                    </option>
-                                    @endforeach
-                                </select>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <x-input-label for="task_type_id" value="Jenis Tugas" />
+                                    <select x-model="formData.task_type_id"
+                                        class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
+                                        <option value="">-- Pilih Jenis Tugas --</option>
+                                        @foreach($taskTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name_task }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <x-input-label for="due_date" value="Batas Waktu (Opsional)" />
+                                    <x-text-input id="due_date" class="block mt-1 w-full" type="date"
+                                        x-model="formData.due_date" />
+                                </div>
                             </div>
+
+                            <div class="border-t pt-6 space-y-6">
+                                <p class="text-sm text-gray-600">Detail Lokasi & Aset (Opsional)</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <x-input-label for="building_id" value="Gedung" />
+                                        <select x-model="selected.building" id="building_id"
+                                            class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                            <option value="">-- Pilih Gedung --</option>
+                                            <template x-for="building in buildings" :key="building.id">
+                                                <option :value="building.id" x-text="building.name_building"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-input-label for="floor_id" value="Lantai" />
+                                        <select x-model="selected.floor" id="floor_id"
+                                            class="block mt-1 w-full border-gray-300 rounded-md shadow-sm"
+                                            :disabled="!selected.building">
+                                            <option value="">-- Pilih Lantai --</option>
+                                            <template x-for="floor in filtered.floors" :key="floor.id">
+                                                <option :value="floor.id" x-text="floor.name_floor"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-input-label for="room_id" value="Ruangan" />
+                                        <select x-model="formData.room_id" id="room_id"
+                                            class="block mt-1 w-full border-gray-300 rounded-md shadow-sm"
+                                            :disabled="!selected.floor">
+                                            <option value="">-- Pilih Ruangan --</option>
+                                            <template x-for="room in filtered.rooms" :key="room.id">
+                                                <option :value="room.id" x-text="room.name_room"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-input-label for="asset_id" value="Aset Terkait" />
+                                        <select x-model="formData.asset_id" id="asset_id"
+                                            class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                            <option value="">-- Pilih Aset --</option>
+                                            @foreach($assets as $asset)
+                                            <option value="{{ $asset->id }}">{{ $asset->name_asset }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <x-input-label for="description" value="Deskripsi Tugas" />
                                 <textarea x-model="formData.description" rows="4"
                                     class="block mt-1 w-full border-gray-300 rounded-md shadow-sm"></textarea>
                             </div>
+
                             <div class="flex items-center justify-end mt-4">
                                 <x-primary-button ::disabled="isSubmitting">
                                     <span x-show="!isSubmitting">Buat Tugas</span>
@@ -59,43 +115,63 @@
     </div>
 
     <script>
-        function createTaskForm() {
+        function createTaskForm(data) {
             return {
-                formData: { title: '', task_type_id: '', description: '' },
+                formData: { title: '', task_type_id: '', description: '', due_date: '', room_id: '', asset_id: '' },
                 isSubmitting: false,
                 notification: { show: false, message: '', type: 'success' },
+
+                // Data dari controller
+                buildings: data.buildings,
+                allFloors: data.floors,
+                allRooms: data.rooms,
+
+                // State untuk dropdown dinamis
+                selected: { building: '', floor: '' },
+                filtered: { floors: [], rooms: [] },
+
+                init() {
+                    // Watcher untuk memfilter lantai saat gedung berubah
+                    this.$watch('selected.building', (buildingId) => {
+                        this.selected.floor = '';
+                        this.formData.room_id = '';
+                        this.filtered.rooms = [];
+                        if (buildingId) {
+                            this.filtered.floors = this.allFloors.filter(f => f.building_id == buildingId);
+                        } else {
+                            this.filtered.floors = [];
+                        }
+                    });
+
+                    // Watcher untuk memfilter ruangan saat lantai berubah
+                    this.$watch('selected.floor', (floorId) => {
+                        this.formData.room_id = '';
+                        if (floorId) {
+                            this.filtered.rooms = this.allRooms.filter(r => r.floor_id == floorId);
+                        } else {
+                            this.filtered.rooms = [];
+                        }
+                    });
+                },
 
                 async submitForm() {
                     this.isSubmitting = true;
                     await fetch('/sanctum/csrf-cookie');
                     fetch('{{ route('api.tasks.store') }}', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-XSRF-TOKEN': this.getCsrfToken()
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
                         body: JSON.stringify(this.formData)
                     })
-                    .then(async res => {
-                        if (!res.ok) {
-                            const err = await res.json().catch(() => ({ message: 'Terjadi kesalahan tidak terduga.' }));
-                            throw err;
-                        }
-                        return res.json();
-                    })
+                    .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
                     .then(data => {
                         this.showNotification('Tugas berhasil dibuat!', 'success');
-                        this.$refs.form.reset(); // Reset form setelah berhasil
-                        this.formData = { title: '', task_type_id: '', description: '' };
+                        this.$refs.form.reset();
+                        this.formData = { title: '', task_type_id: '', description: '', due_date: '', room_id: '', asset_id: '' };
+                        this.selected = { building: '', floor: '' };
                     })
                     .catch(err => {
                         let msg = 'Gagal membuat tugas.';
-                        if (err.errors) {
-                            msg = Object.values(err.errors).flat().join(' ');
-                        } else if (err.message) {
-                            msg = err.message;
-                        }
+                        if (err.errors) msg = Object.values(err.errors).flat().join(' ');
                         this.showNotification(msg, 'error');
                     })
                     .finally(() => this.isSubmitting = false);

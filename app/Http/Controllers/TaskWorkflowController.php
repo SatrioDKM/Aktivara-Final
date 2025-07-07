@@ -6,8 +6,11 @@ use App\Models\Room;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Asset;
+use App\Models\Floor;
+use App\Models\Building;
 use App\Models\TaskType;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Notifications\TaskClaimed;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +24,38 @@ class TaskWorkflowController extends Controller
     // METODE UNTUK MENAMPILKAN HALAMAN (VIEW) - Dipanggil dari web.php
     // ===================================================================
 
+    /**
+     * Menampilkan halaman Blade dengan form untuk membuat tugas.
+     */
     public function createPage()
     {
-        $taskTypes = TaskType::orderBy('name_task')->get();
-        $rooms = Room::with('floor.building')->where('status', 'active')->get();
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        $taskTypesQuery = TaskType::query();
+
+        // Logika untuk Leader:
+        // Leader hanya akan melihat dan bisa memilih Jenis Tugas
+        // yang sesuai dengan departemennya (misal: Leader HK hanya melihat jenis tugas HK).
+        // Manajer dan Admin bisa melihat semua.
+        if (str_ends_with($roleId, '01')) {
+            $departmentCode = substr($roleId, 0, 2); // Ambil kode departemen (e.g., 'HK')
+            $taskTypesQuery->where('departemen', $departmentCode);
+        }
+
+        $taskTypes = $taskTypesQuery->orderBy('name_task')->get();
+
+        // PERBAIKAN: Mengirim data lokasi secara terpisah untuk dropdown dinamis di frontend
+        $buildings = Building::where('status', 'active')->orderBy('name_building')->get(['id', 'name_building']);
+        $floors = Floor::with('building:id,name_building')->where('status', 'active')->get(['id', 'name_floor', 'building_id']);
+        $rooms = Room::with('floor:id,name_floor,building_id')->where('status', 'active')->get(['id', 'name_room', 'floor_id']);
+
         $assets = Asset::where('status', 'available')->orderBy('name_asset')->get();
-        return view('tasks.create', compact('taskTypes', 'rooms', 'assets'));
+
+        // Mengirim semua data yang dibutuhkan ke view
+        return view('tasks.create', compact('taskTypes', 'buildings', 'floors', 'rooms', 'assets'));
     }
+
 
     public function reviewPage()
     {
@@ -77,24 +105,41 @@ class TaskWorkflowController extends Controller
     // METODE UNTUK ENDPOINT API (JSON) - Dipanggil dari api.php
     // ===================================================================
 
+    /**
+     * Endpoint API untuk menyimpan tugas baru.
+     * (INI YANG DIPERBARUI)
+     */
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'task_type_id' => 'required|exists:task_types,id',
+            'task_type_id' => [
+                'required',
+                'exists:task_types,id',
+                // PERBAIKAN: Validasi kondisional untuk Leader.
+                // Aturan ini hanya berlaku jika pengguna adalah seorang Leader.
+                Rule::when(str_ends_with($roleId, '01'), function () use ($roleId) {
+                    $departmentCode = substr($roleId, 0, 2);
+                    // Memastikan task_type_id yang dikirim ada di tabel task_types
+                    // DAN memiliki kode departemen yang sama dengan Leader.
+                    return Rule::exists('task_types', 'id')->where('departemen', $departmentCode);
+                }, 'Anda hanya dapat membuat tugas untuk departemen Anda.')
+            ],
             'room_id' => 'nullable|exists:rooms,id',
             'asset_id' => 'nullable|exists:assets,id',
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
         ]);
 
-        $task = Task::create($validated + ['created_by' => Auth::id(), 'status' => 'unassigned']);
-        $task->load('creator', 'taskType'); // Muat relasi yang dibutuhkan
+        $task = Task::create($validated + ['created_by' => $user->id, 'status' => 'unassigned']);
+        $task->load('creator', 'taskType');
 
         // --- KIRIM NOTIFIKASI TUGAS BARU ---
         $taskType = $task->taskType;
         if ($taskType && $taskType->departemen) {
-            // Cari semua staff di departemen yang sesuai (misal: 'TK02')
             $staffUsers = User::where('role_id', $taskType->departemen . '02')->get();
             if ($staffUsers->isNotEmpty()) {
                 Notification::send($staffUsers, new NewTaskAvailable($task));
@@ -102,7 +147,7 @@ class TaskWorkflowController extends Controller
         }
         // ------------------------------------
 
-        return response()->json($task->load('taskType'), 201);
+        return response()->json($task, 201);
     }
 
     /**

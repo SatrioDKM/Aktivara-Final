@@ -53,26 +53,45 @@
             return {
                 tasks: [], isLoading: true,
                 async init() {
-                    await fetch('/sanctum/csrf-cookie');
+                    // Cukup panggil getTasks, karena getTasks sudah akan memanggil csrf-cookie
                     this.getTasks();
                 },
-                getTasks() {
+                async getTasks() {
                     this.isLoading = true;
+                    await fetch('/sanctum/csrf-cookie'); // Pastikan cookie segar setiap kali data diambil
                     fetch('{{ route('api.tasks.review_list_data') }}', { headers: { 'Accept': 'application/json' } })
                         .then(res => res.json()).then(data => { this.tasks = data; this.isLoading = false; });
                 },
-                submitReview(taskId, decision) {
+
+                // --- PERBAIKAN DI SINI ---
+                async submitReview(taskId, decision) {
+                    // 1. Dapatkan cookie CSRF yang segar sebelum mengirim POST
+                    await fetch('/sanctum/csrf-cookie');
+
+                    // 2. Lanjutkan dengan mengirim permintaan
                     fetch(`/api/tasks/${taskId}/review`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-XSRF-TOKEN': this.getCsrfToken()
+                        },
                         body: JSON.stringify({ decision: decision })
                     }).then(res => {
-                        if (res.ok) this.getTasks(); // Refresh list
-                        else alert('Gagal mengirim review.');
+                        if (res.ok) {
+                            this.getTasks(); // Refresh list setelah berhasil
+                        } else {
+                            alert('Gagal mengirim review.');
+                        }
                     });
                 },
+
                 getCsrfToken() {
-                    return document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1] || '';
+                    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+                    if (csrfCookie) {
+                        return decodeURIComponent(csrfCookie.split('=')[1]);
+                    }
+                    return '';
                 }
             }
         }

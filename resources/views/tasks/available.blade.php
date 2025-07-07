@@ -34,8 +34,10 @@
                                         x-text="new Date(task.created_at).toLocaleDateString('id-ID')"></span>
                                 </p>
                                 <p class="text-sm text-gray-500 mt-1">
-                                    Lokasi: <span
-                                        x-text="task.room ? `${task.room.name_room}, ${task.room.floor.name_floor}` : 'Tidak spesifik'"></span>
+                                    Lokasi:
+                                    {{-- PERBAIKAN DI SINI --}}
+                                    <span
+                                        x-text="task.room && task.room.floor && task.room.floor.building ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor} / ${task.room.name_room}` : 'Tidak spesifik'"></span>
                                 </p>
                             </div>
                             <div>

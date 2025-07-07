@@ -90,7 +90,7 @@
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Lokasi:</span>
                                 <span class="font-semibold text-gray-800 text-right"
-                                    x-text="task.room ? `${task.room.name_room}, ${task.room.floor.name_floor}` : 'Tidak spesifik'"></span>
+                                    x-text="task.room && task.room.floor && task.room.floor.building ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor} / ${task.room.name_room}` : 'Tidak spesifik'"></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Aset Terkait:</span>

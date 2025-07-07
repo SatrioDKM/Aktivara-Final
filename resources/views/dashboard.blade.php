@@ -49,6 +49,63 @@
                                     <div class="h-64"><canvas id="assetStatusChart"></canvas></div>
                                 </div>
                             </div>
+
+                            <!-- BAGIAN BARU: Tabel Laporan Harian Terbaru -->
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-6">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Laporan Harian Terbaru</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th scope="col"
+                                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Judul Laporan</th>
+                                                    <th scope="col"
+                                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Tugas Terkait</th>
+                                                    <th scope="col"
+                                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Dilaporkan Oleh</th>
+                                                    <th scope="col"
+                                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Tanggal</th>
+                                                    <th scope="col" class="relative px-6 py-3"><span
+                                                            class="sr-only">Detail</span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <template x-for="report in stats.latest_reports" :key="report.id">
+                                                    <tr class="hover:bg-gray-50">
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                                            x-text="report.title"></td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                                            x-text="report.task ? report.task.title : 'N/A'"></td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                                            x-text="report.user.name"></td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                                            x-text="new Date(report.created_at).toLocaleDateString('id-ID')">
+                                                        </td>
+                                                        <td
+                                                            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                            <a :href="`/tasks/${report.task_id}`"
+                                                                class="text-indigo-600 hover:text-indigo-900">Lihat
+                                                                Detail</a>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                                <template
+                                                    x-if="!stats.latest_reports || stats.latest_reports.length === 0">
+                                                    <tr>
+                                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                                            Tidak ada laporan terbaru.</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </template>
 
@@ -121,7 +178,11 @@
         function dashboard() {
             return {
                 isLoading: true,
-                stats: {},
+                stats: {
+                    tasks: {},
+                    assets: {},
+                    latest_reports: [] // Inisialisasi properti baru
+                },
                 taskChart: null,
                 assetChart: null,
 
@@ -132,8 +193,6 @@
                             this.stats = data;
                             this.isLoading = false;
 
-                            // --- PERBAIKAN DI SINI ---
-                            // Tunggu hingga DOM diperbarui oleh Alpine, baru buat chart.
                             this.$nextTick(() => {
                                 if (this.stats.role_type === 'admin') {
                                     this.createTaskStatusChart();

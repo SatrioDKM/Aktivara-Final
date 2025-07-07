@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\DailyReport; // <-- Tambahkan ini
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,15 @@ class DashboardController extends Controller
             $taskStats = Task::query()->select('status', DB::raw('count(*) as total'))->groupBy('status')->pluck('total', 'status');
             $assetStats = Asset::query()->select('status', DB::raw('count(*) as total'))->groupBy('status')->pluck('total', 'status');
 
+            // --- DATA BARU: Mengambil 10 laporan harian terbaru ---
+            $latestReports = DailyReport::with([
+                'task:id,title', // Hanya ambil ID dan judul dari tugas terkait
+                'user:id,name'   // Hanya ambil ID dan nama dari pelapor
+            ])
+                ->latest() // Urutkan dari yang paling baru
+                ->take(10)   // Batasi hanya 10 data
+                ->get();
+
             $stats = [
                 'role_type' => 'admin',
                 'total_users' => User::count(),
@@ -48,7 +58,8 @@ class DashboardController extends Controller
                     'in_use' => $assetStats->get('in_use', 0),
                     'maintenance' => $assetStats->get('maintenance', 0),
                     'disposed' => $assetStats->get('disposed', 0),
-                ]
+                ],
+                'latest_reports' => $latestReports, // <-- Menambahkan data laporan ke respons API
             ];
         }
         // --- Dashboard untuk Leader ---

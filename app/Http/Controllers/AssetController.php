@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\User;
 use App\Models\Asset;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Routing\Controller;
 use App\Notifications\LowStockAlert;
 use Illuminate\Support\Facades\Auth;
@@ -25,47 +26,78 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan daftar semua aset.
+     * Menampilkan daftar aset berdasarkan peran.
      */
     public function index()
     {
-        // Eager load relasi untuk menampilkan lokasi lengkap dan user yang mengupdate
-        $assets = Asset::with(['room.floor.building', 'updater:id,name'])->latest()->get();
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $query = Asset::with(['room.floor.building', 'updater:id,name', 'creator:id,name']);
+
+        // Jika user adalah Leader, filter aset berdasarkan kode departemen di nomor seri.
+        if (str_ends_with($roleId, '01')) {
+            $departmentCode = substr($roleId, 0, 2); // Ambil kode departemen (e.g., 'HK')
+            $query->where('serial_number', 'like', $departmentCode . '-%');
+        }
+        // Admin/Manager akan melihat semua aset (tidak perlu filter tambahan).
+
+        $assets = $query->latest()->get();
         return response()->json($assets);
     }
 
     /**
-     * Menyimpan data aset baru.
+     * Menyimpan data aset baru dengan nomor seri otomatis.
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
         $validator = Validator::make($request->all(), [
             'name_asset' => 'required|string|max:100',
             'room_id' => 'nullable|exists:rooms,id',
             'category' => 'required|string|max:50',
-            'serial_number' => 'nullable|string|max:100|unique:assets,serial_number',
             'purchase_date' => 'nullable|date',
             'condition' => 'required|string|max:50',
             'status' => 'required|in:available,in_use,maintenance,disposed',
             'current_stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            // Validasi department_code hanya jika user adalah Admin/Manager
+            'department_code' => [
+                Rule::requiredIf(fn() => in_array($roleId, ['SA00', 'MG00'])),
+                'in:HK,TK,SC,PK'
+            ],
+            // Nomor seri tidak perlu divalidasi karena dibuat otomatis
+            // 'serial_number' => 'nullable|string|max:100|unique:assets,serial_number',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $data = $request->all();
-        $data['updated_by'] = Auth::id();
+        $data = $request->except('serial_number');
+        $data['created_by'] = $user->id;
+        $data['updated_by'] = $user->id;
+
+        // --- Logika Pembuatan Nomor Seri Otomatis ---
+        $departmentCode = '';
+        if (in_array($roleId, ['SA00', 'MG00'])) {
+            $departmentCode = $request->department_code;
+        } else if (str_ends_with($roleId, '01')) {
+            $departmentCode = substr($roleId, 0, 2);
+        }
+
+        // Generate nomor seri hanya jika ada kode departemen
+        if ($departmentCode) {
+            $data['serial_number'] = $this->generateSerialNumber($departmentCode);
+        }
+        // ---------------------------------------------
 
         $asset = Asset::create($data);
-
-        // --- PEMICU NOTIFIKASI STOK MENIPIS (SAAT BUAT BARU) ---
         $this->checkAndNotifyLowStock($asset);
-        // --------------------------------------------------------
 
-        return response()->json($asset->load(['room.floor.building', 'updater:id,name']), 201);
+        return response()->json($asset->load(['room.floor.building', 'updater:id,name', 'creator:id,name']), 201);
     }
 
     /**
@@ -142,5 +174,26 @@ class AssetController extends Controller
                 Notification::send($recipients, new LowStockAlert($asset));
             }
         }
+    }
+
+    /**
+     * Helper method untuk membuat nomor seri unik.
+     */
+    private function generateSerialNumber(string $departmentCode): string
+    {
+        // Cari aset terakhir dengan prefix yang sama untuk mendapatkan nomor urut berikutnya
+        $lastAsset = Asset::where('serial_number', 'like', $departmentCode . '-%')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $number = 1;
+        if ($lastAsset) {
+            // Ambil bagian numerik setelah tanda '-'
+            $lastNumber = (int) substr($lastAsset->serial_number, strpos($lastAsset->serial_number, '-') + 1);
+            $number = $lastNumber + 1;
+        }
+
+        // Format nomor dengan padding nol (e.g., HK-000001)
+        return $departmentCode . '-' . str_pad($number, 6, '0', STR_PAD_LEFT);
     }
 }

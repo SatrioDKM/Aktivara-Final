@@ -24,6 +24,7 @@ class AssetSeeder extends Seeder
             'status' => 'in_use',
             'current_stock' => 1,
             'minimum_stock' => 0,
+            'created_by' => 1, // <-- Tambahkan ini
             'updated_by' => 1,
         ]);
 
@@ -35,6 +36,7 @@ class AssetSeeder extends Seeder
             'status' => 'available',
             'current_stock' => 20,
             'minimum_stock' => 5,
+            'created_by' => 1, // <-- Tambahkan ini
             'updated_by' => 1,
         ]);
 
@@ -45,6 +47,7 @@ class AssetSeeder extends Seeder
             'status' => 'available',
             'current_stock' => 50,
             'minimum_stock' => 10,
+            'created_by' => 1, // <-- Tambahkan ini
             'updated_by' => 1,
         ]);
     }

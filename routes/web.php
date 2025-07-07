@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function () {
 
 // --- GRUP ROUTE UNTUK DATA MASTER ---
 // Hanya bisa diakses oleh user yang sudah login DAN memiliki peran SA00 atau MG00
-Route::middleware(['auth', 'role:SA00,MG00'])->group(function () {
+Route::middleware(['auth', 'role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(function () {
     // Route untuk Gedung
     Route::get('/master/buildings', [BuildingController::class, 'viewPage'])->name('buildings.index');
     // Route untuk Lantai

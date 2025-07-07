@@ -216,15 +216,32 @@
                                                     </template>
                                                 </select>
                                             </div>
+
+                                            <template
+                                                x-if="!isEditMode && ['SA00', 'MG00'].includes(currentUser.role_id)">
+                                                <div>
+                                                    <label for="department_code"
+                                                        class="block text-sm font-medium text-gray-700">Departemen
+                                                        (untuk No. Seri)</label>
+                                                    <select x-model="formData.department_code" id="department_code"
+                                                        class="mt-1 block w-full rounded-md" required>
+                                                        <option value="">-- Pilih Departemen --</option>
+                                                        <option value="HK">Housekeeping</option>
+                                                        <option value="TK">Teknisi</option>
+                                                        <option value="SC">Security</option>
+                                                        <option value="PK">Parking</option>
+                                                    </select>
+                                                </div>
+                                            </template>
                                         </div>
                                         <!-- Kolom Kanan -->
                                         <div class="space-y-4">
                                             <div>
                                                 <label for="serial_number"
-                                                    class="block text-sm font-medium text-gray-700">Nomor Seri
-                                                    (Opsional)</label>
+                                                    class="block text-sm font-medium text-gray-700">Nomor Seri</label>
                                                 <input type="text" x-model="formData.serial_number"
-                                                    class="mt-1 block w-full rounded-md">
+                                                    class="mt-1 block w-full bg-gray-100 rounded-md" disabled
+                                                    :placeholder="isEditMode ? '' : 'Dibuat otomatis'">
                                             </div>
                                             <div>
                                                 <label for="purchase_date"
@@ -327,12 +344,13 @@
                 isLoading: true,
                 showModal: false,
                 isEditMode: false,
+                currentUser: {{ Js::from(Auth::user()) }},
                 formData: {
                     id: null, name_asset: '', room_id: '',
                     category_select: '', category_other: '', category: '',
                     condition_select: '', condition_other: '', condition: '',
                     serial_number: '', purchase_date: '', status: 'available',
-                    current_stock: 0, minimum_stock: 0, description: ''
+                    current_stock: 0, minimum_stock: 0, description: '', department_code: ''
                 },
                 notification: { show: false, message: '', type: 'success' },
                 showDeleteModal: false,

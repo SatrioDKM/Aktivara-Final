@@ -29,12 +29,15 @@
                     @endif
 
                     <!-- Menu untuk Leader (xx01) -->
-                    @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'MG00']))
+                    @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'PK01', 'MG00']))
                     <x-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
                         {{ __('Buat Tugas') }}
                     </x-nav-link>
                     <x-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
                         {{ __('Review Tugas') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
+                        {{ __('Manajemen Aset') }}
                     </x-nav-link>
                     @endif
 
@@ -254,12 +257,15 @@
             @endif
 
             <!-- Menu Responsive untuk Leader -->
-            @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'MG00']))
+            @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'PK01', 'MG00']))
             <x-responsive-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
                 {{ __('Buat Tugas') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tasks.review_list')" :active="request()->routeIs('tasks.review_list')">
                 {{ __('Review Tugas') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
+                {{ __('Manajemen Aset') }}
             </x-responsive-nav-link>
             @endif
 

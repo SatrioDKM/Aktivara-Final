@@ -23,6 +23,7 @@ class Asset extends Model
         'status',
         'current_stock',
         'minimum_stock',
+        'created_by', // <-- Tambahkan ini
         'updated_by',
     ];
 
@@ -42,6 +43,18 @@ class Asset extends Model
         return $this->hasMany(AssetsMaintenance::class);
     }
 
+    /**
+     * Relasi ke User yang membuat aset.
+     * (INI YANG DITAMBAHKAN)
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Relasi ke User yang terakhir memperbarui aset.
+     */
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');

@@ -42,8 +42,16 @@ Route::middleware(['auth', 'role:SA00,MG00'])->group(function () {
     Route::get('/master/assets', [AssetController::class, 'viewPage'])->name('assets.index');
     // Route untuk Maintenance Aset
     Route::get('/master/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
-    // Route untuk Ekspor
+
+    // Route untuk Halaman Ekspor
+    Route::get('/export', [ExportController::class, 'viewPage'])->name('export.index'); // <-- Tambahkan ini
+
+    // Route untuk Aksi Ekspor
     Route::get('/export/assets', [ExportController::class, 'exportAssets'])->name('export.assets');
+    Route::get('/export/daily-reports', [ExportController::class, 'exportDailyReports'])->name('export.daily_reports');
+
+    // Route untuk Halaman Riwayat Tugas
+    Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 });
 
 // --- GRUP ROUTE UNTUK ADMINISTRASI ---

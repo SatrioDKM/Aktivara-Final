@@ -120,20 +120,6 @@ class TaskWorkflowController extends Controller
         return response()->json($availableTasks);
     }
 
-    public function claimTask(Task $task)
-    {
-        try {
-            $claimedTask = DB::transaction(function () use ($task) {
-                $taskToClaim = Task::where('id', $task->id)->where('status', 'unassigned')->lockForUpdate()->firstOrFail();
-                $taskToClaim->update(['user_id' => Auth::id(), 'status' => 'in_progress']);
-                return $taskToClaim;
-            });
-            return response()->json(['message' => 'Tugas berhasil diambil!', 'task' => $claimedTask]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal mengambil tugas. Mungkin sudah diambil staff lain.'], 409);
-        }
-    }
-
     public function myTasks()
     {
         $user = Auth::user();
@@ -176,5 +162,53 @@ class TaskWorkflowController extends Controller
         if (!($user->id === $task->created_by || $user->id === $task->user_id || in_array($user->role_id, ['SA00', 'MG00']))) {
             abort(403, 'AKSES DITOLAK');
         }
+    }
+
+    /**
+     * Menampilkan halaman Riwayat Tugas dengan data untuk filter.
+     * (INI METODE BARU)
+     */
+    public function historyPage()
+    {
+        // Ambil data untuk mengisi dropdown filter
+        $taskTypes = TaskType::orderBy('name_task')->get(['id', 'name_task']);
+        $staffUsers = User::where('role_id', 'like', '%02')->orderBy('name')->get(['id', 'name']);
+
+        return view('history.tasks', compact('taskTypes', 'staffUsers'));
+    }
+
+    /**
+     * Endpoint API untuk mengambil data riwayat tugas dengan filter.
+     * (INI METODE BARU)
+     */
+    public function getTaskHistory(Request $request)
+    {
+        $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name'])
+            ->whereNotNull('user_id'); // Hanya tampilkan tugas yang sudah pernah diambil
+
+        // Terapkan filter secara dinamis jika ada
+        $query->when($request->filled('start_date'), function ($q) use ($request) {
+            $q->whereDate('created_at', '>=', $request->start_date);
+        });
+
+        $query->when($request->filled('end_date'), function ($q) use ($request) {
+            $q->whereDate('created_at', '<=', $request->end_date);
+        });
+
+        $query->when($request->filled('task_type_id'), function ($q) use ($request) {
+            $q->where('task_type_id', $request->task_type_id);
+        });
+
+        $query->when($request->filled('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
+
+        $query->when($request->filled('staff_id'), function ($q) use ($request) {
+            $q->where('user_id', $request->staff_id);
+        });
+
+        $tasks = $query->latest()->get();
+
+        return response()->json($tasks);
     }
 }

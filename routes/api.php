@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
         // Endpoint yang bisa diakses bersama
+        Route::get('/history', [TaskWorkflowController::class, 'getTaskHistory'])->name('history_data');
         Route::get('/my-tasks-list', [TaskWorkflowController::class, 'myTasks'])->name('my_tasks_data');
         Route::get('/{task}', [TaskWorkflowController::class, 'show'])->name('show_data');
 

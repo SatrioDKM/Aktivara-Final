@@ -38,7 +38,7 @@ class LowStockAlert extends Notification
         $url = route('assets.index');
 
         return TelegramMessage::create()
-            ->to($notifiable->telegram_chat_id)
+            // ->to($notifiable->telegram_chat_id)
             ->content("⚠️ *Peringatan Stok Menipis*\n\nAset: *{$this->asset->name_asset}*\nStok Saat Ini: *{$this->asset->current_stock}*\nStok Minimum: *{$this->asset->minimum_stock}*\n\nMohon segera lakukan pengadaan.")
             ->button('Lihat Manajemen Aset', $url);
     }

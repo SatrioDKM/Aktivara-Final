@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use App\Notifications\TaskClaimed;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\TaskReviewed;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\NewTaskAvailable;
 use Illuminate\Support\Facades\Notification;
@@ -215,12 +216,27 @@ class TaskWorkflowController extends Controller
 
     public function submitReview(Request $request, Task $task)
     {
-        $validated = $request->validate(['decision' => 'required|in:completed,rejected', 'review_notes' => 'nullable|string']);
+        $validated = $request->validate([
+            'decision' => 'required|in:completed,rejected',
+            'review_notes' => 'nullable|string'
+        ]);
+
         if ($task->created_by !== Auth::id()) {
             abort(403, 'Anda tidak berhak mereview tugas ini.');
         }
-        $task->update(['status' => $validated['decision']]);
-        return response()->json(['message' => 'Tugas telah direview.', 'task' => $task]);
+
+        // Pastikan ada staff yang mengerjakan tugas ini sebelum mengirim notifikasi
+        if ($task->staff) {
+            $task->update(['status' => $validated['decision']]);
+
+            // --- KIRIM NOTIFIKASI HASIL REVIEW KE STAFF ---
+            $task->staff->notify(new TaskReviewed($task));
+            // ---------------------------------------------
+
+            return response()->json(['message' => 'Tugas telah direview.', 'task' => $task]);
+        }
+
+        return response()->json(['message' => 'Gagal mengirim notifikasi: tidak ada staff yang mengerjakan.'], 422);
     }
 
     private function authorizeTaskAccess(Task $task)

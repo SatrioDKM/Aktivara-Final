@@ -56,4 +56,16 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
+
+    /**
+     * Route notifications for the Telegram channel.
+     * (INI METODE BARU)
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string|null
+     */
+    public function routeNotificationForTelegram()
+    {
+        return $this->telegram_chat_id;
+    }
 }

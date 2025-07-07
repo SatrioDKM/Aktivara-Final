@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
-use App\Models\TaskType;
 use App\Models\Room;
+use App\Models\Task;
+use App\Models\User;
 use App\Models\Asset;
+use App\Models\TaskType;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Notifications\TaskClaimed;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Notifications\NewTaskAvailable;
+use Illuminate\Support\Facades\Notification;
 
 class TaskWorkflowController extends Controller
 {
@@ -62,7 +67,47 @@ class TaskWorkflowController extends Controller
         ]);
 
         $task = Task::create($validated + ['created_by' => Auth::id(), 'status' => 'unassigned']);
+        $task->load('creator', 'taskType'); // Muat relasi yang dibutuhkan
+
+        // --- KIRIM NOTIFIKASI TUGAS BARU ---
+        $taskType = $task->taskType;
+        if ($taskType && $taskType->departemen) {
+            // Cari semua staff di departemen yang sesuai (misal: 'TK02')
+            $staffUsers = User::where('role_id', $taskType->departemen . '02')->get();
+            if ($staffUsers->isNotEmpty()) {
+                Notification::send($staffUsers, new NewTaskAvailable($task));
+            }
+        }
+        // ------------------------------------
+
         return response()->json($task->load('taskType'), 201);
+    }
+
+    /**
+     * Proses klaim tugas oleh Staff.
+     */
+    public function claimTask(Task $task)
+    {
+        try {
+            $claimedTask = DB::transaction(function () use ($task) {
+                $taskToClaim = Task::where('id', $task->id)->where('status', 'unassigned')->lockForUpdate()->firstOrFail();
+
+                $taskToClaim->update([
+                    'user_id' => Auth::id(),
+                    'status' => 'in_progress',
+                ]);
+
+                // --- KIRIM NOTIFIKASI TUGAS DIAMBIL ---
+                // Kirim notifikasi ke pembuat tugas (Leader)
+                $task->creator->notify(new TaskClaimed($task, Auth::user()));
+                // ---------------------------------------
+
+                return $taskToClaim;
+            });
+            return response()->json(['message' => 'Tugas berhasil diambil!', 'task' => $claimedTask]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mengambil tugas. Mungkin sudah diambil staff lain.'], 409);
+        }
     }
 
     public function showAvailable()

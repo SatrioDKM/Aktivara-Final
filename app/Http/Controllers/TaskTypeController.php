@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TaskType;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class TaskTypeController extends Controller

@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Asset;
 use App\Models\Room;
+use App\Models\User;
+use App\Models\Asset;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use App\Notifications\LowStockAlert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
 
 class AssetController extends Controller
 {
@@ -97,6 +101,17 @@ class AssetController extends Controller
         $data['updated_by'] = Auth::id();
 
         $asset->update($data);
+
+        // --- KIRIM NOTIFIKASI STOK MENIPIS ---
+        // Cek jika stok saat ini di bawah atau sama dengan batas minimum
+        if ($asset->current_stock <= $asset->minimum_stock && $asset->minimum_stock > 0) {
+            // Cari semua Manager & Admin
+            $adminsAndManagers = User::whereIn('role_id', ['SA00', 'MG00'])->get();
+            if ($adminsAndManagers->isNotEmpty()) {
+                Notification::send($adminsAndManagers, new LowStockAlert($asset));
+            }
+        }
+        // --------------------------------------
 
         return response()->json($asset->load(['room.floor.building', 'updater:id,name']));
     }

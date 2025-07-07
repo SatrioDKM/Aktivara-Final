@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Floor;
-use App\Models\Building; // Kita butuh ini untuk validasi
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Building; // Kita butuh ini untuk validasi
 
 class FloorController extends Controller
 {

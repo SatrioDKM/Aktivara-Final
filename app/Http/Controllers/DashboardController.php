@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Asset;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\DailyReport; // <-- Tambahkan ini
+use App\Models\Asset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Models\DailyReport; // <-- Tambahkan ini
 
 class DashboardController extends Controller
 {

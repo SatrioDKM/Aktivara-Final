@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\DailyReport;
-use App\Models\ReportAttachment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\ReportAttachment;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Notifications\ReportSubmitted;
 
 class DailyReportController extends Controller
 {
@@ -48,6 +50,12 @@ class DailyReportController extends Controller
                 }
 
                 $task->update(['status' => 'pending_review']);
+
+                // --- KIRIM NOTIFIKASI LAPORAN DIKIRIM ---
+                // Kirim notifikasi ke pembuat tugas (Leader)
+                $task->creator->notify(new ReportSubmitted($task, Auth::user()));
+                // -----------------------------------------
+
                 return $newReport;
             });
 

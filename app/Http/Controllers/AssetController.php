@@ -61,6 +61,10 @@ class AssetController extends Controller
 
         $asset = Asset::create($data);
 
+        // --- PEMICU NOTIFIKASI STOK MENIPIS (SAAT BUAT BARU) ---
+        $this->checkAndNotifyLowStock($asset);
+        // --------------------------------------------------------
+
         return response()->json($asset->load(['room.floor.building', 'updater:id,name']), 201);
     }
 
@@ -102,16 +106,9 @@ class AssetController extends Controller
 
         $asset->update($data);
 
-        // --- KIRIM NOTIFIKASI STOK MENIPIS ---
-        // Cek jika stok saat ini di bawah atau sama dengan batas minimum
-        if ($asset->current_stock <= $asset->minimum_stock && $asset->minimum_stock > 0) {
-            // Cari semua Manager & Admin
-            $adminsAndManagers = User::whereIn('role_id', ['SA00', 'MG00'])->get();
-            if ($adminsAndManagers->isNotEmpty()) {
-                Notification::send($adminsAndManagers, new LowStockAlert($asset));
-            }
-        }
-        // --------------------------------------
+        // --- PEMICU NOTIFIKASI STOK MENIPIS (SAAT UPDATE) ---
+        $this->checkAndNotifyLowStock($asset);
+        // ----------------------------------------------------
 
         return response()->json($asset->load(['room.floor.building', 'updater:id,name']));
     }
@@ -125,5 +122,25 @@ class AssetController extends Controller
         $asset->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Helper method untuk memeriksa stok dan mengirim notifikasi.
+     * (INI METODE BARU)
+     */
+    private function checkAndNotifyLowStock(Asset $asset)
+    {
+        // Kirim notifikasi hanya jika stok saat ini di bawah atau sama dengan batas minimum,
+        // dan batas minimum tersebut lebih dari 0 (aset yang tidak perlu dilacak stoknya akan diabaikan).
+        if ($asset->current_stock <= $asset->minimum_stock && $asset->minimum_stock > 0) {
+
+            // Cari semua pengguna dengan peran Manager & Superadmin
+            $recipients = User::whereIn('role_id', ['SA00', 'MG00'])->get();
+
+            // Kirim notifikasi jika ada penerima
+            if ($recipients->isNotEmpty()) {
+                Notification::send($recipients, new LowStockAlert($asset));
+            }
+        }
     }
 }

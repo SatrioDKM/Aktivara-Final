@@ -10,21 +10,9 @@
             <div x-data="assetsCRUD()">
 
                 <!-- Notifikasi Global -->
-                <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 transform translate-y-2"
-                    x-transition:enter-end="opacity-100 transform translate-y-0"
-                    x-transition:leave="transition ease-in duration-300"
-                    x-transition:leave-start="opacity-100 transform translate-y-0"
-                    x-transition:leave-end="opacity-0 transform translate-y-2" class="fixed top-5 right-5 z-50">
+                <div x-show="notification.show" x-transition class="fixed top-5 right-5 z-50">
                     <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg"
                         :class="{ 'bg-green-100 text-green-700': notification.type === 'success', 'bg-red-100 text-red-700': notification.type === 'error' }">
-                        <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path x-show="notification.type === 'success'"
-                                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                            <path x-show="notification.type === 'error'"
-                                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z" />
-                        </svg>
                         <span x-text="notification.message"></span>
                     </div>
                 </div>
@@ -177,23 +165,49 @@
                                             <div>
                                                 <label for="name_asset"
                                                     class="block text-sm font-medium text-gray-700">Nama Aset</label>
-                                                <input type="text" id="name_asset" x-model="formData.name_asset"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                                    required>
+                                                <input type="text" x-model="formData.name_asset"
+                                                    class="mt-1 block w-full rounded-md" required>
                                             </div>
+
+                                            <!-- KATEGORI DENGAN OPSI LAINNYA -->
                                             <div>
-                                                <label for="category"
+                                                <label for="category_select"
                                                     class="block text-sm font-medium text-gray-700">Kategori</label>
-                                                <input type="text" id="category" x-model="formData.category"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                                    required>
+                                                <select x-model="formData.category_select" id="category_select"
+                                                    class="mt-1 block w-full rounded-md">
+                                                    <option value="">-- Pilih Kategori --</option>
+                                                    <option value="Elektronik">Elektronik</option>
+                                                    <option value="Alat Keamanan">Alat Keamanan</option>
+                                                    <option value="Lainnya">Lainnya</option>
+                                                </select>
+                                                <input type="text" x-show="formData.category_select === 'Lainnya'"
+                                                    x-model="formData.category_other"
+                                                    placeholder="Masukkan kategori lain"
+                                                    class="mt-2 block w-full rounded-md">
                                             </div>
+
+                                            <!-- KONDISI DENGAN OPSI LAINNYA -->
+                                            <div>
+                                                <label for="condition_select"
+                                                    class="block text-sm font-medium text-gray-700">Kondisi</label>
+                                                <select x-model="formData.condition_select" id="condition_select"
+                                                    class="mt-1 block w-full rounded-md">
+                                                    <option value="">-- Pilih Kondisi --</option>
+                                                    <option value="Baik">Baik</option>
+                                                    <option value="Rusak">Rusak</option>
+                                                    <option value="Lainnya">Lainnya</option>
+                                                </select>
+                                                <input type="text" x-show="formData.condition_select === 'Lainnya'"
+                                                    x-model="formData.condition_other"
+                                                    placeholder="Masukkan kondisi lain"
+                                                    class="mt-2 block w-full rounded-md">
+                                            </div>
+
                                             <div>
                                                 <label for="room_id"
                                                     class="block text-sm font-medium text-gray-700">Lokasi
-                                                    (Ruangan)</label>
-                                                <select id="room_id" x-model="formData.room_id"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                                    (Opsional)</label>
+                                                <select x-model="formData.room_id" class="mt-1 block w-full rounded-md">
                                                     <option value="">-- Tidak ada lokasi (Gudang) --</option>
                                                     <template x-for="room in rooms" :key="room.id">
                                                         <option :value="room.id"
@@ -202,39 +216,32 @@
                                                     </template>
                                                 </select>
                                             </div>
-                                            <div>
-                                                <label for="serial_number"
-                                                    class="block text-sm font-medium text-gray-700">Nomor Seri</label>
-                                                <input type="text" id="serial_number" x-model="formData.serial_number"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                            </div>
-                                            <div>
-                                                <label for="purchase_date"
-                                                    class="block text-sm font-medium text-gray-700">Tanggal
-                                                    Pembelian</label>
-                                                <input type="date" id="purchase_date" x-model="formData.purchase_date"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                            </div>
                                         </div>
                                         <!-- Kolom Kanan -->
                                         <div class="space-y-4">
                                             <div>
-                                                <label for="condition"
-                                                    class="block text-sm font-medium text-gray-700">Kondisi</label>
-                                                <input type="text" id="condition" x-model="formData.condition"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                                    required>
+                                                <label for="serial_number"
+                                                    class="block text-sm font-medium text-gray-700">Nomor Seri
+                                                    (Opsional)</label>
+                                                <input type="text" x-model="formData.serial_number"
+                                                    class="mt-1 block w-full rounded-md">
+                                            </div>
+                                            <div>
+                                                <label for="purchase_date"
+                                                    class="block text-sm font-medium text-gray-700">Tanggal Pembelian
+                                                    (Opsional)</label>
+                                                <input type="date" x-model="formData.purchase_date"
+                                                    class="mt-1 block w-full rounded-md">
                                             </div>
                                             <div>
                                                 <label for="status"
                                                     class="block text-sm font-medium text-gray-700">Status</label>
-                                                <select id="status" x-model="formData.status"
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                                <select x-model="formData.status" class="mt-1 block w-full rounded-md"
                                                     required>
-                                                    <option value="available">Tersedia (Available)</option>
-                                                    <option value="in_use">Digunakan (In Use)</option>
-                                                    <option value="maintenance">Perawatan (Maintenance)</option>
-                                                    <option value="disposed">Dibuang (Disposed)</option>
+                                                    <option value="available">Tersedia</option>
+                                                    <option value="in_use">Digunakan</option>
+                                                    <option value="maintenance">Perawatan</option>
+                                                    <option value="disposed">Dibuang</option>
                                                 </select>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
@@ -242,19 +249,15 @@
                                                     <label for="current_stock"
                                                         class="block text-sm font-medium text-gray-700">Stok Saat
                                                         Ini</label>
-                                                    <input type="number" id="current_stock"
-                                                        x-model.number="formData.current_stock" min="0"
-                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                                        required>
+                                                    <input type="number" x-model.number="formData.current_stock" min="0"
+                                                        class="mt-1 block w-full rounded-md" required>
                                                 </div>
                                                 <div>
                                                     <label for="minimum_stock"
                                                         class="block text-sm font-medium text-gray-700">Stok
                                                         Minimum</label>
-                                                    <input type="number" id="minimum_stock"
-                                                        x-model.number="formData.minimum_stock" min="0"
-                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                                        required>
+                                                    <input type="number" x-model.number="formData.minimum_stock" min="0"
+                                                        class="mt-1 block w-full rounded-md" required>
                                                 </div>
                                             </div>
                                             <div>
@@ -325,8 +328,10 @@
                 showModal: false,
                 isEditMode: false,
                 formData: {
-                    id: null, name_asset: '', room_id: '', category: '', serial_number: '',
-                    purchase_date: '', condition: '', status: 'available',
+                    id: null, name_asset: '', room_id: '',
+                    category_select: '', category_other: '', category: '',
+                    condition_select: '', condition_other: '', condition: '',
+                    serial_number: '', purchase_date: '', status: 'available',
                     current_stock: 0, minimum_stock: 0, description: ''
                 },
                 notification: { show: false, message: '', type: 'success' },
@@ -349,8 +354,10 @@
                 openModal() {
                     this.isEditMode = false;
                     this.formData = {
-                        id: null, name_asset: '', room_id: '', category: '', serial_number: '',
-                        purchase_date: '', condition: '', status: 'available',
+                        id: null, name_asset: '', room_id: '',
+                        category_select: '', category_other: '', category: '',
+                        condition_select: '', condition_other: '', condition: '',
+                        serial_number: '', purchase_date: '', status: 'available',
                         current_stock: 0, minimum_stock: 0, description: ''
                     };
                     this.showModal = true;
@@ -360,18 +367,50 @@
 
                 editAsset(asset) {
                     this.isEditMode = true;
-                    // Salin data, pastikan room_id di-set dengan benar (bisa null)
-                    this.formData = { ...asset, room_id: asset.room_id || '' };
+
+                    const predefinedCategories = ['Elektronik', 'Alat Keamanan'];
+                    const predefinedConditions = ['Baik', 'Rusak'];
+
+                    let categorySelect = predefinedCategories.includes(asset.category) ? asset.category : 'Lainnya';
+                    let categoryOther = predefinedCategories.includes(asset.category) ? '' : asset.category;
+
+                    let conditionSelect = predefinedConditions.includes(asset.condition) ? asset.condition : 'Lainnya';
+                    let conditionOther = predefinedConditions.includes(asset.condition) ? '' : asset.condition;
+
+                    this.formData = {
+                        ...asset,
+                        room_id: asset.room_id || '',
+                        category_select: categorySelect,
+                        category_other: categoryOther,
+                        condition_select: conditionSelect,
+                        condition_other: conditionOther,
+                    };
                     this.showModal = true;
                 },
 
                 saveAsset() {
-                    const url = this.isEditMode ? `/api/assets/${this.formData.id}` : '/api/assets';
+                    // Siapkan payload yang akan dikirim ke API
+                    let payload = { ...this.formData };
+
+                    // Tentukan nilai akhir untuk kategori
+                    payload.category = payload.category_select === 'Lainnya' ? payload.category_other : payload.category_select;
+
+                    // Tentukan nilai akhir untuk kondisi
+                    payload.condition = payload.condition_select === 'Lainnya' ? payload.condition_other : payload.condition_select;
+
+                    // Hapus properti sementara dari payload
+                    delete payload.category_select;
+                    delete payload.category_other;
+                    delete payload.condition_select;
+                    delete payload.condition_other;
+
+                    const url = this.isEditMode ? `/api/assets/${payload.id}` : '/api/assets';
                     const method = this.isEditMode ? 'PUT' : 'POST';
+
                     fetch(url, {
                         method: method,
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
-                        body: JSON.stringify(this.formData)
+                        body: JSON.stringify(payload)
                     })
                     .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
                     .then(data => {

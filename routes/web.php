@@ -54,7 +54,6 @@ Route::middleware(['auth', 'role:SA00,MG00'])->group(function () {
     Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 });
 
-// --- GRUP ROUTE UNTUK ADMINISTRASI ---
 // Hanya bisa diakses oleh Superadmin
 Route::middleware(['auth', 'role:SA00'])->group(function () {
     Route::get('/admin/users', [UserController::class, 'viewPage'])->name('users.index');
@@ -74,8 +73,11 @@ Route::middleware(['auth'])->name('tasks.')->prefix('tasks')->group(function () 
         Route::get('/available', [TaskWorkflowController::class, 'availablePage'])->name('available');
     });
 
-    // Rute yang bisa diakses bersama (Menampilkan Halaman)
+    // Rute yang lebih spesifik harus didefinisikan SEBELUM rute dengan parameter wildcard.
     Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks');
+    Route::get('/completed-history', [TaskWorkflowController::class, 'completedHistoryPage'])->name('completed_history');
+
+    // Rute dengan parameter (wildcard) ditempatkan di akhir.
     Route::get('/{task}', [TaskWorkflowController::class, 'showPage'])->name('show');
 });
 

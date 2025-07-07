@@ -51,6 +51,28 @@ class TaskWorkflowController extends Controller
         return view('tasks.show', compact('task'));
     }
 
+    /**
+     * Menampilkan halaman Riwayat Tugas dengan data untuk filter.
+     * (INI METODE BARU)
+     */
+    public function historyPage()
+    {
+        // Ambil data untuk mengisi dropdown filter
+        $taskTypes = TaskType::orderBy('name_task')->get(['id', 'name_task']);
+        $staffUsers = User::where('role_id', 'like', '%02')->orderBy('name')->get(['id', 'name']);
+
+        return view('history.tasks', compact('taskTypes', 'staffUsers'));
+    }
+
+    /**
+     * Menampilkan halaman Riwayat Tugas Selesai.
+     * (INI METODE BARU)
+     */
+    public function completedHistoryPage()
+    {
+        return view('tasks.completed_history');
+    }
+
     // ===================================================================
     // METODE UNTUK ENDPOINT API (JSON) - Dipanggil dari api.php
     // ===================================================================
@@ -165,19 +187,6 @@ class TaskWorkflowController extends Controller
     }
 
     /**
-     * Menampilkan halaman Riwayat Tugas dengan data untuk filter.
-     * (INI METODE BARU)
-     */
-    public function historyPage()
-    {
-        // Ambil data untuk mengisi dropdown filter
-        $taskTypes = TaskType::orderBy('name_task')->get(['id', 'name_task']);
-        $staffUsers = User::where('role_id', 'like', '%02')->orderBy('name')->get(['id', 'name']);
-
-        return view('history.tasks', compact('taskTypes', 'staffUsers'));
-    }
-
-    /**
      * Endpoint API untuk mengambil data riwayat tugas dengan filter.
      * (INI METODE BARU)
      */
@@ -210,5 +219,33 @@ class TaskWorkflowController extends Controller
         $tasks = $query->latest()->get();
 
         return response()->json($tasks);
+    }
+
+    /**
+     * Endpoint API untuk mengambil riwayat tugas yang telah selesai.
+     * Logika disesuaikan berdasarkan peran pengguna.
+     * (INI METODE BARU)
+     */
+    public function getCompletedHistory()
+    {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name'])
+            ->where('status', 'completed');
+
+        // Jika Staff, hanya tampilkan tugas yang dia kerjakan
+        if (str_ends_with($roleId, '02')) {
+            $query->where('user_id', $user->id);
+        }
+        // Jika Leader, hanya tampilkan tugas yang dia buat
+        else if (str_ends_with($roleId, '01')) {
+            $query->where('created_by', $user->id);
+        }
+        // Jika Admin/Manager, tampilkan semua tugas yang selesai (tidak perlu filter tambahan)
+
+        $completedTasks = $query->latest('updated_at')->get();
+
+        return response()->json($completedTasks);
     }
 }

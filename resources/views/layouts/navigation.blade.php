@@ -123,6 +123,11 @@
                     </div>
                     @endif
 
+                    <x-nav-link :href="route('tasks.completed_history')"
+                        :active="request()->routeIs('tasks.completed_history')">
+                        {{ __('History Selesai') }}
+                    </x-nav-link>
+
                     <!-- Menu khusus Superadmin -->
                     @if(Auth::user()->role_id == 'SA00')
                     <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
@@ -294,6 +299,11 @@
                 </div>
             </div>
             @endif
+
+            <x-responsive-nav-link :href="route('tasks.completed_history')"
+                :active="request()->routeIs('tasks.completed_history')">
+                {{ __('History Selesai') }}
+            </x-responsive-nav-link>
 
             <!-- Menu Responsive khusus Superadmin -->
             @if(Auth::user()->role_id == 'SA00')

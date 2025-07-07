@@ -60,6 +60,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/my-tasks-list', [TaskWorkflowController::class, 'myTasks'])->name('my_tasks_data');
         Route::get('/{task}', [TaskWorkflowController::class, 'show'])->name('show_data');
 
+        // Endpoint API untuk mengambil data riwayat tugas yang selesai
+        Route::get('/history/completed', [TaskWorkflowController::class, 'getCompletedHistory'])->name('completed_history_data');
+
         // Endpoint untuk submit laporan
         Route::post('/{task}/report', [DailyReportController::class, 'storeApi'])->name('reports.store_api');
     });

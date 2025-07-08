@@ -102,6 +102,15 @@ class TaskWorkflowController extends Controller
         return view('tasks.completed_history');
     }
 
+    /**
+     * Menampilkan halaman Monitoring Tugas Aktif.
+     * (INI METODE BARU)
+     */
+    public function monitoringPage()
+    {
+        return view('tasks.monitoring');
+    }
+
     // ===================================================================
     // METODE UNTUK ENDPOINT API (JSON) - Dipanggil dari api.php
     // ===================================================================
@@ -308,5 +317,28 @@ class TaskWorkflowController extends Controller
         $completedTasks = $query->latest('updated_at')->get();
 
         return response()->json($completedTasks);
+    }
+
+    /**
+     * Endpoint API untuk mengambil daftar tugas yang sedang dikerjakan.
+     * (INI METODE BARU)
+     */
+    public function getInProgressTasks()
+    {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name', 'room.floor.building'])
+            ->where('status', 'in_progress');
+
+        // Jika pengguna adalah Leader, hanya tampilkan tugas yang dia buat.
+        if (str_ends_with($roleId, '01')) {
+            $query->where('created_by', $user->id);
+        }
+        // Jika bukan Leader (Admin/Manager), tidak ada filter tambahan, tampilkan semua.
+
+        $inProgressTasks = $query->latest('updated_at')->get();
+
+        return response()->json($inProgressTasks);
     }
 }

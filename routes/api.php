@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/', [TaskWorkflowController::class, 'store'])->name('store');
             Route::get('/review-list', [TaskWorkflowController::class, 'showReviewList'])->name('review_list_data');
             Route::post('/{task}/review', [TaskWorkflowController::class, 'submitReview'])->name('submit_review');
+            Route::get('/in-progress', [TaskWorkflowController::class, 'getInProgressTasks'])->name('in_progress_data');
         });
 
         // Endpoint untuk Staff

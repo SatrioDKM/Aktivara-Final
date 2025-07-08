@@ -52,6 +52,9 @@ Route::middleware(['auth', 'role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(functio
 
     // Route untuk Halaman Riwayat Tugas
     Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
+
+    // Route untuk Halaman Monitoring Tugas
+    Route::get('/tasks/monitoring', [TaskWorkflowController::class, 'monitoringPage'])->name('tasks.monitoring');
 });
 
 // Hanya bisa diakses oleh Superadmin

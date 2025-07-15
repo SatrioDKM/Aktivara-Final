@@ -19,12 +19,15 @@
 
                     @auth
                     <!-- Menu untuk Staff (xx02) -->
-                    @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02']))
+                    @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02', 'PK02']))
                     <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
                         {{ __('Papan Tugas') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                    {{-- <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
                         {{ __('Tugas Saya') }}
+                    </x-nav-link> --}}
+                    <x-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">
+                        {{ __('History Tugas') }}
                     </x-nav-link>
                     @endif
 
@@ -129,10 +132,10 @@
                     </div>
                     @endif
 
-                    <x-nav-link :href="route('tasks.completed_history')"
+                    {{-- <x-nav-link :href="route('tasks.completed_history')"
                         :active="request()->routeIs('tasks.completed_history')">
                         {{ __('History Selesai') }}
-                    </x-nav-link>
+                    </x-nav-link> --}}
 
                     <!-- Menu khusus Superadmin -->
                     @if(Auth::user()->role_id == 'SA00')
@@ -254,8 +257,11 @@
             <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
                 {{ __('Papan Tugas') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+            {{-- <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
                 {{ __('Tugas Saya') }}
+            </x-responsive-nav-link> --}}
+            <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">
+                {{ __('History Tugas') }}
             </x-responsive-nav-link>
             @endif
 
@@ -312,10 +318,10 @@
             </div>
             @endif
 
-            <x-responsive-nav-link :href="route('tasks.completed_history')"
+            {{-- <x-responsive-nav-link :href="route('tasks.completed_history')"
                 :active="request()->routeIs('tasks.completed_history')">
                 {{ __('History Selesai') }}
-            </x-responsive-nav-link>
+            </x-responsive-nav-link> --}}
 
             <!-- Menu Responsive khusus Superadmin -->
             @if(Auth::user()->role_id == 'SA00')

@@ -72,8 +72,10 @@ Route::middleware(['auth'])->name('tasks.')->prefix('tasks')->group(function () 
     });
 
     // Rute untuk Staff (Menampilkan Halaman)
-    Route::middleware(['role:HK02,TK02,SC02'])->group(function () {
+    Route::middleware(['role:HK02,TK02,SC02,PK02'])->group(function () {
         Route::get('/available', [TaskWorkflowController::class, 'availablePage'])->name('available');
+        // Rute BARU untuk halaman History Tugas Staff
+        Route::get('/history', [TaskWorkflowController::class, 'myHistoryPage'])->name('my_history');
     });
 
     // Rute yang lebih spesifik harus didefinisikan SEBELUM rute dengan parameter wildcard.

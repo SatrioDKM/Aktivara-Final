@@ -111,6 +111,15 @@ class TaskWorkflowController extends Controller
         return view('tasks.monitoring');
     }
 
+    /**
+     * Menampilkan halaman "History Tugas" untuk Staff.
+     * (INI METODE BARU)
+     */
+    public function myHistoryPage()
+    {
+        return view('tasks.my_history');
+    }
+
     // ===================================================================
     // METODE UNTUK ENDPOINT API (JSON) - Dipanggil dari api.php
     // ===================================================================
@@ -356,5 +365,35 @@ class TaskWorkflowController extends Controller
         $inProgressTasks = $query->latest('updated_at')->get();
 
         return response()->json($inProgressTasks);
+    }
+
+    /**
+     * Endpoint API untuk mengambil riwayat tugas PRIBADI dengan filter.
+     * (INI METODE BARU)
+     */
+    public function getMyTaskHistory(Request $request)
+    {
+        $user = Auth::user();
+
+        $query = Task::with(['taskType', 'room.floor.building'])
+            ->where('user_id', $user->id); // Filter utama: hanya tugas milik user ini
+
+        // Terapkan filter status: 'active' atau 'completed'
+        $query->when($request->input('status') === 'completed', function ($q) {
+            $q->where('status', 'completed');
+        }, function ($q) {
+            // Defaultnya, tampilkan tugas yang masih aktif
+            $q->whereIn('status', ['in_progress', 'rejected', 'pending_review']);
+        });
+
+        // Terapkan filter pencarian jika ada
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $searchTerm = '%' . $request->search . '%';
+            $q->where('title', 'like', $searchTerm);
+        });
+
+        $tasks = $query->latest('updated_at')->paginate(10); // Paginasi 10 item per halaman
+
+        return response()->json($tasks);
     }
 }

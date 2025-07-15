@@ -56,6 +56,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/{task}/claim', [TaskWorkflowController::class, 'claimTask'])->name('claim');
         });
 
+        // Endpoint API BARU untuk riwayat tugas PRIBADI Staff
+        Route::get('/my-history', [TaskWorkflowController::class, 'getMyTaskHistory'])->name('my_history_data');
+
         // Endpoint yang bisa diakses bersama
         Route::get('/history', [TaskWorkflowController::class, 'getTaskHistory'])->name('history_data');
         Route::get('/my-tasks-list', [TaskWorkflowController::class, 'myTasks'])->name('my_tasks_data');

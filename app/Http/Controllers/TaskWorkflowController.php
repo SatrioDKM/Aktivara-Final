@@ -27,36 +27,19 @@ class TaskWorkflowController extends Controller
 
     /**
      * Menampilkan halaman Blade dengan form untuk membuat tugas.
+     * (INI YANG DIPERBARUI)
      */
     public function createPage()
     {
-        $user = Auth::user();
-        $roleId = $user->role_id;
-
-        $taskTypesQuery = TaskType::query();
-
-        // Logika untuk Leader:
-        // Leader hanya akan melihat dan bisa memilih Jenis Tugas
-        // yang sesuai dengan departemennya (misal: Leader HK hanya melihat jenis tugas HK).
-        // Manajer dan Admin bisa melihat semua.
-        if (str_ends_with($roleId, '01')) {
-            $departmentCode = substr($roleId, 0, 2); // Ambil kode departemen (e.g., 'HK')
-            $taskTypesQuery->where('departemen', $departmentCode);
-        }
-
-        $taskTypes = $taskTypesQuery->orderBy('name_task')->get();
-
-        // PERBAIKAN: Mengirim data lokasi secara terpisah untuk dropdown dinamis di frontend
+        // Controller tidak perlu lagi mengirim data TaskType.
+        // Data lokasi dan aset tetap dikirim untuk dropdown opsional.
         $buildings = Building::where('status', 'active')->orderBy('name_building')->get(['id', 'name_building']);
         $floors = Floor::with('building:id,name_building')->where('status', 'active')->get(['id', 'name_floor', 'building_id']);
         $rooms = Room::with('floor:id,name_floor,building_id')->where('status', 'active')->get(['id', 'name_room', 'floor_id']);
-
         $assets = Asset::where('status', 'available')->orderBy('name_asset')->get();
 
-        // Mengirim semua data yang dibutuhkan ke view
-        return view('tasks.create', compact('taskTypes', 'buildings', 'floors', 'rooms', 'assets'));
+        return view('tasks.create', compact('buildings', 'floors', 'rooms', 'assets'));
     }
-
 
     public function reviewPage()
     {
@@ -80,41 +63,23 @@ class TaskWorkflowController extends Controller
         return view('tasks.show', compact('task'));
     }
 
-    /**
-     * Menampilkan halaman Riwayat Tugas dengan data untuk filter.
-     * (INI METODE BARU)
-     */
     public function historyPage()
     {
-        // Ambil data untuk mengisi dropdown filter
         $taskTypes = TaskType::orderBy('name_task')->get(['id', 'name_task']);
         $staffUsers = User::where('role_id', 'like', '%02')->orderBy('name')->get(['id', 'name']);
-
         return view('history.tasks', compact('taskTypes', 'staffUsers'));
     }
 
-    /**
-     * Menampilkan halaman Riwayat Tugas Selesai.
-     * (INI METODE BARU)
-     */
     public function completedHistoryPage()
     {
         return view('tasks.completed_history');
     }
 
-    /**
-     * Menampilkan halaman Monitoring Tugas Aktif.
-     * (INI METODE BARU)
-     */
     public function monitoringPage()
     {
         return view('tasks.monitoring');
     }
 
-    /**
-     * Menampilkan halaman "History Tugas" untuk Staff.
-     * (INI METODE BARU)
-     */
     public function myHistoryPage()
     {
         return view('tasks.my_history');
@@ -135,31 +100,44 @@ class TaskWorkflowController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'task_type_id' => [
-                'required',
-                'exists:task_types,id',
-                // PERBAIKAN: Validasi kondisional untuk Leader.
-                // Aturan ini hanya berlaku jika pengguna adalah seorang Leader.
-                Rule::when(str_ends_with($roleId, '01'), function () use ($roleId) {
-                    $departmentCode = substr($roleId, 0, 2);
-                    // Memastikan task_type_id yang dikirim ada di tabel task_types
-                    // DAN memiliki kode departemen yang sama dengan Leader.
-                    return Rule::exists('task_types', 'id')->where('departemen', $departmentCode);
-                }, 'Anda hanya dapat membuat tugas untuk departemen Anda.')
+            'priority' => 'required|in:low,medium,high,critical',
+            'description' => 'nullable|string',
+            'department_code' => [
+                'nullable', // <-- PERBAIKAN DI SINI
+                Rule::requiredIf(fn() => in_array($roleId, ['SA00', 'MG00'])),
+                'in:HK,TK,SC,PK'
             ],
             'room_id' => 'nullable|exists:rooms,id',
             'asset_id' => 'nullable|exists:assets,id',
-            'description' => 'nullable|string',
             'due_date' => 'nullable|date',
         ]);
 
-        $task = Task::create($validated + ['created_by' => $user->id, 'status' => 'unassigned']);
-        $task->load('creator', 'taskType');
+        // Tentukan kode departemen tujuan secara otomatis atau dari input
+        $departmentCode = '';
+        if (in_array($roleId, ['SA00', 'MG00'])) {
+            $departmentCode = $request->department_code;
+        } else if (str_ends_with($roleId, '01')) {
+            $departmentCode = substr($roleId, 0, 2);
+        }
+
+        $task = Task::create([
+            'title' => $validated['title'],
+            'priority' => $validated['priority'],
+            'description' => $validated['description'] ?? null,
+            'department_code' => $departmentCode,
+            'room_id' => $validated['room_id'] ?? null,
+            'asset_id' => $validated['asset_id'] ?? null,
+            'due_date' => $validated['due_date'] ?? null,
+            'created_by' => $user->id,
+            'status' => 'unassigned',
+        ]);
+
+        $task->load('creator');
 
         // --- KIRIM NOTIFIKASI TUGAS BARU ---
-        $taskType = $task->taskType;
-        if ($taskType && $taskType->departemen) {
-            $staffUsers = User::where('role_id', $taskType->departemen . '02')->get();
+        if ($departmentCode) {
+            $staffRole = $departmentCode . '02';
+            $staffUsers = User::where('role_id', $staffRole)->get();
             if ($staffUsers->isNotEmpty()) {
                 Notification::send($staffUsers, new NewTaskAvailable($task));
             }
@@ -169,25 +147,13 @@ class TaskWorkflowController extends Controller
         return response()->json($task, 201);
     }
 
-    /**
-     * Proses klaim tugas oleh Staff.
-     */
     public function claimTask(Task $task)
     {
         try {
             $claimedTask = DB::transaction(function () use ($task) {
                 $taskToClaim = Task::where('id', $task->id)->where('status', 'unassigned')->lockForUpdate()->firstOrFail();
-
-                $taskToClaim->update([
-                    'user_id' => Auth::id(),
-                    'status' => 'in_progress',
-                ]);
-
-                // --- KIRIM NOTIFIKASI TUGAS DIAMBIL ---
-                // Kirim notifikasi ke pembuat tugas (Leader)
+                $taskToClaim->update(['user_id' => Auth::id(), 'status' => 'in_progress']);
                 $task->creator->notify(new TaskClaimed($task, Auth::user()));
-                // ---------------------------------------
-
                 return $taskToClaim;
             });
             return response()->json(['message' => 'Tugas berhasil diambil!', 'task' => $claimedTask]);
@@ -196,12 +162,16 @@ class TaskWorkflowController extends Controller
         }
     }
 
+    /**
+     * (INI YANG DIPERBARUI)
+     */
     public function showAvailable()
     {
         $userDepartment = substr(Auth::user()->role_id, 0, 2);
-        $availableTasks = Task::with(['taskType', 'room.floor.building', 'creator:id,name'])
+        $availableTasks = Task::with(['room.floor.building', 'creator:id,name'])
             ->where('status', 'unassigned')
-            ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment))
+            // Filter berdasarkan kolom 'department_code' baru di tabel tasks
+            ->where('department_code', $userDepartment)
             ->latest()->get();
         return response()->json($availableTasks);
     }
@@ -236,21 +206,22 @@ class TaskWorkflowController extends Controller
     {
         $validated = $request->validate([
             'decision' => 'required|in:completed,rejected',
-            'review_notes' => 'nullable|string'
+            'rejection_notes' => 'nullable|string|max:1000'
         ]);
 
         if ($task->created_by !== Auth::id()) {
             abort(403, 'Anda tidak berhak mereview tugas ini.');
         }
 
-        // Pastikan ada staff yang mengerjakan tugas ini sebelum mengirim notifikasi
         if ($task->staff) {
-            $task->update(['status' => $validated['decision']]);
-
-            // --- KIRIM NOTIFIKASI HASIL REVIEW KE STAFF ---
+            $updateData = ['status' => $validated['decision']];
+            if ($validated['decision'] === 'rejected') {
+                $updateData['rejection_notes'] = $validated['rejection_notes'];
+            } else {
+                $updateData['rejection_notes'] = null;
+            }
+            $task->update($updateData);
             $task->staff->notify(new TaskReviewed($task));
-            // ---------------------------------------------
-
             return response()->json(['message' => 'Tugas telah direview.', 'task' => $task]);
         }
 
@@ -265,135 +236,66 @@ class TaskWorkflowController extends Controller
         }
     }
 
-    /**
-     * Endpoint API untuk mengambil data riwayat tugas dengan filter.
-     * (INI METODE BARU)
-     */
     public function getTaskHistory(Request $request)
     {
         $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name'])
-            ->whereNotNull('user_id'); // Hanya tampilkan tugas yang sudah pernah diambil
-
-        // Terapkan filter secara dinamis jika ada
-        $query->when($request->filled('start_date'), function ($q) use ($request) {
-            $q->whereDate('created_at', '>=', $request->start_date);
-        });
-
-        $query->when($request->filled('end_date'), function ($q) use ($request) {
-            $q->whereDate('created_at', '<=', $request->end_date);
-        });
-
-        $query->when($request->filled('task_type_id'), function ($q) use ($request) {
-            $q->where('task_type_id', $request->task_type_id);
-        });
-
-        $query->when($request->filled('status'), function ($q) use ($request) {
-            $q->where('status', $request->status);
-        });
-
-        $query->when($request->filled('staff_id'), function ($q) use ($request) {
-            $q->where('user_id', $request->staff_id);
-        });
-
+            ->whereNotNull('user_id');
+        $query->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date));
+        $query->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date));
+        $query->when($request->filled('task_type_id'), fn($q) => $q->where('task_type_id', $request->task_type_id));
+        $query->when($request->filled('status'), fn($q) => $q->where('status', $request->status));
+        $query->when($request->filled('staff_id'), fn($q) => $q->where('user_id', $request->staff_id));
         $tasks = $query->latest()->get();
-
         return response()->json($tasks);
     }
 
-    /**
-     * Endpoint API untuk mengambil riwayat tugas yang telah selesai.
-     * Logika disesuaikan berdasarkan peran pengguna.
-     * (INI METODE BARU)
-     */
     public function getCompletedHistory()
     {
         $user = Auth::user();
         $roleId = $user->role_id;
-
         $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name'])
             ->where('status', 'completed');
-
-        // Jika Staff, hanya tampilkan tugas yang dia kerjakan
         if (str_ends_with($roleId, '02')) {
             $query->where('user_id', $user->id);
-        }
-        // Jika Leader, hanya tampilkan tugas yang dia buat
-        else if (str_ends_with($roleId, '01')) {
+        } else if (str_ends_with($roleId, '01')) {
             $query->where('created_by', $user->id);
         }
-        // Jika Admin/Manager, tampilkan semua tugas yang selesai (tidak perlu filter tambahan)
-
         $completedTasks = $query->latest('updated_at')->get();
-
         return response()->json($completedTasks);
     }
 
-    /**
-     * Endpoint API untuk mengambil daftar tugas yang sedang dikerjakan dengan filter.
-     * (INI YANG DIPERBARUI)
-     */
     public function getInProgressTasks(Request $request)
     {
         $user = Auth::user();
         $roleId = $user->role_id;
-
         $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name', 'room.floor.building'])
-            // Defaultnya menampilkan tugas yang masih aktif (dikerjakan atau menunggu review)
             ->whereIn('status', ['in_progress', 'pending_review']);
-
-        // Jika pengguna adalah Leader, filter hanya untuk tugas yang dia buat.
         if (str_ends_with($roleId, '01')) {
             $query->where('created_by', $user->id);
         }
-
-        // Terapkan filter status jika ada
-        $query->when($request->filled('status'), function ($q) use ($request) {
-            $q->where('status', $request->status);
-        });
-
-        // Terapkan filter pencarian jika ada
+        $query->when($request->filled('status'), fn($q) => $q->where('status', $request->status));
         $query->when($request->filled('search'), function ($q) use ($request) {
             $searchTerm = '%' . $request->search . '%';
             $q->where(function ($subQuery) use ($searchTerm) {
                 $subQuery->where('title', 'like', $searchTerm)
-                    ->orWhereHas('staff', function ($staffQuery) use ($searchTerm) {
-                        $staffQuery->where('name', 'like', $searchTerm);
-                    });
+                    ->orWhereHas('staff', fn($staffQuery) => $staffQuery->where('name', 'like', $searchTerm));
             });
         });
-
         $inProgressTasks = $query->latest('updated_at')->get();
-
         return response()->json($inProgressTasks);
     }
 
-    /**
-     * Endpoint API untuk mengambil riwayat tugas PRIBADI dengan filter.
-     * (INI METODE BARU)
-     */
     public function getMyTaskHistory(Request $request)
     {
         $user = Auth::user();
-
         $query = Task::with(['taskType', 'room.floor.building'])
-            ->where('user_id', $user->id); // Filter utama: hanya tugas milik user ini
-
-        // Terapkan filter status: 'active' atau 'completed'
-        $query->when($request->input('status') === 'completed', function ($q) {
-            $q->where('status', 'completed');
-        }, function ($q) {
-            // Defaultnya, tampilkan tugas yang masih aktif
-            $q->whereIn('status', ['in_progress', 'rejected', 'pending_review']);
-        });
-
-        // Terapkan filter pencarian jika ada
+            ->where('user_id', $user->id);
+        $query->when($request->input('status') === 'completed', fn($q) => $q->where('status', 'completed'), fn($q) => $q->whereIn('status', ['in_progress', 'rejected', 'pending_review']));
         $query->when($request->filled('search'), function ($q) use ($request) {
             $searchTerm = '%' . $request->search . '%';
             $q->where('title', 'like', $searchTerm);
         });
-
-        $tasks = $query->latest('updated_at')->paginate(10); // Paginasi 10 item per halaman
-
+        $tasks = $query->latest('updated_at')->paginate(10);
         return response()->json($tasks);
     }
 }

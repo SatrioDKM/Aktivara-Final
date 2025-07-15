@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            //
+            // Menambahkan kolom untuk menyimpan alasan penolakan setelah kolom status
+            $table->text('rejection_notes')->nullable()->after('status');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            //
+            $table->dropColumn('rejection_notes');
         });
     }
 };

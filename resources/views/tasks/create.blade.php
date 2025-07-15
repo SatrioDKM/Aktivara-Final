@@ -10,7 +10,8 @@
             <div x-data="createTaskForm({
                 buildings: {{ Js::from($buildings) }},
                 floors: {{ Js::from($floors) }},
-                rooms: {{ Js::from($rooms) }}
+                rooms: {{ Js::from($rooms) }},
+                assets: {{ Js::from($assets) }}
             })">
                 <!-- Notifikasi -->
                 <div x-show="notification.show" x-transition class="fixed top-5 right-5 z-50">
@@ -31,20 +32,30 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <x-input-label for="task_type_id" value="Jenis Tugas" />
-                                    <select x-model="formData.task_type_id"
+                                    <x-input-label for="priority" value="Tingkat Prioritas" />
+                                    <select x-model="formData.priority" id="priority"
                                         class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
-                                        <option value="">-- Pilih Jenis Tugas --</option>
-                                        @foreach($taskTypes as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name_task }}</option>
-                                        @endforeach
+                                        <option value="low">Rendah (Low)</option>
+                                        <option value="medium">Sedang (Medium)</option>
+                                        <option value="high">Tinggi (High)</option>
+                                        <option value="critical">Kritis (Critical)</option>
                                     </select>
                                 </div>
+
+                                <!-- Dropdown Departemen hanya untuk Admin/Manager -->
+                                @if(in_array(Auth::user()->role_id, ['SA00', 'MG00']))
                                 <div>
-                                    <x-input-label for="due_date" value="Batas Waktu (Opsional)" />
-                                    <x-text-input id="due_date" class="block mt-1 w-full" type="date"
-                                        x-model="formData.due_date" />
+                                    <x-input-label for="department_code" value="Departemen Tujuan" />
+                                    <select x-model="formData.department_code" id="department_code"
+                                        class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
+                                        <option value="">-- Pilih Departemen --</option>
+                                        <option value="HK">Housekeeping</option>
+                                        <option value="TK">Teknisi</option>
+                                        <option value="SC">Security</option>
+                                        <option value="PK">Parking</option>
+                                    </select>
                                 </div>
+                                @endif
                             </div>
 
                             <div class="border-t pt-6 space-y-6">
@@ -87,16 +98,16 @@
                                         <select x-model="formData.asset_id" id="asset_id"
                                             class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
                                             <option value="">-- Pilih Aset --</option>
-                                            @foreach($assets as $asset)
-                                            <option value="{{ $asset->id }}">{{ $asset->name_asset }}</option>
-                                            @endforeach
+                                            <template x-for="asset in assets" :key="asset.id">
+                                                <option :value="asset.id" x-text="asset.name_asset"></option>
+                                            </template>
                                         </select>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <x-input-label for="description" value="Deskripsi Tugas" />
+                                <x-input-label for="description" value="Deskripsi Tugas (Opsional)" />
                                 <textarea x-model="formData.description" rows="4"
                                     class="block mt-1 w-full border-gray-300 rounded-md shadow-sm"></textarea>
                             </div>
@@ -117,7 +128,15 @@
     <script>
         function createTaskForm(data) {
             return {
-                formData: { title: '', task_type_id: '', description: '', due_date: '', room_id: '', asset_id: '' },
+                formData: {
+                    title: '',
+                    priority: 'medium',
+                    description: '',
+                    department_code: '',
+                    due_date: '',
+                    room_id: '',
+                    asset_id: ''
+                },
                 isSubmitting: false,
                 notification: { show: false, message: '', type: 'success' },
 
@@ -125,32 +144,23 @@
                 buildings: data.buildings,
                 allFloors: data.floors,
                 allRooms: data.rooms,
+                assets: data.assets,
 
                 // State untuk dropdown dinamis
                 selected: { building: '', floor: '' },
                 filtered: { floors: [], rooms: [] },
 
                 init() {
-                    // Watcher untuk memfilter lantai saat gedung berubah
                     this.$watch('selected.building', (buildingId) => {
                         this.selected.floor = '';
                         this.formData.room_id = '';
                         this.filtered.rooms = [];
-                        if (buildingId) {
-                            this.filtered.floors = this.allFloors.filter(f => f.building_id == buildingId);
-                        } else {
-                            this.filtered.floors = [];
-                        }
+                        this.filtered.floors = buildingId ? this.allFloors.filter(f => f.building_id == buildingId) : [];
                     });
 
-                    // Watcher untuk memfilter ruangan saat lantai berubah
                     this.$watch('selected.floor', (floorId) => {
                         this.formData.room_id = '';
-                        if (floorId) {
-                            this.filtered.rooms = this.allRooms.filter(r => r.floor_id == floorId);
-                        } else {
-                            this.filtered.rooms = [];
-                        }
+                        this.filtered.rooms = floorId ? this.allRooms.filter(r => r.floor_id == floorId) : [];
                     });
                 },
 
@@ -166,13 +176,13 @@
                     .then(data => {
                         this.showNotification('Tugas berhasil dibuat!', 'success');
                         this.$refs.form.reset();
-                        this.formData = { title: '', task_type_id: '', description: '', due_date: '', room_id: '', asset_id: '' };
+                        this.formData = { title: '', priority: 'medium', description: '', department_code: '', due_date: '', room_id: '', asset_id: '' };
                         this.selected = { building: '', floor: '' };
                     })
                     .catch(err => {
                         let msg = 'Gagal membuat tugas.';
                         if (err.errors) msg = Object.values(err.errors).flat().join(' ');
-                        this.showNotification(msg, 'error');
+                        this.showNotification(`Error: ${msg}`, 'error');
                     })
                     .finally(() => this.isSubmitting = false);
                 },

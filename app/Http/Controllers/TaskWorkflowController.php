@@ -320,22 +320,38 @@ class TaskWorkflowController extends Controller
     }
 
     /**
-     * Endpoint API untuk mengambil daftar tugas yang sedang dikerjakan.
-     * (INI METODE BARU)
+     * Endpoint API untuk mengambil daftar tugas yang sedang dikerjakan dengan filter.
+     * (INI YANG DIPERBARUI)
      */
-    public function getInProgressTasks()
+    public function getInProgressTasks(Request $request)
     {
         $user = Auth::user();
         $roleId = $user->role_id;
 
         $query = Task::with(['taskType', 'staff:id,name', 'creator:id,name', 'room.floor.building'])
-            ->where('status', 'in_progress');
+            // Defaultnya menampilkan tugas yang masih aktif (dikerjakan atau menunggu review)
+            ->whereIn('status', ['in_progress', 'pending_review']);
 
-        // Jika pengguna adalah Leader, hanya tampilkan tugas yang dia buat.
+        // Jika pengguna adalah Leader, filter hanya untuk tugas yang dia buat.
         if (str_ends_with($roleId, '01')) {
             $query->where('created_by', $user->id);
         }
-        // Jika bukan Leader (Admin/Manager), tidak ada filter tambahan, tampilkan semua.
+
+        // Terapkan filter status jika ada
+        $query->when($request->filled('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
+
+        // Terapkan filter pencarian jika ada
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $searchTerm = '%' . $request->search . '%';
+            $q->where(function ($subQuery) use ($searchTerm) {
+                $subQuery->where('title', 'like', $searchTerm)
+                    ->orWhereHas('staff', function ($staffQuery) use ($searchTerm) {
+                        $staffQuery->where('name', 'like', $searchTerm);
+                    });
+            });
+        });
 
         $inProgressTasks = $query->latest('updated_at')->get();
 

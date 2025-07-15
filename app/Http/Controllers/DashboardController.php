@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use App\Models\DailyReport; // <-- Tambahkan ini
+use App\Models\DailyReport;
 
 class DashboardController extends Controller
 {
@@ -24,7 +24,7 @@ class DashboardController extends Controller
     /**
      * Endpoint API untuk mengambil data statistik agregat berdasarkan peran.
      */
-    public function getStats()
+    public function getStats(Request $request)
     {
         $user = Auth::user();
         $roleId = $user->role_id;
@@ -78,15 +78,25 @@ class DashboardController extends Controller
         // --- Dashboard untuk Staff ---
         else {
             $userDepartment = substr($roleId, 0, 2);
-            $availableTasksCount = Task::where('status', 'unassigned')
-                ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment))
-                ->count();
+
+            $query = Task::with(['creator:id,name', 'room.floor.building'])
+                ->where('status', 'unassigned')
+                ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment));
+
+            // Terapkan filter pencarian jika ada
+            $query->when($request->filled('search'), function ($q) use ($request) {
+                $searchTerm = '%' . $request->search . '%';
+                $q->where('title', 'like', $searchTerm);
+            });
+
+            // Ambil data tugas yang tersedia dengan paginasi
+            $availableTasks = $query->latest()->paginate(5); // Menampilkan 5 tugas per halaman
 
             $myTasks = Task::where('user_id', $user->id);
 
             $stats = [
                 'role_type' => 'staff',
-                'available_tasks_count' => $availableTasksCount,
+                'available_tasks' => $availableTasks, // Kirim data paginasi
                 'my_active_tasks_count' => (clone $myTasks)->whereIn('status', ['in_progress', 'rejected'])->count(),
                 'my_completed_tasks_count' => (clone $myTasks)->where('status', 'completed')->count(),
             ];

@@ -49,11 +49,16 @@
                                     <div class="h-64"><canvas id="assetStatusChart"></canvas></div>
                                 </div>
                             </div>
-
-                            <!-- BAGIAN BARU: Tabel Laporan Harian Terbaru -->
+                            <!-- Tabel Laporan Harian Terbaru -->
                             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                                 <div class="p-6">
-                                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Laporan Harian Terbaru</h3>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-700">Laporan Harian Terbaru</h3>
+                                        <a href="{{ route('export.daily_reports') }}"
+                                            class="inline-flex items-center px-4 py-2 bg-teal-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-teal-500">
+                                            Export Laporan
+                                        </a>
+                                    </div>
                                     <div class="overflow-x-auto">
                                         <table class="min-w-full divide-y divide-gray-200">
                                             <thead class="bg-gray-50">
@@ -138,33 +143,84 @@
                     </template>
 
                     <!-- ============================================= -->
-                    <!-- TAMPILAN UNTUK STAFF                           -->
+                    <!-- TAMPILAN BARU UNTUK STAFF                     -->
                     <!-- ============================================= -->
                     <template x-if="stats.role_type === 'staff'">
-                        <div>
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6">
-                                <h3 class="text-2xl font-semibold text-gray-900">Selamat datang, {{ Auth::user()->name
-                                    }}!</h3>
-                                <p class="mt-1 text-gray-600">Berikut ringkasan pekerjaan Anda.</p>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <a href="{{ route('tasks.available') }}"
-                                    class="block bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 hover:bg-indigo-50 transition">
-                                    <h3 class="text-sm font-medium text-indigo-600 truncate">Tugas Tersedia Untuk Anda
-                                    </h3>
-                                    <p class="mt-1 text-3xl font-semibold text-indigo-600"
-                                        x-text="stats.available_tasks_count"></p>
-                                </a>
+                        <div class="space-y-6">
+                            <!-- Kartu Statistik Personal -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <a href="{{ route('tasks.my_tasks') }}"
                                     class="block bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 hover:bg-blue-50 transition">
                                     <h3 class="text-sm font-medium text-blue-600 truncate">Tugas Aktif Anda</h3>
                                     <p class="mt-1 text-3xl font-semibold text-blue-600"
                                         x-text="stats.my_active_tasks_count"></p>
                                 </a>
-                                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                                <a href="{{ route('tasks.completed_history') }}"
+                                    class="block bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 hover:bg-green-50 transition">
                                     <h3 class="text-sm font-medium text-green-600 truncate">Tugas Selesai</h3>
                                     <p class="mt-1 text-3xl font-semibold text-green-600"
                                         x-text="stats.my_completed_tasks_count"></p>
+                                </a>
+                            </div>
+
+                            <!-- Papan Tugas (Job Board) -->
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-6">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Papan Tugas Tersedia</h3>
+                                    <!-- Search Bar -->
+                                    <div class="mb-4">
+                                        <input type="text" x-model.debounce.500ms="search" @input="getDashboardData(1)"
+                                            placeholder="Cari berdasarkan judul tugas..."
+                                            class="block w-full rounded-md border-gray-300 shadow-sm">
+                                    </div>
+
+                                    <!-- Daftar Tugas -->
+                                    <div class="space-y-4">
+                                        <template x-if="isLoadingTasks">
+                                            <p class="text-center text-gray-500 py-4">Mencari tugas...</p>
+                                        </template>
+                                        <template x-for="task in availableTasks.data" :key="task.id">
+                                            <div class="border p-4 rounded-lg flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-bold text-gray-800" x-text="task.title"></p>
+                                                    <p class="text-sm text-gray-500 mt-1">
+                                                        Lokasi: <span
+                                                            x-text="task.room ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor}` : 'Tidak spesifik'"></span>
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <x-primary-button @click="claimTask(task.id)"
+                                                        ::disabled="isSubmitting">
+                                                        <span x-show="!isSubmitting">Ambil</span>
+                                                        <span x-show="isSubmitting">Memproses...</span>
+                                                    </x-primary-button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template
+                                            x-if="!isLoadingTasks && (!availableTasks.data || availableTasks.data.length === 0)">
+                                            <p class="text-center text-gray-500 py-4">Tidak ada tugas yang cocok dengan
+                                                pencarian Anda.</p>
+                                        </template>
+                                    </div>
+
+                                    <!-- Pagination -->
+                                    <div class="mt-6 flex justify-between items-center"
+                                        x-show="availableTasks.total > 0">
+                                        <p class="text-sm text-gray-700">
+                                            Menampilkan <span x-text="availableTasks.from || 0"></span> sampai <span
+                                                x-text="availableTasks.to || 0"></span> dari <span
+                                                x-text="availableTasks.total || 0"></span> hasil
+                                        </p>
+                                        <div class="flex space-x-2">
+                                            <button @click="getDashboardData(availableTasks.current_page - 1)"
+                                                :disabled="!availableTasks.prev_page_url"
+                                                class="px-3 py-1 text-sm rounded-md bg-gray-200 disabled:opacity-50">Sebelumnya</button>
+                                            <button @click="getDashboardData(availableTasks.current_page + 1)"
+                                                :disabled="!availableTasks.next_page_url"
+                                                class="px-3 py-1 text-sm rounded-md bg-gray-200 disabled:opacity-50">Berikutnya</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -178,20 +234,39 @@
         function dashboard() {
             return {
                 isLoading: true,
-                stats: {
-                    tasks: {},
-                    assets: {},
-                    latest_reports: [] // Inisialisasi properti baru
-                },
-                taskChart: null,
-                assetChart: null,
+                stats: {},
+                // State baru untuk Papan Tugas Staff
+                isLoadingTasks: true,
+                availableTasks: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
+                search: '',
+                isSubmitting: false, // State untuk tombol claim
+                notification: { show: false, message: '', type: 'success' },
 
                 init() {
-                    fetch('{{ route('api.dashboard.stats') }}', { headers: { 'Accept': 'application/json' } })
+                    this.getDashboardData();
+                },
+
+                getDashboardData(page = 1) {
+                    // Hanya set loading utama saat pertama kali
+                    if (page === 1 && this.search === '') {
+                        this.isLoading = true;
+                    }
+                    this.isLoadingTasks = true;
+
+                    const params = new URLSearchParams({
+                        page: page,
+                        search: this.search
+                    }).toString();
+
+                    fetch(`{{ route('api.dashboard.stats') }}?${params}`, { headers: { 'Accept': 'application/json' } })
                         .then(res => res.json())
                         .then(data => {
                             this.stats = data;
+                            if (data.role_type === 'staff') {
+                                this.availableTasks = data.available_tasks;
+                            }
                             this.isLoading = false;
+                            this.isLoadingTasks = false;
 
                             this.$nextTick(() => {
                                 if (this.stats.role_type === 'admin') {
@@ -203,7 +278,8 @@
                 },
 
                 createTaskStatusChart() {
-                    const ctx = document.getElementById('taskStatusChart').getContext('2d');
+                    const ctx = document.getElementById('taskStatusChart')?.getContext('2d');
+                    if (!ctx) return;
                     if(this.taskChart) this.taskChart.destroy();
                     this.taskChart = new Chart(ctx, {
                         type: 'doughnut',
@@ -211,34 +287,18 @@
                             labels: ['Unassigned', 'In Progress', 'Pending Review', 'Completed'],
                             datasets: [{
                                 label: 'Status Tugas',
-                                data: [
-                                    this.stats.tasks.unassigned,
-                                    this.stats.tasks.in_progress,
-                                    this.stats.tasks.pending_review,
-                                    this.stats.tasks.completed
-                                ],
-                                backgroundColor: [
-                                    'rgba(156, 163, 175, 0.7)', // gray
-                                    'rgba(59, 130, 246, 0.7)', // blue
-                                    'rgba(245, 158, 11, 0.7)', // amber
-                                    'rgba(34, 197, 94, 0.7)'  // green
-                                ],
-                                borderColor: '#fff',
-                                borderWidth: 2
+                                data: [ this.stats.tasks.unassigned, this.stats.tasks.in_progress, this.stats.tasks.pending_review, this.stats.tasks.completed ],
+                                backgroundColor: [ 'rgba(156, 163, 175, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(34, 197, 94, 0.7)' ],
+                                borderColor: '#fff', borderWidth: 2
                             }]
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'top' }
-                            }
-                        }
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
                     });
                 },
 
                 createAssetStatusChart() {
-                    const ctx = document.getElementById('assetStatusChart').getContext('2d');
+                    const ctx = document.getElementById('assetStatusChart')?.getContext('2d');
+                    if (!ctx) return;
                     if(this.assetChart) this.assetChart.destroy();
                     this.assetChart = new Chart(ctx, {
                         type: 'pie',
@@ -246,31 +306,51 @@
                             labels: ['Available', 'In Use', 'Maintenance', 'Disposed'],
                             datasets: [{
                                 label: 'Status Aset',
-                                data: [
-                                    this.stats.assets.available,
-                                    this.stats.assets.in_use,
-                                    this.stats.assets.maintenance,
-                                    this.stats.assets.disposed
-                                ],
-                                backgroundColor: [
-                                    'rgba(34, 197, 94, 0.7)',  // green
-                                    'rgba(59, 130, 246, 0.7)', // blue
-                                    'rgba(245, 158, 11, 0.7)', // amber
-                                    'rgba(107, 114, 128, 0.7)' // gray
-                                ],
-                                borderColor: '#fff',
-                                borderWidth: 2
+                                data: [ this.stats.assets.available, this.stats.assets.in_use, this.stats.assets.maintenance, this.stats.assets.disposed ],
+                                backgroundColor: [ 'rgba(34, 197, 94, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(107, 114, 128, 0.7)' ],
+                                borderColor: '#fff', borderWidth: 2
                             }]
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'top' }
-                            }
-                        }
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
                     });
-                }
+                },
+
+                // --- FUNGSI BARU UNTUK KLAIM TUGAS ---
+                async claimTask(taskId) {
+                    this.isSubmitting = true;
+                    await fetch('/sanctum/csrf-cookie');
+                    fetch(`/api/tasks/${taskId}/claim`, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() }
+                    })
+                    .then(async res => {
+                        if (res.ok) {
+                            window.location.href = '{{ route('tasks.my_tasks') }}';
+                        } else {
+                            const err = await res.json();
+                            throw new Error(err.message || 'Gagal mengambil tugas.');
+                        }
+                    })
+                    .catch(err => {
+                        this.showNotification(err.message, 'error');
+                    })
+                    .finally(() => {
+                        this.isSubmitting = false;
+                    });
+                },
+
+                getCsrfToken() {
+                    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+                    if (csrfCookie) return decodeURIComponent(csrfCookie.split('=')[1]);
+                    return '';
+                },
+
+                showNotification(message, type) {
+                    this.notification.message = message;
+                    this.notification.type = type;
+                    this.notification.show = true;
+                    setTimeout(() => this.notification.show = false, 3000);
+                },
             }
         }
     </script>

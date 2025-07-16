@@ -158,16 +158,22 @@ class AssetController extends Controller
 
     /**
      * Helper method untuk memeriksa stok dan mengirim notifikasi.
-     * (INI METODE BARU)
+     * (INI METODE YANG DIPERBARUI)
      */
     private function checkAndNotifyLowStock(Asset $asset)
     {
         // Kirim notifikasi hanya jika stok saat ini di bawah atau sama dengan batas minimum,
-        // dan batas minimum tersebut lebih dari 0 (aset yang tidak perlu dilacak stoknya akan diabaikan).
+        // dan batas minimum tersebut lebih dari 0.
         if ($asset->current_stock <= $asset->minimum_stock && $asset->minimum_stock > 0) {
 
-            // Cari semua pengguna dengan peran Manager & Superadmin
-            $recipients = User::whereIn('role_id', ['SA00', 'MG00'])->get();
+            // Ambil semua Manager dan Superadmin
+            $managersAndAdmins = User::whereIn('role_id', ['SA00', 'MG00'])->get();
+
+            // Ambil semua Leader (role_id diakhiri dengan '01')
+            $leaders = User::where('role_id', 'like', '%01')->get();
+
+            // Gabungkan semua penerima dan pastikan tidak ada duplikat
+            $recipients = $managersAndAdmins->merge($leaders)->unique('id');
 
             // Kirim notifikasi jika ada penerima
             if ($recipients->isNotEmpty()) {
@@ -195,5 +201,41 @@ class AssetController extends Controller
 
         // Format nomor dengan padding nol (e.g., HK-000001)
         return $departmentCode . '-' . str_pad($number, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Mengurangi stok untuk barang habis pakai.
+     * (INI METHOD BARU)
+     */
+    public function stockOut(Request $request, string $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $asset = Asset::findOrFail($id);
+
+        // Pastikan hanya barang habis pakai yang bisa dikurangi stoknya
+        if ($asset->asset_type !== 'consumable') {
+            return response()->json(['message' => 'Hanya barang habis pakai yang bisa dikurangi stoknya.'], 400);
+        }
+
+        if ($asset->current_stock < $request->amount) {
+            return response()->json(['message' => 'Stok tidak mencukupi.'], 422);
+        }
+
+        // Kurangi stok
+        $asset->current_stock -= $request->amount;
+        $asset->updated_by = Auth::id();
+        $asset->save();
+
+        // Cek apakah stok sekarang berada di bawah minimum
+        $this->checkAndNotifyLowStock($asset);
+
+        return response()->json($asset);
     }
 }

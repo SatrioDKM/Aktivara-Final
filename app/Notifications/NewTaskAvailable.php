@@ -40,7 +40,7 @@ class NewTaskAvailable extends Notification
         $url = route('tasks.available');
 
         return TelegramMessage::create()
-            // ->to($notifiable->telegram_chat_id)
+            ->to($notifiable->telegram_chat_id)
             ->content("🔔 *Tugas Baru Tersedia*\n\nSebuah tugas baru telah dibuat oleh *{$this->task->creator->name}*.\n\n*Judul:* {$this->task->title}\n\nSilakan cek papan tugas untuk mengambilnya.")
             ->button('Lihat Papan Tugas', $url);
     }

@@ -15,6 +15,7 @@ class Asset extends Model
     protected $fillable = [
         'room_id',
         'name_asset',
+        'asset_type',
         'category',
         'serial_number',
         'description',
@@ -23,7 +24,7 @@ class Asset extends Model
         'status',
         'current_stock',
         'minimum_stock',
-        'created_by', // <-- Tambahkan ini
+        'created_by',
         'updated_by',
     ];
 
@@ -36,7 +37,8 @@ class Asset extends Model
     }
 
     /**
-     * Relasi ke Maintenance Logs
+     * Relasi ke Maintenance Logs (untuk historikal maintenance)
+     * (Nama relasi ini sudah benar, kita akan manfaatkan ini)
      */
     public function maintenances()
     {

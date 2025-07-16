@@ -21,6 +21,7 @@ class UserSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'SA00',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -31,6 +32,7 @@ class UserSeeder extends Seeder
                 'email' => 'manager@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'MG00',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -41,6 +43,7 @@ class UserSeeder extends Seeder
                 'email' => 'leader.hk@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK01',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -50,6 +53,7 @@ class UserSeeder extends Seeder
                 'email' => 'leader.tk@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'TK01',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -60,6 +64,7 @@ class UserSeeder extends Seeder
                 'email' => 'staff.hk.budi@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK02',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -69,6 +74,7 @@ class UserSeeder extends Seeder
                 'email' => 'staff.hk.citra@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'HK02',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -78,6 +84,7 @@ class UserSeeder extends Seeder
                 'email' => 'staff.tk.dodi@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => 'TK02',
+                'telegram_chat_id' => '648052160', // change your user_id telegram
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()

@@ -42,7 +42,7 @@ class ReportSubmitted extends Notification
         $url = route('tasks.review_list');
 
         return TelegramMessage::create()
-            // ->to($notifiable->telegram_chat_id)
+            ->to($notifiable->telegram_chat_id)
             ->content("📝 *Laporan Dikirim*\n\n*{$this->staff->name}* telah mengirim laporan untuk tugas *{$this->task->title}*.\n\nSilakan review laporan tersebut.")
             ->button('Lihat Daftar Review', $url);
     }

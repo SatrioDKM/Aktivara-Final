@@ -13,7 +13,6 @@
                 rooms: {{ Js::from($rooms) }},
                 assets: {{ Js::from($assets) }}
             })">
-                <!-- Notifikasi -->
                 <div x-show="notification.show" x-transition class="fixed top-5 right-5 z-50">
                     <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg"
                         :class="{ 'bg-green-100 text-green-700': notification.type === 'success', 'bg-red-100 text-red-700': notification.type === 'error' }">
@@ -42,20 +41,17 @@
                                     </select>
                                 </div>
 
-                                <!-- Dropdown Departemen hanya untuk Admin/Manager -->
-                                @if(in_array(Auth::user()->role_id, ['SA00', 'MG00']))
                                 <div>
-                                    <x-input-label for="department_code" value="Departemen Tujuan" />
-                                    <select x-model="formData.department_code" id="department_code"
+                                    <x-input-label for="task_type_id" value="Jenis Tugas" />
+                                    <select x-model="formData.task_type_id" id="task_type_id"
                                         class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
-                                        <option value="">-- Pilih Departemen --</option>
-                                        <option value="HK">Housekeeping</option>
-                                        <option value="TK">Teknisi</option>
-                                        <option value="SC">Security</option>
-                                        <option value="PK">Parking</option>
+                                        <option value="">-- Pilih Jenis Tugas --</option>
+                                        @foreach($taskTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name_task }} ({{$type->departemen}})
+                                        </option>
+                                        @endforeach
                                     </select>
                                 </div>
-                                @endif
                             </div>
 
                             <div class="border-t pt-6 space-y-6">
@@ -132,7 +128,7 @@
                     title: '',
                     priority: 'medium',
                     description: '',
-                    department_code: '',
+                    task_type_id: '',
                     due_date: '',
                     room_id: '',
                     asset_id: ''
@@ -146,11 +142,13 @@
                 allRooms: data.rooms,
                 assets: data.assets,
 
-                // State untuk dropdown dinamis
                 selected: { building: '', floor: '' },
                 filtered: { floors: [], rooms: [] },
 
-                init() {
+                async init() {
+                    // Pemanasan untuk CSRF Token
+                    await fetch('/sanctum/csrf-cookie');
+
                     this.$watch('selected.building', (buildingId) => {
                         this.selected.floor = '';
                         this.formData.room_id = '';
@@ -174,17 +172,24 @@
                     })
                     .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
                     .then(data => {
-                        this.showNotification('Tugas berhasil dibuat!', 'success');
-                        this.$refs.form.reset();
-                        this.formData = { title: '', priority: 'medium', description: '', department_code: '', due_date: '', room_id: '', asset_id: '' };
-                        this.selected = { building: '', floor: '' };
+                        this.showNotification(data.message, 'success');
+                        // Alihkan ke dashboard setelah 1.5 detik agar notifikasi sempat terbaca
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
                     })
                     .catch(err => {
                         let msg = 'Gagal membuat tugas.';
                         if (err.errors) msg = Object.values(err.errors).flat().join(' ');
                         this.showNotification(`Error: ${msg}`, 'error');
-                    })
-                    .finally(() => this.isSubmitting = false);
+                        this.isSubmitting = false; // Pastikan tombol bisa diklik lagi jika error
+                    });
+                },
+
+                getCsrfToken() {
+                    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+                    if (csrfCookie) return decodeURIComponent(csrfCookie.split('=')[1]);
+                    return '';
                 },
 
                 showNotification(message, type) {
@@ -192,14 +197,6 @@
                     this.notification.type = type;
                     this.notification.show = true;
                     setTimeout(() => this.notification.show = false, 3000);
-                },
-
-                getCsrfToken() {
-                    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-                    if (csrfCookie) {
-                        return decodeURIComponent(csrfCookie.split('=')[1]);
-                    }
-                    return '';
                 }
             }
         }

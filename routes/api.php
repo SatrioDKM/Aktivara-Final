@@ -34,8 +34,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('buildings', BuildingController::class);
     Route::apiResource('floors', FloorController::class);
     Route::apiResource('rooms', RoomController::class);
+
     Route::apiResource('task-types', TaskTypeController::class);
+    Route::get('/task-types/by-department/{department_code}', [TaskTypeController::class, 'getByDepartment'])->name('api.task-types.by-department');
+
     Route::apiResource('assets', AssetController::class);
+    Route::post('/assets/{id}/stock-out', [AssetController::class, 'stockOut'])->name('api.assets.stock_out');
+
     Route::apiResource('maintenances', AssetMaintenanceController::class);
     Route::apiResource('users', UserController::class)->middleware('role:SA00');
 
@@ -48,6 +53,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/review-list', [TaskWorkflowController::class, 'showReviewList'])->name('review_list_data');
             Route::post('/{task}/review', [TaskWorkflowController::class, 'submitReview'])->name('submit_review');
             Route::get('/in-progress', [TaskWorkflowController::class, 'getInProgressTasks'])->name('in_progress_data');
+
+            Route::get('/active', [TaskWorkflowController::class, 'getActiveTasks'])->name('active_data');
         });
 
         // Endpoint untuk Staff

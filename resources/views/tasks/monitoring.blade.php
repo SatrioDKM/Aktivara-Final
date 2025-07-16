@@ -9,23 +9,22 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div x-data="monitoringTasks()">
 
-                <!-- Panel Filter -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Filter Pencarian -->
                             <div class="md:col-span-2">
                                 <label for="search" class="block text-sm font-medium text-gray-700">Cari Tugas</label>
                                 <input type="text" x-model.debounce.500ms="filters.search" @input="applyFilters"
                                     id="search" placeholder="Cari berdasarkan judul atau nama staff..."
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                             </div>
-                            <!-- Filter Status -->
                             <div>
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select x-model="filters.status" @change="applyFilters" id="status"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                     <option value="">Semua Status Aktif</option>
+                                    {{-- TAMBAHKAN OPSI INI --}}
+                                    <option value="unassigned">Belum Diambil</option>
                                     <option value="in_progress">Sedang Dikerjakan</option>
                                     <option value="pending_review">Menunggu Review</option>
                                 </select>
@@ -34,7 +33,6 @@
                     </div>
                 </div>
 
-                <!-- Tabel Hasil -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4">Daftar Tugas</h3>
@@ -75,8 +73,9 @@
                                             <td class="px-6 py-4 text-sm text-gray-500" x-text="index + 1"></td>
                                             <td class="px-6 py-4 text-sm font-medium text-gray-900" x-text="task.title">
                                             </td>
+                                            {{-- UBAH LOGIKA INI untuk menangani staff yang null --}}
                                             <td class="px-6 py-4 text-sm text-gray-500"
-                                                x-text="task.staff ? task.staff.name : 'N/A'"></td>
+                                                x-text="task.staff ? task.staff.name : 'Belum Diambil'"></td>
                                             <td class="px-6 py-4 text-sm text-gray-500"
                                                 x-text="task.room ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor}` : 'Tidak spesifik'">
                                             </td>
@@ -121,11 +120,11 @@
                 },
                 applyFilters() {
                     this.isLoading = true;
-                    // Hapus filter yang kosong agar URL lebih bersih
                     const activeFilters = Object.fromEntries(Object.entries(this.filters).filter(([_, v]) => v != ''));
                     const params = new URLSearchParams(activeFilters).toString();
 
-                    fetch(`{{ route('api.tasks.in_progress_data') }}?${params}`, {
+                    // UBAH ENDPOINT API DI SINI
+                    fetch(`{{ route('api.tasks.active_data') }}?${params}`, {
                         headers: { 'Accept': 'application/json' }
                     })
                     .then(res => {
@@ -145,6 +144,8 @@
                 },
                 statusColor(status) {
                     const colors = {
+                        // TAMBAHKAN WARNA UNTUK STATUS BARU
+                        'unassigned': 'bg-gray-200 text-gray-800',
                         'in_progress': 'bg-blue-100 text-blue-800',
                         'pending_review': 'bg-yellow-100 text-yellow-800',
                     };

@@ -65,6 +65,7 @@ class TaskReviewed extends Notification
         }
 
         return TelegramMessage::create()
+            ->to($notifiable->telegram_chat_id)
             ->content($content)
             ->button('Lihat Detail Tugas', $url);
     }

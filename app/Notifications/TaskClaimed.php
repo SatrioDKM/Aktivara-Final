@@ -42,7 +42,7 @@ class TaskClaimed extends Notification
         $url = route('tasks.show', $this->task->id);
 
         return TelegramMessage::create()
-            // ->to($notifiable->telegram_chat_id)
+            ->to($notifiable->telegram_chat_id)
             ->content("✅ *Tugas Diambil*\n\nTugas *{$this->task->title}* yang Anda buat telah diambil oleh *{$this->staff->name}*.")
             ->button('Lihat Detail Tugas', $url);
     }

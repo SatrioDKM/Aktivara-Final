@@ -89,4 +89,18 @@ class TaskTypeController extends Controller
 
         return response()->json(null, 204);
     }
+
+    /**
+     * Mengambil jenis tugas berdasarkan kode departemen.
+     * (INI METHOD BARU)
+     */
+    public function getByDepartment(string $department_code)
+    {
+        $taskTypes = TaskType::where('departemen', $department_code)
+            ->orWhere('departemen', 'UMUM') // Sertakan juga jenis tugas umum
+            ->orderBy('name_task')
+            ->get(['id', 'name_task']);
+
+        return response()->json($taskTypes);
+    }
 }

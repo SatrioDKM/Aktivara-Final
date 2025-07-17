@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            // Hapus kolom department_code
-            $table->dropColumn('department_code');
+            // Cek dulu apakah kolomnya ada sebelum dihapus
+            if (Schema::hasColumn('assets', 'department_code')) {
+                Schema::table('assets', function (Blueprint $table) {
+                    $table->dropColumn('department_code');
+                });
+            }
         });
     }
 

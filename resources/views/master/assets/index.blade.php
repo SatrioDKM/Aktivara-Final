@@ -7,7 +7,10 @@
 
     <div class="py-12">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div x-data="assetsCRUD()">
+            <div x-data="assetsCRUD({
+                rooms: {{ Js::from($rooms) }},
+                currentUser: {{ Js::from(Auth::user()) }}
+            })">
 
                 <div x-show="notification.show" x-transition class="fixed top-5 right-5 z-50">
                     <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg"
@@ -228,7 +231,13 @@
                                                 <label for="serial_number"
                                                     class="block text-sm font-medium text-gray-700">Nomor Seri</label>
                                                 <input type="text" x-model="formData.serial_number"
-                                                    class="mt-1 block w-full rounded-md">
+                                                    class="mt-1 block w-full rounded-md"
+                                                    :disabled="isEditMode && formData.serial_number">
+                                                <p x-show="!isEditMode && isLeader()"
+                                                    class="mt-1 text-xs text-gray-500">Kosongkan untuk nomor seri
+                                                    otomatis.</p>
+                                                <p x-show="!isEditMode && isAdminOrManager()"
+                                                    class="mt-1 text-xs text-gray-500">Isi manual jika diperlukan.</p>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
@@ -277,10 +286,9 @@
                             <div class="mt-4 max-h-96 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">Riwayat Perbaikan</h4>
-                                    <ul class="space-y-3">
-                                        <template x-if="selectedAsset.maintenances.length > 0">
-                                            <template x-for="maintenance in selectedAsset.maintenances"
-                                                :key="maintenance.id">
+                                    <ul class="space-y-3"><template
+                                            x-if="selectedAsset.maintenances.length > 0"><template
+                                                x-for="maintenance in selectedAsset.maintenances" :key="maintenance.id">
                                                 <li class="border p-3 rounded-md text-sm">
                                                     <p><strong>Tanggal:</strong> <span
                                                             x-text="new Date(maintenance.created_at).toLocaleDateString('id-ID')"></span>
@@ -291,19 +299,16 @@
                                                             x-text="maintenance.technician ? maintenance.technician.name : 'N/A'"></span>
                                                     </p>
                                                 </li>
-                                            </template>
-                                        </template>
-                                        <template x-if="selectedAsset.maintenances.length === 0">
+                                            </template></template><template
+                                            x-if="selectedAsset.maintenances.length === 0">
                                             <p class="text-gray-500 text-sm">Tidak ada riwayat perbaikan.</p>
-                                        </template>
-                                    </ul>
+                                        </template></ul>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">Riwayat Pemakaian/Tugas
                                     </h4>
-                                    <ul class="space-y-3">
-                                        <template x-if="selectedAsset.tasks.length > 0">
-                                            <template x-for="task in selectedAsset.tasks" :key="task.id">
+                                    <ul class="space-y-3"><template x-if="selectedAsset.tasks.length > 0"><template
+                                                x-for="task in selectedAsset.tasks" :key="task.id">
                                                 <li class="border p-3 rounded-md text-sm">
                                                     <p><strong>Tanggal:</strong> <span
                                                             x-text="new Date(task.created_at).toLocaleDateString('id-ID')"></span>
@@ -312,13 +317,10 @@
                                                     <p><strong>Dikerjakan Oleh:</strong> <span
                                                             x-text="task.staff ? task.staff.name : 'N/A'"></span></p>
                                                 </li>
-                                            </template>
-                                        </template>
-                                        <template x-if="selectedAsset.tasks.length === 0">
+                                            </template></template><template x-if="selectedAsset.tasks.length === 0">
                                             <p class="text-gray-500 text-sm">Aset ini belum pernah terkait dengan tugas
                                                 apapun.</p>
-                                        </template>
-                                    </ul>
+                                        </template></ul>
                                 </div>
                             </div>
                             <div class="mt-6 flex justify-end">
@@ -338,13 +340,11 @@
                                     <h3 class="text-lg font-medium text-gray-900">Catat Stok Keluar</h3>
                                     <p class="mt-1 text-sm text-gray-600">Anda akan mengurangi stok untuk: <strong
                                             x-text="selectedAsset.name_asset"></strong></p>
-                                    <div class="mt-4">
-                                        <label for="stock_out_amount"
-                                            class="block text-sm font-medium text-gray-700">Jumlah Keluar</label>
-                                        <input type="number" id="stock_out_amount" x-model.number="stockOutData.amount"
+                                    <div class="mt-4"><label for="stock_out_amount"
+                                            class="block text-sm font-medium text-gray-700">Jumlah Keluar</label><input
+                                            type="number" id="stock_out_amount" x-model.number="stockOutData.amount"
                                             min="1" :max="selectedAsset.current_stock"
-                                            class="mt-1 block w-full rounded-md" required>
-                                    </div>
+                                            class="mt-1 block w-full rounded-md" required></div>
                                 </div>
                                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <x-danger-button type="submit">Konfirmasi</x-danger-button>
@@ -370,8 +370,7 @@
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
+                                        </svg></div>
                                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                                         <h3 class="text-lg leading-6 font-medium text-gray-900">Hapus Aset</h3>
                                         <p class="mt-2 text-sm text-gray-500">Apakah Anda yakin ingin menghapus data
@@ -379,11 +378,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                <button @click="deleteAsset()"
+                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"><button
+                                    @click="deleteAsset()"
                                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Ya,
-                                    Hapus</button>
-                                <button @click="showDeleteModal = false"
+                                    Hapus</button><button @click="showDeleteModal = false"
                                     class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
                             </div>
                         </div>
@@ -395,10 +393,11 @@
     </div>
 
     <script>
-        function assetsCRUD() {
+        function assetsCRUD(data) {
             return {
                 assets: [],
-                rooms: @json($rooms),
+                rooms: data.rooms || [],
+                currentUser: data.currentUser || {},
                 isLoading: true,
                 showModal: false,
                 isEditMode: false,
@@ -411,6 +410,9 @@
                 notification: { show: false, message: '', type: 'success' },
                 showDeleteModal: false,
                 assetToDeleteId: null,
+
+                isLeader() { return this.currentUser.role_id && this.currentUser.role_id.endsWith('01'); },
+                isAdminOrManager() { return ['SA00', 'MG00'].includes(this.currentUser.role_id); },
 
                 get filteredAssets() {
                     if (!this.assets) return [];
@@ -436,13 +438,10 @@
                     const isFixed = this.currentTab === 'fixed_asset';
                     this.formData = {
                         id: null, name_asset: '', room_id: '',
-                        asset_type: this.currentTab,
-                        category: '',
-                        condition: isFixed ? 'Baik' : '',
-                        serial_number: '', purchase_date: '',
-                        status: 'available',
-                        current_stock: isFixed ? 1 : 0,
-                        minimum_stock: 0,
+                        asset_type: this.currentTab, category: '',
+                        condition: isFixed ? 'Baik' : '', serial_number: '',
+                        purchase_date: '', status: 'available',
+                        current_stock: isFixed ? 1 : 0, minimum_stock: 0,
                         description: ''
                     };
                     this.showModal = true;
@@ -463,14 +462,15 @@
                         body: JSON.stringify(this.formData)
                     })
                     .then(async res => res.ok ? res.json() : Promise.reject(await res.json()))
-                    .then(data => {
+                    .then(() => {
                         this.showNotification(this.isEditMode ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success');
                         this.getAssets();
                         this.closeModal();
                     })
                     .catch(err => {
                         let msg = 'Terjadi kesalahan.';
-                        if (err.errors) msg = Object.values(err.errors).flat().join(' ');
+                        if (err && err.errors) msg = Object.values(err.errors).flat().join(' ');
+                        else if (err && err.message) msg = err.message;
                         this.showNotification(`Error: ${msg}`, 'error');
                     });
                 },
@@ -502,12 +502,9 @@
                     })
                     .then(res => { if (!res.ok) throw new Error('Gagal menghapus.'); this.showNotification('Aset berhasil dihapus', 'success'); this.getAssets(); })
                     .catch(err => this.showNotification(err.message, 'error'))
-                    .finally(() => {
-                        this.showDeleteModal = false;
-                        this.assetToDeleteId = null;
-                    });
+                    .finally(() => { this.showDeleteModal = false; this.assetToDeleteId = null; });
                 },
-                getCsrfToken() { const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN=')); if(csrfCookie) return decodeURIComponent(csrfCookie.split('=')[1]); return ''; },
+                getCsrfToken() { const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN=')); return c ? decodeURIComponent(c.split('=')[1]) : ''; },
                 showNotification(message, type) { this.notification.message = message; this.notification.type = type; this.notification.show = true; setTimeout(() => this.notification.show = false, 3000); }
             }
         }

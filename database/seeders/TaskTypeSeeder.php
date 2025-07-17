@@ -13,32 +13,30 @@ class TaskTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        TaskType::create([
-            'name_task' => 'Pembersihan Toilet',
-            'departemen' => 'HK',
-            'priority_level' => 'medium',
-            'description' => 'Membersihkan seluruh area toilet termasuk wastafel, kloset, dan lantai.'
-        ]);
+        $taskTypes = [
+            // Housekeeping
+            ['departemen' => 'HK', 'name_task' => 'Pembersihan Rutin'],
+            ['departemen' => 'HK', 'name_task' => 'Pengelolaan Sampah'],
 
-        TaskType::create([
-            'name_task' => 'Perbaikan AC',
-            'departemen' => 'TK',
-            'priority_level' => 'high',
-            'description' => 'Memeriksa dan memperbaiki unit AC yang dilaporkan tidak dingin.'
-        ]);
+            // Teknisi
+            ['departemen' => 'TK', 'name_task' => 'Perbaikan Kelistrikan'],
+            ['departemen' => 'TK', 'name_task' => 'Perbaikan Aset'],
+            ['departemen' => 'TK', 'name_task' => 'Instalasi Baru'],
 
-        TaskType::create([
-            'name_task' => 'Patroli Keamanan',
-            'departemen' => 'SC',
-            'priority_level' => 'medium',
-            'description' => 'Melakukan patroli rutin di area yang telah ditentukan.'
-        ]);
+            // Security
+            ['departemen' => 'SC', 'name_task' => 'Patroli Keamanan'],
+            ['departemen' => 'SC', 'name_task' => 'Pengawalan Tamu VIP'],
 
-        TaskType::create([
-            'name_task' => 'Penggantian Lampu',
-            'departemen' => 'TK',
-            'priority_level' => 'low',
-            'description' => 'Mengganti bola lampu yang mati atau rusak.'
-        ]);
+            // Parking
+            ['departemen' => 'PK', 'name_task' => 'Pengaturan Lalu Lintas'],
+
+            // Umum (bisa diakses semua departemen)
+            ['departemen' => 'UMUM', 'name_task' => 'Laporan Insiden'],
+            ['departemen' => 'UMUM', 'name_task' => 'Permintaan Bantuan'],
+        ];
+
+        foreach ($taskTypes as $type) {
+            TaskType::create($type);
+        }
     }
 }

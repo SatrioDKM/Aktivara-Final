@@ -32,7 +32,15 @@ class AssetController extends Controller
     {
         $user = Auth::user();
         $roleId = $user->role_id;
-        $query = Asset::with(['room.floor.building', 'updater:id,name', 'creator:id,name']);
+
+        // Eager load relasi yang dibutuhkan untuk tampilan history dan data lainnya
+        $query = Asset::with([
+            'room.floor.building',
+            'updater:id,name',
+            'creator:id,name',
+            'maintenances.technician:id,name', // History maintenance
+            'tasks.staff:id,name' // History pemakaian/pergerakan
+        ]);
 
         // Jika user adalah Leader, filter aset berdasarkan kode departemen di nomor seri.
         if (str_ends_with($roleId, '01')) {
@@ -55,13 +63,15 @@ class AssetController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name_asset' => 'required|string|max:100',
+            'asset_type' => 'required|in:fixed_asset,consumable', // Validasi tipe aset
             'room_id' => 'nullable|exists:rooms,id',
             'category' => 'required|string|max:50',
             'purchase_date' => 'nullable|date',
-            'condition' => 'required|string|max:50',
+            'condition' => 'required_if:asset_type,fixed_asset|string|max:50', // Wajib untuk aset tetap
             'status' => 'required|in:available,in_use,maintenance,disposed',
             'current_stock' => 'required|integer|min:0',
-            'minimum_stock' => 'required|integer|min:0',
+            // Stok minimum hanya wajib jika tipenya consumable
+            'minimum_stock' => 'required_if:asset_type,consumable|integer|min:0',
             'description' => 'nullable|string',
             // Validasi department_code hanya jika user adalah Admin/Manager
             'department_code' => [
@@ -69,7 +79,7 @@ class AssetController extends Controller
                 'in:HK,TK,SC,PK'
             ],
             // Nomor seri tidak perlu divalidasi karena dibuat otomatis
-            // 'serial_number' => 'nullable|string|max:100|unique:assets,serial_number',
+            'serial_number' => 'nullable|string|max:100|unique:assets,serial_number',
         ]);
 
         if ($validator->fails()) {
@@ -79,6 +89,12 @@ class AssetController extends Controller
         $data = $request->except('serial_number');
         $data['created_by'] = $user->id;
         $data['updated_by'] = $user->id;
+
+        // Jika Aset Tetap, set minimum_stock ke 0 dan current_stock ke 1 (by default)
+        if ($data['asset_type'] === 'fixed_asset') {
+            $data['minimum_stock'] = 0;
+            $data['current_stock'] = 1;
+        }
 
         // --- Logika Pembuatan Nomor Seri Otomatis ---
         $departmentCode = '';
@@ -97,7 +113,8 @@ class AssetController extends Controller
         $asset = Asset::create($data);
         $this->checkAndNotifyLowStock($asset);
 
-        return response()->json($asset->load(['room.floor.building', 'updater:id,name', 'creator:id,name']), 201);
+        // Muat relasi baru untuk dikirim kembali
+        return response()->json($asset->load(['room.floor.building', 'updater:id,name', 'creator:id,name', 'maintenances', 'tasks']), 201);
     }
 
     /**

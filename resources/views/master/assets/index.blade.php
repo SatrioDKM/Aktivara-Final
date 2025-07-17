@@ -39,22 +39,10 @@
                             </h3>
                             <div class="flex space-x-3">
                                 <a href="{{ route('export.assets') }}"
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                        </path>
-                                    </svg>
-                                    Export Excel
-                                </a>
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500">Export
+                                    Excel</a>
                                 <button @click="openModal()"
                                     class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                    </svg>
                                     Tambah <span x-text="currentTab === 'fixed_asset' ? 'Aset' : 'Barang'"></span>
                                 </button>
                             </div>
@@ -67,9 +55,6 @@
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Nama Aset</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            No. Seri</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Kategori</th>
@@ -85,12 +70,19 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
+                                    <template x-if="isLoading">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">Memuat data...</td>
+                                        </tr>
+                                    </template>
                                     <template x-for="asset in filteredAssets" :key="asset.id">
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="px-6 py-4 text-sm font-medium text-gray-900"
-                                                x-text="asset.name_asset"></td>
-                                            <td class="px-6 py-4 text-sm text-gray-500"
-                                                x-text="asset.serial_number || '-'"></td>
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                                <div x-text="asset.name_asset"></div>
+                                                <div class="text-xs text-gray-500"
+                                                    x-text="asset.serial_number ? 'SN: ' + asset.serial_number : ''">
+                                                </div>
+                                            </td>
                                             <td class="px-6 py-4 text-sm text-gray-500" x-text="asset.category"></td>
                                             <td class="px-6 py-4 text-sm text-gray-500"
                                                 x-text="asset.room ? `${asset.room.floor.building.name_building} / ${asset.room.floor.name_floor} / ${asset.room.name_room}` : 'Gudang'">
@@ -104,7 +96,7 @@
                                                         title="Edit">Edit</button>
                                                     <button @click="openHistoryModal(asset)"
                                                         class="text-blue-600 hover:text-blue-900"
-                                                        title="History">History</button>
+                                                        title="Lihat History">History</button>
                                                     <button @click="confirmDelete(asset.id)"
                                                         class="text-red-600 hover:text-red-900"
                                                         title="Hapus">Hapus</button>
@@ -114,8 +106,7 @@
                                     </template>
                                     <template x-if="!isLoading && filteredAssets.length === 0">
                                         <tr>
-                                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada data
-                                                aset tetap.</td>
+                                            <td colspan="5" class="text-center py-4">Tidak ada data aset tetap.</td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -144,8 +135,13 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
+                                    <template x-if="isLoading">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">Memuat data...</td>
+                                        </tr>
+                                    </template>
                                     <template x-for="asset in filteredAssets" :key="asset.id">
-                                        <tr class="hover:bg-gray-50 transition">
+                                        <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-4 text-sm font-medium text-gray-900"
                                                 x-text="asset.name_asset"></td>
                                             <td class="px-6 py-4 text-sm text-gray-500" x-text="asset.category"></td>
@@ -160,7 +156,7 @@
                                                         title="Edit">Edit</button>
                                                     <button @click="openStockOutModal(asset)"
                                                         class="text-red-600 hover:text-red-900"
-                                                        title="Stock Keluar">Stock Keluar</button>
+                                                        title="Catat Stok Keluar">Stock Keluar</button>
                                                     <button @click="confirmDelete(asset.id)"
                                                         class="text-gray-500 hover:text-gray-700"
                                                         title="Hapus">Hapus</button>
@@ -170,8 +166,8 @@
                                     </template>
                                     <template x-if="!isLoading && filteredAssets.length === 0">
                                         <tr>
-                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada data
-                                                barang habis pakai.</td>
+                                            <td colspan="5" class="text-center py-4">Tidak ada data barang habis pakai.
+                                            </td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -189,15 +185,21 @@
                             <form @submit.prevent="saveAsset()">
                                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                                        x-text="isEditMode ? 'Edit ' + (formData.asset_type === 'fixed_asset' ? 'Aset' : 'Barang') : 'Tambah ' + (currentTab === 'fixed_asset' ? 'Aset Baru' : 'Barang Baru')">
-                                    </h3>
+                                        x-text="isEditMode ? 'Edit Data' : 'Tambah Data Baru'"></h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-4">
-                                            <input type="hidden" x-model="formData.asset_type">
+                                            <div x-show="!isEditMode">
+                                                <label for="asset_type"
+                                                    class="block text-sm font-medium text-gray-700">Jenis Aset</label>
+                                                <select x-model="formData.asset_type" id="asset_type"
+                                                    class="mt-1 block w-full rounded-md" :disabled="isEditMode">
+                                                    <option value="fixed_asset">Aset Tetap</option>
+                                                    <option value="consumable">Barang Habis Pakai</option>
+                                                </select>
+                                            </div>
                                             <div>
-                                                <label for="name_asset"
-                                                    class="block text-sm font-medium text-gray-700">Nama <span
-                                                        x-text="formData.asset_type === 'fixed_asset' ? 'Aset' : 'Barang'"></span></label>
+                                                <label for="name_asset" class="block text-sm font-medium text-gray-700"
+                                                    x-text="formData.asset_type === 'fixed_asset' ? 'Nama Aset' : 'Nama Barang'"></label>
                                                 <input type="text" x-model="formData.name_asset"
                                                     class="mt-1 block w-full rounded-md" required>
                                             </div>
@@ -207,22 +209,13 @@
                                                 <input type="text" x-model="formData.category"
                                                     class="mt-1 block w-full rounded-md" required>
                                             </div>
-                                            <div x-show="formData.asset_type === 'fixed_asset'">
-                                                <label for="condition"
-                                                    class="block text-sm font-medium text-gray-700">Kondisi</label>
-                                                <select x-model="formData.condition"
-                                                    class="mt-1 block w-full rounded-md">
-                                                    <option value="Baik">Baik</option>
-                                                    <option value="Rusak">Rusak</option>
-                                                </select>
-                                            </div>
                                             <div>
                                                 <label for="room_id"
                                                     class="block text-sm font-medium text-gray-700">Lokasi
                                                     (Opsional)</label>
                                                 <select x-model="formData.room_id" class="mt-1 block w-full rounded-md">
-                                                    <option value="">-- Tidak ada lokasi (Gudang) --</option>
-                                                    <template x-for="room in rooms" :key="room.id">
+                                                    <option value="">-- Gudang/Tidak Spesifik --</option><template
+                                                        x-for="room in rooms" :key="room.id">
                                                         <option :value="room.id"
                                                             x-text="`${room.floor.building.name_building} / ${room.floor.name_floor} / ${room.name_room}`">
                                                         </option>
@@ -237,22 +230,16 @@
                                                 <input type="text" x-model="formData.serial_number"
                                                     class="mt-1 block w-full rounded-md">
                                             </div>
-                                            <div x-show="formData.asset_type === 'fixed_asset'">
-                                                <label for="purchase_date"
-                                                    class="block text-sm font-medium text-gray-700">Tanggal Pembelian
-                                                    (Opsional)</label>
-                                                <input type="date" x-model="formData.purchase_date"
-                                                    class="mt-1 block w-full rounded-md">
-                                            </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <label for="current_stock"
                                                         class="block text-sm font-medium text-gray-700">Stok Saat
                                                         Ini</label>
                                                     <input type="number" x-model.number="formData.current_stock" min="0"
-                                                        class="mt-1 block w-full rounded-md" required>
+                                                        class="mt-1 block w-full rounded-md" required
+                                                        :disabled="formData.asset_type === 'fixed_asset'">
                                                 </div>
-                                                <div>
+                                                <div x-show="formData.asset_type === 'consumable'">
                                                     <label for="minimum_stock"
                                                         class="block text-sm font-medium text-gray-700">Stok
                                                         Minimum</label>
@@ -271,46 +258,68 @@
                                 </div>
                                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <button type="submit"
-                                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>
+                                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>
                                     <button type="button" @click="closeModal()"
-                                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
+                                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                <div x-show="showHistoryModal" x-transition class="fixed inset-0 z-50 overflow-y-auto">
+                <div x-show="showHistoryModal" @keydown.escape.window="showHistoryModal = false" x-transition
+                    class="fixed inset-0 z-50 overflow-y-auto">
                     <div class="flex items-center justify-center min-h-screen">
                         <div @click="showHistoryModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
-                        <div class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-2xl sm:w-full p-6">
-                            <h3 class="text-lg font-medium text-gray-900">Riwayat Maintenance: <span
-                                    x-text="selectedAsset.name_asset"></span></h3>
-                            <div class="mt-4 max-h-96 overflow-y-auto">
-                                <template x-if="selectedAsset.maintenances.length > 0">
-                                    <ul class="space-y-4">
-                                        <template x-for="maintenance in selectedAsset.maintenances"
-                                            :key="maintenance.id">
-                                            <li class="border p-3 rounded-md">
-                                                <p><strong>Tanggal:</strong> <span
-                                                        x-text="new Date(maintenance.created_at).toLocaleDateString('id-ID')"></span>
-                                                </p>
-                                                <p><strong>Laporan:</strong> <span
-                                                        x-text="maintenance.description_text"></span></p>
-                                                <p><strong>Teknisi:</strong> <span
-                                                        x-text="maintenance.technician ? maintenance.technician.name : 'N/A'"></span>
-                                                </p>
-                                                <p><strong>Status:</strong> <span x-text="maintenance.status"></span>
-                                                </p>
-                                                <p x-show="maintenance.notes"><strong>Catatan:</strong> <span
-                                                        x-text="maintenance.notes"></span></p>
-                                            </li>
+                        <div class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-3xl sm:w-full p-6">
+                            <h3 class="text-lg font-medium text-gray-900">History untuk: <span
+                                    x-text="selectedAsset.name_asset" class="font-bold"></span></h3>
+                            <div class="mt-4 max-h-96 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">Riwayat Perbaikan</h4>
+                                    <ul class="space-y-3">
+                                        <template x-if="selectedAsset.maintenances.length > 0">
+                                            <template x-for="maintenance in selectedAsset.maintenances"
+                                                :key="maintenance.id">
+                                                <li class="border p-3 rounded-md text-sm">
+                                                    <p><strong>Tanggal:</strong> <span
+                                                            x-text="new Date(maintenance.created_at).toLocaleDateString('id-ID')"></span>
+                                                    </p>
+                                                    <p><strong>Laporan:</strong> <span
+                                                            x-text="maintenance.description_text"></span></p>
+                                                    <p><strong>Teknisi:</strong> <span
+                                                            x-text="maintenance.technician ? maintenance.technician.name : 'N/A'"></span>
+                                                    </p>
+                                                </li>
+                                            </template>
+                                        </template>
+                                        <template x-if="selectedAsset.maintenances.length === 0">
+                                            <p class="text-gray-500 text-sm">Tidak ada riwayat perbaikan.</p>
                                         </template>
                                     </ul>
-                                </template>
-                                <template x-if="selectedAsset.maintenances.length === 0">
-                                    <p class="text-gray-500">Tidak ada riwayat maintenance untuk aset ini.</p>
-                                </template>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">Riwayat Pemakaian/Tugas
+                                    </h4>
+                                    <ul class="space-y-3">
+                                        <template x-if="selectedAsset.tasks.length > 0">
+                                            <template x-for="task in selectedAsset.tasks" :key="task.id">
+                                                <li class="border p-3 rounded-md text-sm">
+                                                    <p><strong>Tanggal:</strong> <span
+                                                            x-text="new Date(task.created_at).toLocaleDateString('id-ID')"></span>
+                                                    </p>
+                                                    <p><strong>Tugas:</strong> <span x-text="task.title"></span></p>
+                                                    <p><strong>Dikerjakan Oleh:</strong> <span
+                                                            x-text="task.staff ? task.staff.name : 'N/A'"></span></p>
+                                                </li>
+                                            </template>
+                                        </template>
+                                        <template x-if="selectedAsset.tasks.length === 0">
+                                            <p class="text-gray-500 text-sm">Aset ini belum pernah terkait dengan tugas
+                                                apapun.</p>
+                                        </template>
+                                    </ul>
+                                </div>
                             </div>
                             <div class="mt-6 flex justify-end">
                                 <x-secondary-button @click="showHistoryModal = false">Tutup</x-secondary-button>
@@ -319,25 +328,28 @@
                     </div>
                 </div>
 
-                <div x-show="showStockOutModal" x-transition class="fixed inset-0 z-50 overflow-y-auto">
+                <div x-show="showStockOutModal" @keydown.escape.window="showStockOutModal = false" x-transition
+                    class="fixed inset-0 z-50 overflow-y-auto">
                     <div class="flex items-center justify-center min-h-screen">
                         <div @click="showStockOutModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
-                        <div class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full p-6">
+                        <div class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full">
                             <form @submit.prevent="submitStockOut()">
-                                <h3 class="text-lg font-medium text-gray-900">Catat Stok Keluar</h3>
-                                <p class="mt-1 text-sm text-gray-600">Anda akan mengurangi stok untuk: <strong
-                                        x-text="selectedAsset.name_asset"></strong></p>
-                                <div class="mt-4">
-                                    <label for="stock_out_amount" class="block text-sm font-medium text-gray-700">Jumlah
-                                        Keluar</label>
-                                    <input type="number" id="stock_out_amount" x-model.number="stockOutData.amount"
-                                        min="1" :max="selectedAsset.current_stock" class="mt-1 block w-full rounded-md"
-                                        required>
+                                <div class="p-6">
+                                    <h3 class="text-lg font-medium text-gray-900">Catat Stok Keluar</h3>
+                                    <p class="mt-1 text-sm text-gray-600">Anda akan mengurangi stok untuk: <strong
+                                            x-text="selectedAsset.name_asset"></strong></p>
+                                    <div class="mt-4">
+                                        <label for="stock_out_amount"
+                                            class="block text-sm font-medium text-gray-700">Jumlah Keluar</label>
+                                        <input type="number" id="stock_out_amount" x-model.number="stockOutData.amount"
+                                            min="1" :max="selectedAsset.current_stock"
+                                            class="mt-1 block w-full rounded-md" required>
+                                    </div>
                                 </div>
-                                <div class="mt-6 flex justify-end space-x-3">
-                                    <x-secondary-button type="button" @click="showStockOutModal = false">Batal
-                                    </x-secondary-button>
+                                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <x-danger-button type="submit">Konfirmasi</x-danger-button>
+                                    <x-secondary-button type="button" @click="showStockOutModal = false" class="mr-3">
+                                        Batal</x-secondary-button>
                                 </div>
                             </form>
                         </div>
@@ -390,26 +402,18 @@
                 isLoading: true,
                 showModal: false,
                 isEditMode: false,
-                currentUser: {{ Js::from(Auth::user()) }},
-                currentTab: 'fixed_asset', // Tab default
-
-                // State untuk modal-modal baru
+                currentTab: 'fixed_asset',
                 showHistoryModal: false,
                 showStockOutModal: false,
-                selectedAsset: { maintenances: [] }, // Untuk menampung data aset yang dipilih
+                selectedAsset: { maintenances: [], tasks: [] },
                 stockOutData: { id: null, amount: 1 },
-
-                formData: {
-                    id: null, name_asset: '', room_id: '', asset_type: 'fixed_asset',
-                    category: '', condition: 'Baik', serial_number: '', purchase_date: '',
-                    status: 'available', current_stock: 1, minimum_stock: 0, description: ''
-                },
+                formData: {},
                 notification: { show: false, message: '', type: 'success' },
                 showDeleteModal: false,
                 assetToDeleteId: null,
 
-                // Computed property untuk memfilter aset berdasarkan tab
                 get filteredAssets() {
+                    if (!this.assets) return [];
                     return this.assets.filter(asset => asset.asset_type === this.currentTab);
                 },
 
@@ -421,26 +425,28 @@
                 getAssets() {
                     this.isLoading = true;
                     fetch('/api/assets', { headers: { 'Accept': 'application/json' } })
-                    .then(res => { if (!res.ok) throw new Error('Gagal memuat data.'); return res.json(); })
-                    .then(data => { this.assets = data; this.isLoading = false; })
-                    .catch(err => { this.showNotification(err.message, 'error'); this.isLoading = false; });
+                    .then(res => res.ok ? res.json() : Promise.reject('Gagal memuat data.'))
+                    .then(data => { this.assets = data; })
+                    .catch(err => this.showNotification(err, 'error'))
+                    .finally(() => this.isLoading = false);
                 },
 
                 openModal() {
                     this.isEditMode = false;
+                    const isFixed = this.currentTab === 'fixed_asset';
                     this.formData = {
-                        id: null, name_asset: '', room_id: '', asset_type: this.currentTab,
-                        category: '', condition: 'Baik', serial_number: '', purchase_date: '',
-                        status: 'available', current_stock: 1, minimum_stock: 0, description: ''
+                        id: null, name_asset: '', room_id: '',
+                        asset_type: this.currentTab,
+                        category: '',
+                        condition: isFixed ? 'Baik' : '',
+                        serial_number: '', purchase_date: '',
+                        status: 'available',
+                        current_stock: isFixed ? 1 : 0,
+                        minimum_stock: 0,
+                        description: ''
                     };
-                    // Barang habis pakai tidak punya stok 1 by default, bisa 0 atau lebih
-                    if (this.currentTab === 'consumable') {
-                        this.formData.current_stock = 0;
-                    }
                     this.showModal = true;
                 },
-
-                closeModal() { this.showModal = false; },
 
                 editAsset(asset) {
                     this.isEditMode = true;
@@ -451,13 +457,12 @@
                 saveAsset() {
                     const url = this.isEditMode ? `/api/assets/${this.formData.id}` : '/api/assets';
                     const method = this.isEditMode ? 'PUT' : 'POST';
-
                     fetch(url, {
                         method: method,
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
                         body: JSON.stringify(this.formData)
                     })
-                    .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
+                    .then(async res => res.ok ? res.json() : Promise.reject(await res.json()))
                     .then(data => {
                         this.showNotification(this.isEditMode ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success');
                         this.getAssets();
@@ -470,17 +475,8 @@
                     });
                 },
 
-                openHistoryModal(asset) {
-                    this.selectedAsset = asset;
-                    this.showHistoryModal = true;
-                },
-
-                openStockOutModal(asset) {
-                    this.stockOutData.id = asset.id;
-                    this.stockOutData.amount = 1;
-                    this.selectedAsset = asset;
-                    this.showStockOutModal = true;
-                },
+                openHistoryModal(asset) { this.selectedAsset = asset; this.showHistoryModal = true; },
+                openStockOutModal(asset) { this.selectedAsset = asset; this.stockOutData.id = asset.id; this.stockOutData.amount = 1; this.showStockOutModal = true; },
 
                 submitStockOut() {
                     fetch(`/api/assets/${this.stockOutData.id}/stock-out`, {
@@ -488,24 +484,18 @@
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
                         body: JSON.stringify({ amount: this.stockOutData.amount })
                     })
-                    .then(async res => { if (!res.ok) { const err = await res.json(); throw err; } return res.json(); })
-                    .then(data => {
+                    .then(async res => res.ok ? res.json() : Promise.reject(await res.json()))
+                    .then(() => {
                         this.showNotification('Stok berhasil dikurangi.', 'success');
                         this.getAssets();
                         this.showStockOutModal = false;
                     })
-                    .catch(err => {
-                        let msg = err.message || 'Gagal mengurangi stok.';
-                        this.showNotification(`Error: ${msg}`, 'error');
-                    });
+                    .catch(err => this.showNotification(err.message || 'Gagal mengurangi stok.', 'error'));
                 },
 
-                confirmDelete(id) {
-                    this.assetToDeleteId = id;
-                    this.showDeleteModal = true;
-                },
-
-                 deleteAsset() {
+                closeModal() { this.showModal = false; },
+                confirmDelete(id) { this.assetToDeleteId = id; this.showDeleteModal = true; },
+                deleteAsset() {
                     fetch(`/api/assets/${this.assetToDeleteId}`, {
                         method: 'DELETE',
                         headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() }
@@ -517,19 +507,8 @@
                         this.assetToDeleteId = null;
                     });
                 },
-
-                getCsrfToken() {
-                    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-                    if (csrfCookie) return decodeURIComponent(csrfCookie.split('=')[1]);
-                    return '';
-                },
-
-                showNotification(message, type) {
-                    this.notification.message = message;
-                    this.notification.type = type;
-                    this.notification.show = true;
-                    setTimeout(() => this.notification.show = false, 3000);
-                }
+                getCsrfToken() { const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN=')); if(csrfCookie) return decodeURIComponent(csrfCookie.split('=')[1]); return ''; },
+                showNotification(message, type) { this.notification.message = message; this.notification.type = type; this.notification.show = true; setTimeout(() => this.notification.show = false, 3000); }
             }
         }
     </script>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Room;
+use App\Models\Task;
 use App\Models\User;
 use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
@@ -43,6 +44,15 @@ class Asset extends Model
     public function maintenances()
     {
         return $this->hasMany(AssetsMaintenance::class);
+    }
+
+    /**
+     * Relasi ke Tasks untuk melihat history pemakaian/pergerakan.
+     * (INI RELASI BARU)
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class)->latest();
     }
 
     /**

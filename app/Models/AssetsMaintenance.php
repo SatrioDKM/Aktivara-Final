@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Task;
 use App\Models\User;
 use App\Models\Asset;
 use Illuminate\Database\Eloquent\Model;
@@ -36,5 +37,13 @@ class AssetsMaintenance extends Model
     public function technician()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke tugas yang dihasilkan oleh laporan maintenance ini.
+     */
+    public function generatedTask()
+    {
+        return $this->hasOne(Task::class, 'assets_maintenance_id');
     }
 }

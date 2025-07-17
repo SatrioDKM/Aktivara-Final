@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Asset;
 use App\Models\TaskType;
 use App\Models\DailyReport;
+use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -72,5 +73,13 @@ class Task extends Model
     public function dailyReports()
     {
         return $this->hasMany(DailyReport::class);
+    }
+
+    /**
+     * Relasi ke record maintenance yang menghasilkan tugas ini.
+     */
+    public function maintenanceRecord()
+    {
+        return $this->belongsTo(AssetsMaintenance::class, 'assets_maintenance_id');
     }
 }

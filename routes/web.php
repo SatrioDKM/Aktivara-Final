@@ -22,6 +22,10 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'viewPage'])
     ->middleware(['auth', 'verified'])->name('dashboard');
 
+// Rute untuk form keluhan publik (tanpa login)
+Route::get('/lapor-keluhan', [GuestComplaintController::class, 'create'])->name('guest.complaint.create');
+Route::post('/lapor-keluhan', [GuestComplaintController::class, 'store'])->name('guest.complaint.store');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -69,7 +73,7 @@ Route::middleware(['auth', 'role:SA00'])->group(function () {
 Route::middleware(['auth'])->name('tasks.')->prefix('tasks')->group(function () {
 
     // Rute untuk Leader & Manager (Menampilkan Halaman)
-    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01'])->group(function () {
+    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,HK02,TK02,SC02,PK02'])->group(function () {
         Route::get('/create', [TaskWorkflowController::class, 'createPage'])->name('create');
         Route::get('/review', [TaskWorkflowController::class, 'reviewPage'])->name('review_list');
     });

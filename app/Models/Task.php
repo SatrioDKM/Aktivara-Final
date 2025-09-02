@@ -15,6 +15,9 @@ class Task extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'task_type_id',
         'user_id', // Staff yang mengerjakan
@@ -25,6 +28,13 @@ class Task extends Model
         'status',
         'due_date',
         'created_by', // Leader yang membuat
+        'assets_maintenance_id',
+        'report_text',
+        'image_before', // Kolom baru untuk foto sebelum
+        'image_after',  // Kolom baru untuk foto sesudah
+        'reviewed_by',
+        'review_notes',
+        'rejection_notes', // Kolom untuk catatan penolakan
     ];
 
     /**
@@ -68,7 +78,7 @@ class Task extends Model
     }
 
     /**
-     * Relasi ke DailyReports
+     * Relasi ke DailyReports (jika masih digunakan)
      */
     public function dailyReports()
     {

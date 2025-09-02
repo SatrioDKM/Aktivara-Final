@@ -8,6 +8,7 @@ use App\Http\Controllers\AssetController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
+use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\NotificationController;
@@ -80,4 +81,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // --- GRUP ENDPOINT UNTUK LAPORAN/KELUHAN ---
+    Route::prefix('complaints')->name('api.complaints.')->group(function () {
+        Route::get('/', [ComplaintController::class, 'index'])->name('index');
+        Route::post('/', [ComplaintController::class, 'store'])->name('store');
+        Route::post('/{id}/convert', [ComplaintController::class, 'convertToTask'])->name('convert');
+    });
 });

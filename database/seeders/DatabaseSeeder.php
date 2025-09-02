@@ -11,6 +11,7 @@ use Database\Seeders\AssetSeeder;
 use Database\Seeders\FloorSeeder;
 use Database\Seeders\BuildingSeeder;
 use Database\Seeders\TaskTypeSeeder;
+use Database\Seeders\ComplaintSeeder;
 use Database\Seeders\DailyReportSeeder;
 use Database\Seeders\AssetsMaintenanceSeeder;
 
@@ -28,10 +29,11 @@ class DatabaseSeeder extends Seeder
             FloorSeeder::class,
             RoomSeeder::class,
             TaskTypeSeeder::class,
-            AssetSeeder::class,      // <-- Pastikan AssetSeeder ada di sini
-            TaskSeeder::class,       // <-- dan dipanggil sebelum TaskSeeder
+            AssetSeeder::class,
+            TaskSeeder::class,
             AssetsMaintenanceSeeder::class,
             DailyReportSeeder::class,
+            ComplaintSeeder::class,
         ]);
     }
 }

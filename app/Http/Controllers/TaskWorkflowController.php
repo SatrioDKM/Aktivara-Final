@@ -350,13 +350,17 @@ class TaskWorkflowController extends Controller
     }
 
     /**
-     * API: Mengambil data untuk halaman Riwayat Tugas Staff dengan filter.
+     * API: Mengambil data riwayat tugas pribadi Staff dengan filter yang berfungsi.
+     * (FUNGSI LAMA DIGANTI DENGAN YANG INI)
      */
     public function getMyHistory(Request $request)
     {
         $user = Auth::user();
-        $query = Task::with(['creator:id,name', 'taskType'])->where('user_id', $user->id);
 
+        $query = Task::with(['creator:id,name', 'taskType'])
+            ->where('user_id', $user->id); // Hanya tugas milik staff yang login
+
+        // Filter berdasarkan status
         $query->when($request->filled('status'), function ($q) use ($request) {
             if ($request->status === 'active') {
                 return $q->whereIn('status', ['in_progress', 'rejected']);
@@ -364,14 +368,19 @@ class TaskWorkflowController extends Controller
             return $q->where('status', $request->status);
         });
 
+        // Filter berdasarkan tanggal
         $query->when($request->filled('start_date'), fn($q) => $q->whereDate('updated_at', '>=', $request->start_date));
         $query->when($request->filled('end_date'), fn($q) => $q->whereDate('updated_at', '<=', $request->end_date));
 
+        // Filter pencarian
         $query->when($request->filled('search'), function ($q) use ($request) {
-            $q->where('title', 'like', '%' . $request->search . '%');
+            $searchTerm = '%' . $request->search . '%';
+            $q->where('title', 'like', $searchTerm);
         });
 
-        return response()->json($query->latest('updated_at')->paginate(10));
+        $history = $query->latest('updated_at')->paginate(10);
+
+        return response()->json($history);
     }
 
     /**
@@ -493,17 +502,33 @@ class TaskWorkflowController extends Controller
         return response()->json($activeTasks);
     }
 
+    /**
+     * API: Mengambil data riwayat tugas pribadi Staff dengan filter yang berfungsi.
+     * (LOGIKA FILTER DIPERBAIKI)
+     */
     public function getMyTaskHistory(Request $request)
     {
         $user = Auth::user();
-        $query = Task::with(['taskType', 'room.floor.building'])
+        $query = Task::with(['creator:id,name', 'taskType'])
             ->where('user_id', $user->id);
-        $query->when($request->input('status') === 'completed', fn($q) => $q->where('status', 'completed'), fn($q) => $q->whereIn('status', ['in_progress', 'rejected', 'pending_review']));
-        $query->when($request->filled('search'), function ($q) use ($request) {
-            $searchTerm = '%' . $request->search . '%';
-            $q->where('title', 'like', $searchTerm);
+
+        // Filter berdasarkan status
+        $query->when($request->filled('status'), function ($q) use ($request) {
+            if ($request->status === 'active') {
+                return $q->whereIn('status', ['in_progress', 'rejected']);
+            }
+            return $q->where('status', $request->status);
         });
-        $tasks = $query->latest('updated_at')->paginate(10);
-        return response()->json($tasks);
+
+        // Filter berdasarkan tanggal
+        $query->when($request->filled('start_date'), fn($q) => $q->whereDate('updated_at', '>=', $request->start_date));
+        $query->when($request->filled('end_date'), fn($q) => $q->whereDate('updated_at', '<=', $request->end_date));
+
+        // Filter pencarian
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $q->where('title', 'like', '%' . $request->search . '%');
+        });
+
+        return response()->json($query->latest('updated_at')->paginate(10));
     }
 }

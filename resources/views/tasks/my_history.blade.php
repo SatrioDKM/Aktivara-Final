@@ -11,12 +11,16 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                            <div><label class="block text-sm font-medium text-gray-700">Dari Tanggal</label><input
-                                    type="date" x-model="filters.start_date"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Sampai Tanggal</label><input
-                                    type="date" x-model="filters.end_date"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Dari Tanggal</label>
+                                <input type="date" x-model="filters.start_date"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Sampai Tanggal</label>
+                                <input type="date" x-model="filters.end_date"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Status Tugas</label>
                                 <select x-model="filters.status"
@@ -27,13 +31,18 @@
                                     <option value="completed">Selesai</option>
                                 </select>
                             </div>
-                            <div><button @click="applyFilters"
-                                    class="w-full inline-flex justify-center py-2 px-4 border shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Filter</button>
+                            <div>
+                                <button @click="applyFilters"
+                                    class="w-full inline-flex justify-center py-2 px-4 border shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                    Filter
+                                </button>
                             </div>
                         </div>
-                        <div class="mt-4"><input type="text" x-model.debounce.500ms="filters.search"
-                                @input="applyFilters" placeholder="Cari berdasarkan judul tugas..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div class="mt-4">
+                            <input type="text" x-model.debounce.500ms="filters.search" @input="applyFilters"
+                                placeholder="Cari berdasarkan judul tugas..."
+                                class="block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
                     </div>
                 </div>
 
@@ -66,7 +75,8 @@
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-4 text-sm font-medium text-gray-900" x-text="task.title">
                                             </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500" x-text="task.creator.name"></td>
+                                            <td class="px-6 py-4 text-sm text-gray-500"
+                                                x-text="task.creator ? task.creator.name : 'N/A'"></td>
                                             <td class="px-6 py-4 text-sm text-gray-500"
                                                 x-text="new Date(task.updated_at).toLocaleDateString('id-ID')"></td>
                                             <td class="px-6 py-4"><span
@@ -113,12 +123,19 @@
                 history: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
                 filters: { start_date: '', end_date: '', status: '', search: '' },
 
-                init() { this.fetchHistory(1); },
-                applyFilters() { this.fetchHistory(1); },
+                init() {
+                    // Panggil API dengan filter default (kosong) saat halaman dimuat
+                    this.fetchHistory(1);
+                },
+                applyFilters() {
+                    // Reset ke halaman pertama setiap kali filter baru diterapkan
+                    this.fetchHistory(1);
+                },
                 fetchHistory(page) {
                     if (page < 1) return;
                     this.isLoading = true;
-                    const activeFilters = Object.fromEntries(Object.entries(this.filters).filter(([_, v]) => v !== ''));
+                    // Hapus properti filter yang kosong sebelum mengirim request
+                    const activeFilters = Object.fromEntries(Object.entries(this.filters).filter(([_, v]) => v !== null && v !== ''));
                     const params = new URLSearchParams({ page: page, ...activeFilters }).toString();
 
                     fetch(`{{ route('api.tasks.my_history_data') }}?${params}`, { headers: { 'Accept': 'application/json' } })
@@ -126,8 +143,17 @@
                         .then(data => { this.history = data; })
                         .finally(() => this.isLoading = false);
                 },
-                statusColor(status) { return { in_progress: 'bg-blue-100 text-blue-800', pending_review: 'bg-yellow-100 text-yellow-800', completed: 'bg-green-100 text-green-800', rejected: 'bg-red-100 text-red-800' }[status] || 'bg-gray-100 text-gray-800'; },
-                statusText(status) { return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); }
+                statusColor(status) {
+                    return {
+                        'in_progress': 'bg-blue-100 text-blue-800',
+                        'pending_review': 'bg-yellow-100 text-yellow-800',
+                        'completed': 'bg-green-100 text-green-800',
+                        'rejected': 'bg-red-100 text-red-800'
+                    }[status] || 'bg-gray-100 text-gray-800';
+                },
+                statusText(status) {
+                    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                }
             }
         }
     </script>

@@ -19,7 +19,7 @@ Secara sederhana, sistem ini bekerja sebagai berikut:
 
 Bagian ini menjelaskan bagaimana tugas dibuat, dikelola, dan diselesaikan oleh berbagai peran pengguna (Staff, Leader, Manager, Admin).
 
- Proses Pembuatan Tugas
+Proses Pembuatan Tugas
 
 Tugas dapat dibuat melalui tiga cara:
 1.  (Guest) Laporan Keluhan: Pengguna luar (tanpa login) mengisi form keluhan. Sistem secara otomatis membuat tugas dan menugaskannya ke departemen terkait (Teknisi, Kebersihan, Keamanan). Prioritas untuk tugas ini bisa kosong.

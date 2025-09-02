@@ -7,24 +7,25 @@ use App\Http\Controllers\AssetController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\AssetMaintenanceController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/dashboard', [DashboardController::class, 'viewPage'])
-    ->middleware(['auth', 'verified'])->name('dashboard');
+// --- RUTE HALAMAN UTAMA (LANDING PAGE) ---
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Rute untuk form keluhan publik (tanpa login)
 Route::get('/lapor-keluhan', [GuestComplaintController::class, 'create'])->name('guest.complaint.create');
 Route::post('/lapor-keluhan', [GuestComplaintController::class, 'store'])->name('guest.complaint.store');
+
+Route::get('/dashboard', [DashboardController::class, 'viewPage'])
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

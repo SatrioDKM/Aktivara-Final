@@ -71,22 +71,40 @@ class DashboardController extends Controller
         }
         // --- Dashboard untuk Leader ---
         else if (str_ends_with($roleId, '01')) {
-            $tasksCreated = Task::where('created_by', $user->id);
-
-            // Statistik aset yang relevan untuk departemen Leader
+            // Ambil daftar staff di departemen Leader untuk filter dropdown
             $departmentCode = substr($roleId, 0, 2);
-            $departmentAssets = Asset::where('serial_number', 'like', $departmentCode . '-%')
-                ->orWhereHas('tasks.taskType', function ($query) use ($departmentCode) {
-                    $query->where('departemen', $departmentCode);
-                });
+            $staffInDepartment = User::where('role_id', $departmentCode . '02')->orderBy('name')->get(['id', 'name']);
+
+            // Query dasar: semua tugas yang dibuat oleh Leader ini
+            $query = Task::with(['staff:id,name', 'taskType:id,name_task'])
+                ->where('created_by', $user->id);
+
+            // Terapkan filter berdasarkan status
+            $query->when($request->filled('status'), function ($q) use ($request) {
+                if ($request->status === 'dikerjakan') {
+                    return $q->where('status', 'in_progress');
+                }
+                return $q->where('status', $request->status);
+            });
+
+            // Terapkan filter berdasarkan staff
+            $query->when($request->filled('staff_id'), fn($q) => $q->where('user_id', $request->staff_id));
+
+            // Terapkan filter berdasarkan tanggal
+            $query->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date));
+            $query->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date));
+
+            // Terapkan filter pencarian
+            $query->when($request->filled('search'), function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%');
+            });
+
+            $tasks = $query->latest('updated_at')->paginate(10);
 
             $stats = [
                 'role_type' => 'leader',
-                'tasks_created_total' => $tasksCreated->count(),
-                'tasks_pending_review' => (clone $tasksCreated)->where('status', 'pending_review')->count(),
-                'tasks_in_progress_by_team' => (clone $tasksCreated)->where('status', 'in_progress')->count(),
-                'tasks_completed_by_team' => (clone $tasksCreated)->where('status', 'completed')->count(),
-                'department_assets_count' => $departmentAssets->count(), // Statistik aset baru untuk leader
+                'tasks' => $tasks,
+                'staff_list' => $staffInDepartment,
             ];
         }
         // --- Dashboard untuk Staff ---

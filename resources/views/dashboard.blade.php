@@ -97,20 +97,20 @@
                                         <table class="min-w-full divide-y divide-gray-200">
                                             <thead class="bg-gray-50">
                                                 <tr>
-                                                    <th scope="col"
+                                                    <th
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         Judul Laporan</th>
-                                                    <th scope="col"
+                                                    <th
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         Tugas Terkait</th>
-                                                    <th scope="col"
+                                                    <th
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         Dilaporkan Oleh</th>
-                                                    <th scope="col"
+                                                    <th
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         Tanggal</th>
-                                                    <th scope="col" class="relative px-6 py-3"><span
-                                                            class="sr-only">Detail</span></th>
+                                                    <th class="relative px-6 py-3"><span class="sr-only">Detail</span>
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200">
@@ -149,34 +149,151 @@
                     </template>
 
                     <template x-if="stats.role_type === 'leader'">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                            <div
-                                class="bg-yellow-100 border-l-4 border-yellow-500 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                                <h3 class="text-sm font-medium text-yellow-800 truncate">Tugas Menunggu Review</h3>
-                                <p class="mt-1 text-3xl font-semibold text-yellow-900"
-                                    x-text="stats.tasks_pending_review"></p>
+                        <div x-data="leaderDashboard({
+                            initialTasks: stats.tasks,
+                            staffList: stats.staff_list,
+                            taskTypes: {{ Js::from(App\Models\TaskType::where('departemen', substr(Auth::user()->role_id, 0, 2))->orWhere('departemen', 'UMUM')->get()) }}
+                        })">
+                            <div class="flex justify-end mb-4"><button @click="openCreateModal()"
+                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-indigo-700">Buat
+                                    Tugas Baru</button></div>
+                            <div x-show="notification.show" x-transition
+                                class="fixed top-20 right-5 z-50 p-4 rounded-lg shadow-lg"
+                                :class="notification.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                                <span x-text="notification.message"></span>
                             </div>
-                            <div
-                                class="bg-blue-100 border-l-4 border-blue-500 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                                <h3 class="text-sm font-medium text-blue-800 truncate">Tugas Dikerjakan Tim</h3>
-                                <p class="mt-1 text-3xl font-semibold text-blue-900"
-                                    x-text="stats.tasks_in_progress_by_team"></p>
+
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                                    <div><label class="block text-sm">Dari Tanggal</label><input type="date"
+                                            x-model="filters.start_date" class="mt-1 block w-full rounded-md"></div>
+                                    <div><label class="block text-sm">Sampai Tanggal</label><input type="date"
+                                            x-model="filters.end_date" class="mt-1 block w-full rounded-md"></div>
+                                    <div><label class="block text-sm">Status</label><select x-model="filters.status"
+                                            class="mt-1 block w-full rounded-md">
+                                            <option value="">Semua Status</option>
+                                            <option value="unassigned">Belum Dikerjakan</option>
+                                            <option value="dikerjakan">Sudah Dikerjakan</option>
+                                            <option value="pending_review">Perlu Review</option>
+                                            <option value="completed">Selesai</option>
+                                        </select></div>
+                                    <div><label class="block text-sm">Staff</label><select x-model="filters.staff_id"
+                                            class="mt-1 block w-full rounded-md">
+                                            <option value="">Semua Staff</option><template x-for="staff in staffList"
+                                                :key="staff.id">
+                                                <option :value="staff.id" x-text="staff.name"></option>
+                                            </template>
+                                        </select></div>
+                                    <div><button @click="applyFilters"
+                                            class="w-full py-2 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Filter</button>
+                                    </div>
+                                </div>
+                                <div class="mt-4"><input type="text" x-model.debounce.500ms="filters.search"
+                                        @input="applyFilters" placeholder="Cari judul tugas..."
+                                        class="block w-full rounded-md"></div>
                             </div>
-                            <div
-                                class="bg-green-100 border-l-4 border-green-500 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                                <h3 class="text-sm font-medium text-green-800 truncate">Tugas Diselesaikan Tim</h3>
-                                <p class="mt-1 text-3xl font-semibold text-green-900"
-                                    x-text="stats.tasks_completed_by_team"></p>
-                            </div>
+
                             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                                <h3 class="text-sm font-medium text-gray-500 truncate">Total Tugas Dibuat</h3>
-                                <p class="mt-1 text-3xl font-semibold text-gray-900" x-text="stats.tasks_created_total">
-                                </p>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium uppercase">Tugas</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium uppercase">Status
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium uppercase">Tgl.
+                                                    Update</th>
+                                                <th class="px-6 py-3 text-center text-xs font-medium uppercase">Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <template x-if="isLoadingTasks">
+                                                <tr>
+                                                    <td colspan="4" class="py-4 text-center">Memuat tugas...</td>
+                                                </tr>
+                                            </template>
+                                            <template x-for="task in tasks.data" :key="task.id">
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="px-6 py-4 text-sm font-medium">
+                                                        <div x-text="task.title"></div>
+                                                        <div class="text-xs text-gray-500"
+                                                            x-text="`Jenis: ${task.task_type.name_task}`"></div>
+                                                    </td>
+                                                    <td class="px-6 py-4 text-sm"
+                                                        x-html="formatStatus(task.status, task.staff ? task.staff.name : null)">
+                                                    </td>
+                                                    <td class="px-6 py-4 text-sm"
+                                                        x-text="new Date(task.updated_at).toLocaleDateString('id-ID')">
+                                                    </td>
+                                                    <td class="px-6 py-4 text-center"><a :href="`/tasks/${task.id}`"
+                                                            class="text-indigo-600 hover:text-indigo-900">Detail</a>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                            <template
+                                                x-if="!isLoadingTasks && (!tasks.data || tasks.data.length === 0)">
+                                                <tr>
+                                                    <td colspan="4" class="py-4 text-center">Tidak ada data.</td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-6 flex justify-between items-center" x-show="tasks.total > 0">
+                                    <p class="text-sm">Menampilkan <span x-text="tasks.from || 0"></span>-<span
+                                            x-text="tasks.to || 0"></span> dari <span x-text="tasks.total || 0"></span>
+                                    </p>
+                                    <div><button @click="fetchTasks(tasks.current_page - 1)"
+                                            :disabled="!tasks.prev_page_url"
+                                            class="px-3 py-1 rounded-md disabled:opacity-50">Sebelumnya</button><button
+                                            @click="fetchTasks(tasks.current_page + 1)" :disabled="!tasks.next_page_url"
+                                            class="px-3 py-1 rounded-md disabled:opacity-50">Berikutnya</button></div>
+                                </div>
                             </div>
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                                <h3 class="text-sm font-medium text-gray-500 truncate">Aset Departemen</h3>
-                                <p class="mt-1 text-3xl font-semibold text-gray-900"
-                                    x-text="stats.department_assets_count"></p>
+
+                            <div x-show="showCreateModal" x-transition class="fixed inset-0 z-50 overflow-y-auto">
+                                <div class="flex items-center justify-center min-h-screen">
+                                    <div @click="showCreateModal = false"
+                                        class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
+                                    <div
+                                        class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full p-6">
+                                        <form @submit.prevent="saveTask()">
+                                            <h3 class="text-lg font-medium mb-4">Buat Tugas Baru</h3>
+                                            <div class="space-y-4">
+                                                <div><label class="block text-sm">Judul Tugas</label><input type="text"
+                                                        x-model="formData.title" class="mt-1 w-full rounded-md"
+                                                        required></div>
+                                                <div><label class="block text-sm">Jenis Tugas</label><select
+                                                        x-model="formData.task_type_id" class="mt-1 w-full rounded-md"
+                                                        required>
+                                                        <option value="">-- Pilih Jenis --</option><template
+                                                            x-for="tt in taskTypes" :key="tt.id">
+                                                            <option :value="tt.id" x-text="tt.name_task"></option>
+                                                        </template>
+                                                    </select></div>
+                                                <div><label class="block text-sm">Prioritas</label><select
+                                                        x-model="formData.priority" class="mt-1 w-full rounded-md"
+                                                        required>
+                                                        <option value="low">Rendah</option>
+                                                        <option value="medium">Sedang</option>
+                                                        <option value="high">Tinggi</option>
+                                                        <option value="critical">Kritis</option>
+                                                    </select></div>
+                                                <div><label class="block text-sm">Deskripsi</label><textarea
+                                                        x-model="formData.description" rows="3"
+                                                        class="mt-1 w-full rounded-md"></textarea></div>
+                                            </div>
+                                            <div class="mt-6 flex justify-end space-x-3">
+                                                <x-secondary-button type="button" @click="showCreateModal = false">Batal
+                                                </x-secondary-button>
+                                                <x-primary-button type="submit" ::disabled="isSubmitting"><span
+                                                        x-show="!isSubmitting">Simpan</span><span
+                                                        x-show="isSubmitting">Menyimpan...</span></x-primary-button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -184,13 +301,13 @@
                     <template x-if="stats.role_type === 'staff'">
                         <div class="space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <a href="{{ route('tasks.my_tasks') }}"
+                                <a href="{{ route('tasks.my_history') }}"
                                     class="block bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 hover:bg-blue-50 transition">
                                     <h3 class="text-sm font-medium text-blue-600 truncate">Tugas Aktif Anda</h3>
                                     <p class="mt-1 text-3xl font-semibold text-blue-600"
                                         x-text="stats.my_active_tasks_count"></p>
                                 </a>
-                                <a href="{{ route('tasks.completed_history') }}"
+                                <a href="{{ route('tasks.my_history') }}?status=completed"
                                     class="block bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 hover:bg-green-50 transition">
                                     <h3 class="text-sm font-medium text-green-600 truncate">Tugas Selesai</h3>
                                     <p class="mt-1 text-3xl font-semibold text-green-600"
@@ -201,11 +318,9 @@
                             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                                 <div class="p-6">
                                     <h3 class="text-lg font-semibold text-gray-700 mb-4">Papan Tugas Tersedia</h3>
-                                    <div class="mb-4">
-                                        <input type="text" x-model.debounce.500ms="search" @input="getDashboardData(1)"
-                                            placeholder="Cari berdasarkan judul tugas..."
-                                            class="block w-full rounded-md border-gray-300 shadow-sm">
-                                    </div>
+                                    <div class="mb-4"><input type="text" x-model.debounce.500ms="search"
+                                            @input="getDashboardData(1)" placeholder="Cari berdasarkan judul tugas..."
+                                            class="block w-full rounded-md border-gray-300 shadow-sm"></div>
                                     <div class="space-y-4">
                                         <template x-if="isLoadingTasks">
                                             <p class="text-center text-gray-500 py-4">Mencari tugas...</p>
@@ -222,10 +337,9 @@
                                                 </div>
                                                 <div>
                                                     <x-primary-button @click="claimTask(task.id)"
-                                                        ::disabled="isSubmitting">
-                                                        <span x-show="!isSubmitting">Ambil</span>
-                                                        <span x-show="isSubmitting">Memproses...</span>
-                                                    </x-primary-button>
+                                                        ::disabled="isSubmitting"><span
+                                                            x-show="!isSubmitting">Ambil</span><span
+                                                            x-show="isSubmitting">Memproses...</span></x-primary-button>
                                                 </div>
                                             </div>
                                         </template>
@@ -241,11 +355,11 @@
                                                 x-text="availableTasks.from || 0"></span> sampai <span
                                                 x-text="availableTasks.to || 0"></span> dari <span
                                                 x-text="availableTasks.total || 0"></span> hasil</p>
-                                        <div class="flex space-x-2">
-                                            <button @click="getDashboardData(availableTasks.current_page - 1)"
+                                        <div class="flex space-x-2"><button
+                                                @click="getDashboardData(availableTasks.current_page - 1)"
                                                 :disabled="!availableTasks.prev_page_url"
-                                                class="px-3 py-1 text-sm rounded-md bg-gray-200 disabled:opacity-50">Sebelumnya</button>
-                                            <button @click="getDashboardData(availableTasks.current_page + 1)"
+                                                class="px-3 py-1 text-sm rounded-md bg-gray-200 disabled:opacity-50">Sebelumnya</button><button
+                                                @click="getDashboardData(availableTasks.current_page + 1)"
                                                 :disabled="!availableTasks.next_page_url"
                                                 class="px-3 py-1 text-sm rounded-md bg-gray-200 disabled:opacity-50">Berikutnya</button>
                                         </div>
@@ -260,24 +374,18 @@
     </div>
 
     <script>
+        // SCRIPT UTAMA UNTUK DASHBOARD ADMIN & STAFF
         function dashboard() {
             return {
-                isLoading: true,
-                stats: {},
-                isLoadingTasks: true,
+                isLoading: true, stats: {}, isLoadingTasks: true,
                 availableTasks: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
-                search: '',
-                isSubmitting: false,
+                search: '', isSubmitting: false,
                 notification: { show: false, message: '', type: 'success' },
-
-                init() {
-                    this.getDashboardData();
-                },
+                init() { this.getDashboardData(); },
                 getDashboardData(page = 1) {
                     if (page === 1 && this.search === '') { this.isLoading = true; }
                     this.isLoadingTasks = true;
                     const params = new URLSearchParams({ page: page, search: this.search }).toString();
-
                     fetch(`{{ route('api.dashboard.stats') }}?${params}`, { headers: { 'Accept': 'application/json' } })
                     .then(res => res.json())
                     .then(data => {
@@ -288,7 +396,7 @@
                         this.$nextTick(() => {
                             if (this.stats.role_type === 'admin') {
                                 this.createTaskStatusChart();
-                                this.createAssetStatusChart(); // Panggil chart aset yang baru
+                                this.createAssetStatusChart();
                             }
                         });
                     });
@@ -296,37 +404,78 @@
                 createTaskStatusChart() {
                     const ctx = document.getElementById('taskStatusChart')?.getContext('2d');
                     if (!ctx) return;
-                    if(this.taskChart) this.taskChart.destroy();
-                    this.taskChart = new Chart(ctx, {
+
+                    // Hancurkan chart lama jika ada untuk mencegah error saat data di-refresh
+                    if(window.taskChart instanceof Chart) {
+                        window.taskChart.destroy();
+                    }
+
+                    window.taskChart = new Chart(ctx, {
                         type: 'doughnut',
                         data: {
-                            labels: ['Unassigned', 'In Progress', 'Pending Review', 'Completed'],
+                            labels: ['Belum Dikerjakan', 'Dikerjakan', 'Perlu Review', 'Selesai'],
                             datasets: [{
                                 label: 'Status Tugas',
-                                data: [ this.stats.tasks.unassigned, this.stats.tasks.in_progress, this.stats.tasks.pending_review, this.stats.tasks.completed ],
-                                backgroundColor: [ 'rgba(156, 163, 175, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(34, 197, 94, 0.7)' ],
-                                borderColor: '#fff', borderWidth: 2
+                                data: [
+                                    this.stats.tasks.unassigned,
+                                    this.stats.tasks.in_progress,
+                                    this.stats.tasks.pending_review,
+                                    this.stats.tasks.completed
+                                ],
+                                backgroundColor: [
+                                    'rgba(156, 163, 175, 0.7)', // gray
+                                    'rgba(59, 130, 246, 0.7)',  // blue
+                                    'rgba(245, 158, 11, 0.7)',  // amber
+                                    'rgba(34, 197, 94, 0.7)'    // green
+                                ],
+                                borderColor: '#fff',
+                                borderWidth: 2
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'top' }
+                            }
+                        }
                     });
                 },
-                createAssetStatusChart() { // FUNGSI CHART DIPERBARUI
+
+                createAssetStatusChart() {
                     const ctx = document.getElementById('assetStatusChart')?.getContext('2d');
                     if (!ctx) return;
-                    if(this.assetChart) this.assetChart.destroy();
-                    this.assetChart = new Chart(ctx, {
+
+                    // Hancurkan chart lama jika ada
+                    if(window.assetChart instanceof Chart) {
+                        window.assetChart.destroy();
+                    }
+
+                    window.assetChart = new Chart(ctx, {
                         type: 'pie',
                         data: {
                             labels: ['Aset Tetap', 'Barang Habis Pakai'],
                             datasets: [{
                                 label: 'Komposisi Aset',
-                                data: [ this.stats.assets.total_fixed, this.stats.assets.total_consumable ],
-                                backgroundColor: [ 'rgba(59, 130, 246, 0.7)', 'rgba(34, 197, 94, 0.7)' ],
-                                borderColor: '#fff', borderWidth: 2
+                                data: [
+                                    this.stats.assets.total_fixed,
+                                    this.stats.assets.total_consumable
+                                ],
+                                backgroundColor: [
+                                    'rgba(59, 130, 246, 0.7)', // blue
+                                    'rgba(34, 197, 94, 0.7)'   // green
+                                ],
+                                borderColor: '#fff',
+                                borderWidth: 2
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'top' }
+                            }
+                        }
                     });
                 },
                 async claimTask(taskId) {
@@ -336,12 +485,63 @@
                         method: 'POST',
                         headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() }
                     })
-                    .then(async res => {
-                        if (res.ok) { window.location.href = '{{ route('tasks.my_tasks') }}'; }
-                        else { const err = await res.json(); throw new Error(err.message || 'Gagal mengambil tugas.'); }
-                    })
-                    .catch(err => { this.showNotification(err.message, 'error'); })
+                    .then(async res => res.ok ? res.json() : Promise.reject(await res.json()))
+                    .then(() => { window.location.href = '{{ route('tasks.my_history') }}'; })
+                    .catch(err => { this.showNotification(err.message || 'Gagal.', 'error'); })
                     .finally(() => { this.isSubmitting = false; });
+                },
+                getCsrfToken() { const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN=')); return c ? decodeURIComponent(c.split('=')[1]) : ''; },
+                showNotification(message, type) { this.notification.message = message; this.notification.type = type; this.notification.show = true; setTimeout(() => this.notification.show = false, 3000); }
+            }
+        }
+
+        // SCRIPT BARU KHUSUS UNTUK DASHBOARD LEADER
+        function leaderDashboard(data) {
+            return {
+                tasks: data.initialTasks, staffList: data.staffList, taskTypes: data.taskTypes,
+                isLoadingTasks: false,
+                filters: { start_date: '', end_date: '', status: '', staff_id: '', search: '' },
+                showCreateModal: false, isSubmitting: false,
+                notification: { show: false, message: '', type: 'success' },
+                formData: {},
+                init() { this.resetForm(); },
+                resetForm() { this.formData = { title: '', task_type_id: '', priority: 'medium', description: '' }; },
+                applyFilters() { this.fetchTasks(1); },
+                fetchTasks(page) {
+                    if (page < 1) return;
+                    this.isLoadingTasks = true;
+                    const params = new URLSearchParams({ page: page, ...this.filters }).toString();
+                    fetch(`{{ route('api.dashboard.stats') }}?${params}`, { headers: { 'Accept': 'application/json' } })
+                        .then(res => res.json()).then(data => { this.tasks = data.tasks; })
+                        .finally(() => this.isLoadingTasks = false);
+                },
+                formatStatus(status, staffName) {
+                    const statusMap = {
+                        unassigned: '<span class="text-gray-600">Belum Dikerjakan</span>',
+                        rejected: '<span class="text-red-600">Belum Dikerjakan (Ditolak)</span>',
+                        in_progress: `<span class="text-blue-600">Dikerjakan oleh <strong>${staffName || ''}</strong></span>`,
+                        pending_review: '<span class="text-yellow-600">Perlu Review</span>',
+                        completed: '<span class="text-green-600">Selesai</span>',
+                    };
+                    return statusMap[status] || status;
+                },
+                openCreateModal() { this.resetForm(); this.showCreateModal = true; },
+                async saveTask() {
+                    this.isSubmitting = true;
+                    await fetch('/sanctum/csrf-cookie');
+                    fetch('{{ route('api.tasks.store') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
+                        body: JSON.stringify(this.formData)
+                    })
+                    .then(res => res.ok ? res.json() : Promise.reject(res.json()))
+                    .then(data => {
+                        this.showNotification(data.message, 'success');
+                        this.showCreateModal = false;
+                        this.applyFilters();
+                    })
+                    .catch(() => this.showNotification('Gagal membuat tugas.', 'error'))
+                    .finally(() => this.isSubmitting = false);
                 },
                 getCsrfToken() { const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN=')); return c ? decodeURIComponent(c.split('=')[1]) : ''; },
                 showNotification(message, type) { this.notification.message = message; this.notification.type = type; this.notification.show = true; setTimeout(() => this.notification.show = false, 3000); }

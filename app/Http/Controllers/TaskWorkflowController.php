@@ -138,32 +138,28 @@ class TaskWorkflowController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'priority' => 'required|in:low,medium,high,critical',
-            'task_type_id' => 'required|exists:task_types,id', // task_type_id sekarang wajib
+            'task_type_id' => 'required|exists:task_types,id',
+            'priority' => 'required|in:low,medium,high,critical', // Priority sekarang wajib
             'description' => 'nullable|string',
             'room_id' => 'nullable|exists:rooms,id',
             'asset_id' => 'nullable|exists:assets,id',
-            'due_date' => 'nullable|date',
         ]);
 
-        $task = Task::create([
-            'title' => $validated['title'],
-            'task_type_id' => $validated['task_type_id'], // Simpan dari pilihan dropdown
-            'priority' => $validated['priority'] ?? 'low', // Default 'low' jika dibuat staff
-            'description' => $validated['description'] ?? null,
-            'room_id' => $validated['room_id'] ?? null,
-            'asset_id' => $validated['asset_id'] ?? null,
-            'due_date' => $validated['due_date'] ?? null,
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $task = Task::create(array_merge($validator->validated(), [
             'created_by' => Auth::id(),
-            'user_id' => null, // Benar, karena tugas belum diambil
             'status' => 'unassigned',
-            // Kolom 'department_code' tidak lagi diisi dari sini
-        ]);
+        ]));
 
         // Muat relasi yang dibutuhkan, termasuk taskType
-        $task->load(['creator', 'taskType']);
+        $task->load('taskType');
 
         // --- KIRIM NOTIFIKASI TUGAS BARU (LOGIKA BARU) ---
         $departmentCode = $task->taskType->departemen; // Ambil departemen dari relasi
@@ -178,8 +174,7 @@ class TaskWorkflowController extends Controller
 
         // UBAH DI SINI: Tambahkan 'redirect_url' ke dalam respons JSON
         return response()->json([
-            'message' => 'Tugas berhasil dibuat! Anda akan dialihkan.',
-            'task' => $task,
+            'message' => 'Tugas berhasil dibuat!',
             'redirect_url' => route('dashboard')
         ], 201);
     }
@@ -314,30 +309,44 @@ class TaskWorkflowController extends Controller
         return response()->json($tasksToReview);
     }
 
+    /**
+     * API: Leader mereview laporan dari Staff.
+     * (LOGIKA DIPERBARUI)
+     */
     public function submitReview(Request $request, Task $task)
     {
-        $validated = $request->validate([
+        // Pastikan hanya pembuat tugas yang bisa mereview
+        if (Auth::id() !== $task->created_by) {
+            abort(403, 'Anda tidak berwenang mereview tugas ini.');
+        }
+
+        $validator = Validator::make($request->all(), [
             'decision' => 'required|in:completed,rejected',
-            'rejection_notes' => 'nullable|string|max:1000'
+            'rejection_notes' => 'required_if:decision,rejected|string|min:10',
         ]);
 
-        if ($task->created_by !== Auth::id()) {
-            abort(403, 'Anda tidak berhak mereview tugas ini.');
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($task->staff) {
-            $updateData = ['status' => $validated['decision']];
-            if ($validated['decision'] === 'rejected') {
-                $updateData['rejection_notes'] = $validated['rejection_notes'];
-            } else {
-                $updateData['rejection_notes'] = null;
+        $decision = $request->decision;
+        $notes = $request->rejection_notes;
+
+        $task->update([
+            'status' => $decision,
+            'reviewed_by' => Auth::id(),
+            'rejection_notes' => $decision === 'rejected' ? $notes : null,
+        ]);
+
+        try {
+            if ($task->staff) {
+                Notification::send($task->staff, new TaskReviewed($task));
             }
-            $task->update($updateData);
-            $task->staff->notify(new TaskReviewed($task));
-            return response()->json(['message' => 'Tugas telah direview.', 'task' => $task]);
+        } catch (\Exception $e) {
+            Log::error('Gagal mengirim notifikasi review tugas: ' . $e->getMessage());
         }
 
-        return response()->json(['message' => 'Gagal mengirim notifikasi: tidak ada staff yang mengerjakan.'], 422);
+        return response()->json(['message' => 'Review berhasil dikirim.']);
     }
 
     private function authorizeTaskAccess(Task $task)

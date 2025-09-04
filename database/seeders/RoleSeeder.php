@@ -26,7 +26,6 @@ class RoleSeeder extends Seeder
             ['role_id' => 'TK01', 'role_name' => 'Leader Teknisi'],
             ['role_id' => 'TK02', 'role_name' => 'Staff Teknisi'],
 
-            // --- PERAN BARU YANG DITAMBAHKAN ---
             // Peran Parkir
             ['role_id' => 'PK01', 'role_name' => 'Leader Parking'],
             ['role_id' => 'PK02', 'role_name' => 'Staff Parking'],
@@ -35,6 +34,10 @@ class RoleSeeder extends Seeder
             // Peran Security
             ['role_id' => 'SC01', 'role_name' => 'Leader Security'],
             ['role_id' => 'SC02', 'role_name' => 'Staff Security'],
+
+            // Peran Warehouse
+            ['id' => 'WH01', 'name_role' => 'Leader Warehouse'],
+            ['id' => 'WH02', 'name_role' => 'Staff Warehouse'],
         ]);
     }
 }

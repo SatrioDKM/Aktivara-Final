@@ -36,11 +36,13 @@
                                 <button
                                     class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition {{ request()->routeIs(['tasks.create', 'tasks.monitoring', 'tasks.review_list']) ? 'border-indigo-400 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                                     <div>Manajemen Tugas</div>
-                                    <div class="ms-1"><svg class="fill-current h-4 w-4" viewBox="0 0 20 20">
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                                                 clip-rule="evenodd" />
-                                        </svg></div>
+                                        </svg>
+                                    </div>
                                 </button>
                             </x-slot>
                             <x-slot name="content">
@@ -96,6 +98,12 @@
                                 <x-dropdown-link :href="route('master.assets.index')">{{ __('Manajemen Aset') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="route('master.maintenances.index')">{{ __('Maintenance Aset') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('stock.index')">
+                                    {{ __('Manajemen Stok') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('packing_lists.index')">
+                                    {{ __('Barang Keluar') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
@@ -195,34 +203,39 @@
 
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open"
-                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"><svg
-                        class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex"
                             stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round"
                             stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg></button>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
 
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{
-                __('Dashboard') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                {{ __('Dashboard') }}
+            </x-responsive-nav-link>
 
             @auth
             @if(in_array(Auth::user()->role_id, ['HK02', 'TK02', 'SC02', 'PK02']))
-            <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
-                __('Papan Tugas') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
-                __('Riwayat Tugas Saya') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
+                {{ __('Papan Tugas') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">
+                {{ __('Riwayat Tugas Saya') }}
+            </x-responsive-nav-link>
             @endif
 
             @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00']))
-            <x-responsive-nav-link :href="route('complaints.index')" :active="request()->routeIs('complaints.index')">{{
-                __('Laporan Masuk') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('complaints.index')" :active="request()->routeIs('complaints.index')">
+                {{ __('Laporan Masuk') }}
+            </x-responsive-nav-link>
             @endif
 
             @if(in_array(Auth::user()->role_id, ['HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00']))
@@ -231,11 +244,14 @@
                     <div class="font-medium text-base text-gray-800">Manajemen Tugas</div>
                 </div>
                 <div class="mt-1 space-y-1">
-                    <x-responsive-nav-link :href="route('tasks.create')">{{ __('Buat Tugas Baru') }}
+                    <x-responsive-nav-link :href="route('tasks.create')">
+                        {{ __('Buat Tugas Baru') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.monitoring')">{{ __('Monitoring Tugas Aktif') }}
+                    <x-responsive-nav-link :href="route('tasks.monitoring')">
+                        {{ __('Monitoring Tugas Aktif') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.review_list')">{{ __('Review Laporan Staff') }}
+                    <x-responsive-nav-link :href="route('tasks.review_list')">
+                        {{ __('Review Laporan Staff') }}
                     </x-responsive-nav-link>
                 </div>
             </div>
@@ -247,17 +263,29 @@
                     <div class="font-medium text-base text-gray-800">Data Master</div>
                 </div>
                 <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('master.buildings.index')">{{ __('Gedung') }}
+                    <x-responsive-nav-link :href="route('master.buildings.index')">
+                        {{ __('Gedung') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.floors.index')">{{ __('Lantai') }}
+                    <x-responsive-nav-link :href="route('master.floors.index')">
+                        {{ __('Lantai') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.rooms.index')">{{ __('Ruangan') }}
+                    <x-responsive-nav-link :href="route('master.rooms.index')">
+                        {{ __('Ruangan') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.task_types.index')">{{ __('Jenis Tugas') }}
+                    <x-responsive-nav-link :href="route('master.task_types.index')">
+                        {{ __('Jenis Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.assets.index')">{{ __('Manajemen Aset') }}
+                    <x-responsive-nav-link :href="route('master.assets.index')">
+                        {{ __('Manajemen Aset') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.maintenances.index')">{{ __('Maintenance Aset') }}
+                    <x-responsive-nav-link :href="route('master.maintenances.index')">
+                        {{ __('Maintenance Aset') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('stock.index')">
+                        {{ __('Manajemen Stok') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('packing_lists.index')">
+                        {{ __('Barang Keluar') }}
                     </x-responsive-nav-link>
                 </div>
             </div>
@@ -266,30 +294,42 @@
                     <div class="font-medium text-base text-gray-800">Laporan</div>
                 </div>
                 <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('history.tasks')">{{ __('Riwayat & Laporan Tugas') }}
+                    <x-responsive-nav-link :href="route('history.tasks')">
+                        {{ __('Riwayat & Laporan Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('export.index')">{{ __('Halaman Ekspor') }}
+                    <x-responsive-nav-link :href="route('export.index')">
+                        {{ __('Halaman Ekspor') }}
                     </x-responsive-nav-link>
                 </div>
             </div>
             @endif
 
             @if(Auth::user()->role_id == 'SA00')
-            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">{{
-                __('Manajemen Pengguna') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                {{ __('Manajemen Pengguna') }}
+            </x-responsive-nav-link>
             @endif
             @endauth
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-gray-800">
+                    {{ Auth::user()->name }}
+                </div>
+                <div class="font-medium text-sm text-gray-500">
+                    {{ Auth::user()->email }}
+                </div>
             </div>
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profile') }}</x-responsive-nav-link>
-                <form method="POST" action="{{ route('logout') }}">@csrf<x-responsive-nav-link :href="route('logout')"
-                        onclick="event.preventDefault(); this.closest('form').submit();">{{ __('Log Out') }}
+                <x-responsive-nav-link :href="route('profile.edit')">
+                    {{ __('Profile') }}
+                </x-responsive-nav-link>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <x-responsive-nav-link :href="route('logout')"
+                        onclick="event.preventDefault(); this.closest('form').submit();">
+                        {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
             </div>

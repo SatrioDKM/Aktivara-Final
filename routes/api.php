@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
 
 /*
@@ -44,6 +45,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::apiResource('maintenances', AssetMaintenanceController::class);
     Route::apiResource('users', UserController::class)->middleware('role:SA00');
+
+    // --- API untuk Manajemen Stok ---
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
+        Route::get('/stock-management', [StockManagementController::class, 'index'])->name('api.stock.index');
+        Route::put('/stock-management/{asset}', [StockManagementController::class, 'update'])->name('api.stock.update');
+    });
 
     // --- GRUP ENDPOINT UNTUK ALUR KERJA TUGAS ---
     Route::prefix('tasks')->name('api.tasks.')->group(function () {

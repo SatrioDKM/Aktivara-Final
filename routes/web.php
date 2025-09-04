@@ -12,8 +12,10 @@ use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PackingListController;
 use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\GuestComplaintController;
+use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
 
 /*
@@ -40,6 +42,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // --- RUTE UNTUK BARANG KELUAR / PACKING LIST ---
+    Route::get('/packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
+    Route::post('/packing-lists', [PackingListController::class, 'store'])->name('packing_lists.store');
+    Route::get('/packing-lists/{packingList}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf');
+
+    // --- Rute untuk Manajemen Stok (Warehouse, Admin, Manager) ---
+    Route::get('/stock-management', [StockManagementController::class, 'viewPage'])
+        ->middleware('role:SA00,MG00,WH01,WH02')
+        ->name('stock.index');
 
 
     // --- Rute Leader, Manager, & Admin ---

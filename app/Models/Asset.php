@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Room;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\PackingList;
 use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -70,5 +71,13 @@ class Asset extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Relasi ke Packing Lists (banyak ke banyak).
+     */
+    public function packingLists()
+    {
+        return $this->belongsToMany(PackingList::class, 'asset_packing_list');
     }
 }

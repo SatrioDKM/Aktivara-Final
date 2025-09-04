@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Asset;
+use App\Models\DailyReport;
+use App\Models\PackingList;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use App\Models\DailyReport;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -23,7 +25,6 @@ class DashboardController extends Controller
 
     /**
      * Endpoint API untuk mengambil data statistik agregat berdasarkan peran.
-     * (LOGIKA DIPERBARUI)
      */
     public function getStats(Request $request)
     {
@@ -33,23 +34,22 @@ class DashboardController extends Controller
 
         // --- Dashboard untuk Manager & Superadmin ---
         if (in_array($roleId, ['SA00', 'MG00'])) {
-            $taskStats = Task::query()->select('status', DB::raw('count(*) as total'))->groupBy('status')->pluck('total', 'status');
+            // Filter Rentang Tanggal
+            $startDate = $request->input('start_date', Carbon::now()->subMonth());
+            $endDate = $request->input('end_date', Carbon::now());
 
-            // --- STATISTIK ASET DIPERBARUI ---
-            // Pisahkan query untuk Aset Tetap dan Barang Habis Pakai
-            $fixedAssetsQuery = Asset::where('asset_type', 'fixed_asset');
-            $consumableAssetsQuery = Asset::where('asset_type', 'consumable');
-
-            // Hitung aset yang stoknya di bawah minimum
-            $lowStockAssets = (clone $consumableAssetsQuery)
-                ->whereRaw('current_stock <= minimum_stock')
-                ->where('minimum_stock', '>', 0)
+            // Statistik Pergerakan Aset
+            $assetsIn = Asset::whereBetween('created_at', [$startDate, $endDate])->count();
+            $assetsOut = DB::table('asset_packing_list')
+                ->join('packing_lists', 'asset_packing_list.packing_list_id', '=', 'packing_lists.id')
+                ->whereBetween('packing_lists.created_at', [$startDate, $endDate])
                 ->count();
 
-            $latestReports = DailyReport::with(['user:id,name', 'task:id,title'])
-                ->latest()
-                ->take(10)
-                ->get();
+            // Statistik Lainnya
+            $taskStats = Task::query()->select('status', DB::raw('count(*) as total'))->groupBy('status')->pluck('total', 'status');
+            $fixedAssetsQuery = Asset::where('asset_type', 'fixed_asset');
+            $consumableAssetsQuery = Asset::where('asset_type', 'consumable');
+            $lowStockAssets = (clone $consumableAssetsQuery)->whereRaw('current_stock <= minimum_stock')->where('minimum_stock', '>', 0)->count();
 
             $stats = [
                 'role_type' => 'admin',
@@ -66,20 +66,20 @@ class DashboardController extends Controller
                     'fixed_in_maintenance' => (clone $fixedAssetsQuery)->where('status', 'maintenance')->count(),
                     'consumable_low_stock' => $lowStockAssets,
                 ],
-                'latest_reports' => $latestReports,
+                'asset_movement' => [
+                    'in' => $assetsIn,
+                    'out' => $assetsOut,
+                ],
             ];
         }
         // --- Dashboard untuk Leader ---
         else if (str_ends_with($roleId, '01')) {
-            // Ambil daftar staff di departemen Leader untuk filter dropdown
             $departmentCode = substr($roleId, 0, 2);
             $staffInDepartment = User::where('role_id', $departmentCode . '02')->orderBy('name')->get(['id', 'name']);
 
-            // Query dasar: semua tugas yang dibuat oleh Leader ini
             $query = Task::with(['staff:id,name', 'taskType:id,name_task'])
                 ->where('created_by', $user->id);
 
-            // Terapkan filter berdasarkan status
             $query->when($request->filled('status'), function ($q) use ($request) {
                 if ($request->status === 'dikerjakan') {
                     return $q->where('status', 'in_progress');
@@ -87,14 +87,9 @@ class DashboardController extends Controller
                 return $q->where('status', $request->status);
             });
 
-            // Terapkan filter berdasarkan staff
             $query->when($request->filled('staff_id'), fn($q) => $q->where('user_id', $request->staff_id));
-
-            // Terapkan filter berdasarkan tanggal
             $query->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date));
             $query->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date));
-
-            // Terapkan filter pencarian
             $query->when($request->filled('search'), function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%');
             });
@@ -111,18 +106,16 @@ class DashboardController extends Controller
         else {
             $userDepartment = substr($roleId, 0, 2);
 
-            // Query untuk tugas tersedia tidak berubah, sudah benar.
-            $availableTasksQuery = Task::with(['creator:id,name', 'room.floor.building', 'taskType'])
+            $query = Task::with(['creator:id,name', 'room.floor.building'])
                 ->where('status', 'unassigned')
-                ->whereHas('taskType', function ($q) use ($userDepartment) {
-                    $q->where('departemen', $userDepartment)->orWhere('departemen', 'UMUM');
-                });
+                ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment)->orWhere('departemen', 'UMUM'));
 
-            $availableTasksQuery->when($request->filled('search'), function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%');
+            $query->when($request->filled('search'), function ($q) use ($request) {
+                $searchTerm = '%' . $request->search . '%';
+                $q->where('title', 'like', $searchTerm);
             });
 
-            $availableTasks = $availableTasksQuery->latest()->paginate(5);
+            $availableTasks = $query->latest()->paginate(5);
 
             $myTasks = Task::where('user_id', $user->id);
 

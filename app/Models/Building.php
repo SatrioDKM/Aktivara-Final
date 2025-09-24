@@ -21,6 +21,20 @@ class Building extends Model
     ];
 
     /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'lat_building' => 'double',
+            'long_building' => 'double',
+            'status' => 'string',
+        ];
+    }
+
+    /**
      * Relasi ke Floors
      */
     public function floors()

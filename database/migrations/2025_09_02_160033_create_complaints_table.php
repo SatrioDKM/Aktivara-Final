@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreignId('asset_id')->nullable()->constrained()->onDelete('set null');
 
             // Relasi ke tabel lain
-            $table->foreignId('created_by')->constrained('users'); // Siapa yang mencatat laporan ini di sistem
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null'); // Siapa yang mencatat laporan ini di sistem
             $table->foreignId('task_id')->nullable()->unique()->constrained()->onDelete('set null'); // Tautan ke tugas yang dihasilkan
 
             $table->timestamps();

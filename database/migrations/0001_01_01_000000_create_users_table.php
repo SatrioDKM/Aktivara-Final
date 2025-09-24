@@ -19,10 +19,13 @@ return new class extends Migration
             $table->string('password');
             $table->string('profile_picture', 255)->nullable();
             $table->string('telegram_chat_id', 50)->nullable();
-            $table->string('role_id', 10)->nullable()->references('role_id')->on('roles')->onDelete('set null');
+            $table->string('role_id', 10)->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->rememberToken();
             $table->timestamps();
+
+            // Definisi foreign key yang lebih standar untuk non-integer key
+            $table->foreign('role_id')->references('role_id')->on('roles')->onDelete('set null');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -47,13 +50,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Hapus constraint sebelum menghapus kolom
-            $table->dropForeign(['FK_role_id']);
+            // Hapus constraint sebelum menghapus kolom (menggunakan nama kolom lebih aman)
+            $table->dropForeign(['role_id']);
 
             $table->dropColumn([
                 'profile_picture',
                 'telegram_chat_id',
-                'FK_role_id',
+                'role_id', // Perbaikan dari 'FK_role_id' menjadi 'role_id'
                 'status',
             ]);
         });

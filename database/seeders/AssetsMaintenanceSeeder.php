@@ -23,8 +23,8 @@ class AssetsMaintenanceSeeder extends Seeder
         if ($asset && $technician) {
             AssetsMaintenance::create([
                 'asset_id' => $asset->id,
-                'user_id' => $technician->id, // <-- RENAMED from 'technician_id'
-                'description_text' => 'Pembersihan filter dan pengecekan freon rutin.',
+                'user_id' => $technician->id,
+                'description' => 'Pembersihan filter dan pengecekan freon rutin.', // DIPERBAIKI dari description_text
                 'status' => 'completed',
                 'notes' => 'Tidak ada masalah ditemukan, AC berfungsi normal.',
             ]);

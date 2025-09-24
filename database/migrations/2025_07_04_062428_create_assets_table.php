@@ -18,8 +18,8 @@ return new class extends Migration
             $table->date('purchase_date')->nullable();
             $table->string('condition', 50)->nullable();
             $table->enum('status', ['available', 'in_use', 'maintenance', 'disposed'])->default('available');
-            $table->integer('current_stock')->default(0);
-            $table->integer('minimum_stock')->default(0);
+            $table->unsignedInteger('current_stock')->default(0); // Menggunakan unsignedInteger
+            $table->unsignedInteger('minimum_stock')->default(0); // Menggunakan unsignedInteger
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });

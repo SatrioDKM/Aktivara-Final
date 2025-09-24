@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Targetkan tabel 'tasks' untuk semua operasi
         Schema::table('tasks', function (Blueprint $table) {
-            // Cek dulu apakah kolomnya ada sebelum dihapus
-            if (Schema::hasColumn('assets', 'department_code')) {
-                Schema::table('assets', function (Blueprint $table) {
-                    $table->dropColumn('department_code');
-                });
+            // Cek dulu apakah kolomnya ada di tabel 'tasks' sebelum dihapus
+            if (Schema::hasColumn('tasks', 'department_code')) {
+                $table->dropColumn('department_code');
             }
         });
     }

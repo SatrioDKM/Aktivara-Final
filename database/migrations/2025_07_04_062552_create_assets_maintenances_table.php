@@ -15,7 +15,7 @@ return new class extends Migration
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
             $table->enum('maintenance_type', ['repair', 'routine_check', 'replacement'])->nullable();
-            $table->text('description_text');
+            $table->text('description'); // Disederhanakan dari description_text
             $table->text('notes')->nullable();
             $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])->default('scheduled');
             $table->timestamps();

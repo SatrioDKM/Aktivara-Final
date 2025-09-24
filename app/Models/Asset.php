@@ -31,6 +31,22 @@ class Asset extends Model
     ];
 
     /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'purchase_date' => 'date',
+            'asset_type' => 'string',
+            'status' => 'string',
+            'current_stock' => 'integer',
+            'minimum_stock' => 'integer',
+        ];
+    }
+
+    /**
      * Relasi ke Room (lokasi aset)
      */
     public function room()

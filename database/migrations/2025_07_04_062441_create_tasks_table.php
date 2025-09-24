@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id(); // Standar Laravel
-            $table->foreignId('task_type_id')->constrained('task_types');
+            $table->foreignId('task_type_id')->constrained('task_types')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('asset_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('room_id')->nullable()->constrained()->onDelete('set null');
@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('status', ['unassigned', 'in_progress', 'pending_review', 'completed', 'rejected'])
                 ->default('unassigned');
             $table->dateTime('due_date')->nullable();
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

@@ -35,7 +35,23 @@ class Task extends Model
         'reviewed_by',
         'review_notes',
         'rejection_notes', // Kolom untuk catatan penolakan
+        'priority', // Ditambahkan dari migrasi
+        'department_code', // Ditambahkan dari migrasi
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'due_date' => 'datetime',
+            'status' => 'string',
+            'priority' => 'string',
+        ];
+    }
 
     /**
      * Relasi ke User (staff yang mengerjakan)

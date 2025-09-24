@@ -17,6 +17,12 @@ class AssetSeeder extends Seeder
         // Ambil ID user admin untuk kolom created_by/updated_by
         $adminUser = User::where('role_id', 'SA00')->first();
 
+        // Hentikan seeder jika admin tidak ditemukan
+        if (!$adminUser) {
+            $this->command->info('User dengan role Superadmin (SA00) tidak ditemukan, AssetSeeder dilewati.');
+            return;
+        }
+
         // Data untuk Aset Tetap (Fixed Assets)
         $fixedAssets = [
             [

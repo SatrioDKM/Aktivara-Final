@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('document_number')->unique();
             $table->string('recipient_name');
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->text('notes')->nullable();
             $table->timestamps();
         });

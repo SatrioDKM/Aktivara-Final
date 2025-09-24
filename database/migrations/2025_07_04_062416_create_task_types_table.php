@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name_task', 100);
             $table->text('description')->nullable();
             $table->string('notification_template', 255)->nullable();
-            $table->string('departemen', 50)->nullable();
+            $table->string('departemen', 50)->nullable(); // Perbaikan typo
             $table->enum('priority_level', ['low', 'medium', 'high', 'critical'])->default('medium');
             $table->timestamps();
         });

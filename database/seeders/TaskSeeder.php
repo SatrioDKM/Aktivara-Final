@@ -25,6 +25,12 @@ class TaskSeeder extends Seeder
         $ac = Asset::where('serial_number', 'AC-2025-001')->first();
         $bohlam = Asset::where('name_asset', 'Bohlam LED 12W')->first();
 
+        // Defensive check untuk memastikan semua data prasyarat ada
+        if (!$leaderTeknisi || !$staffTeknisi || !$leaderHK || !$staffHK || !$ac || !$bohlam) {
+            $this->command->info('Beberapa data User atau Asset prasyarat tidak ditemukan, TaskSeeder dilewati.');
+            return;
+        }
+
         // Data tugas
         $tasks = [
             // Tugas Maintenance AC (terkait dengan Aset Tetap)
@@ -38,7 +44,6 @@ class TaskSeeder extends Seeder
                 'status' => 'completed',
                 'created_by' => $leaderTeknisi->id,
                 'user_id' => $staffTeknisi->id, // Sudah dikerjakan staff teknisi
-                // Kolom 'report_text', 'report_image', 'reviewed_by', 'review_notes' DIHAPUS DARI SINI
                 'created_at' => now()->subDays(5),
                 'updated_at' => now()->subDays(4),
             ],

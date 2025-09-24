@@ -35,9 +35,9 @@ class RoleSeeder extends Seeder
             ['role_id' => 'SC01', 'role_name' => 'Leader Security'],
             ['role_id' => 'SC02', 'role_name' => 'Staff Security'],
 
-            // Peran Warehouse
-            ['id' => 'WH01', 'name_role' => 'Leader Warehouse'],
-            ['id' => 'WH02', 'name_role' => 'Staff Warehouse'],
+            // Peran Warehouse (INI YANG DIPERBAIKI)
+            ['role_id' => 'WH01', 'role_name' => 'Leader Warehouse'],
+            ['role_id' => 'WH02', 'role_name' => 'Staff Warehouse'],
         ]);
     }
 }

@@ -18,10 +18,25 @@ class AssetsMaintenance extends Model
         'start_date',
         'end_date',
         'maintenance_type',
-        'description_text',
+        'description', // Disesuaikan dengan migrasi
         'notes',
         'status',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
+            'maintenance_type' => 'string',
+            'status' => 'string',
+        ];
+    }
 
     /**
      * Relasi ke Asset

@@ -46,7 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- RUTE UNTUK BARANG KELUAR / PACKING LIST ---
     Route::get('/packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
     Route::post('/packing-lists', [PackingListController::class, 'store'])->name('packing_lists.store');
-    Route::get('/packing-lists/{packingList}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf');
+    Route::get('/packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
 
     // --- Rute untuk Manajemen Stok (Warehouse, Admin, Manager) ---
     Route::get('/stock-management', [StockManagementController::class, 'viewPage'])
@@ -100,7 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         // Rute Detail Tugas (ditempatkan di akhir)
-        Route::get('/{task}', [TaskWorkflowController::class, 'showPage'])->name('show');
+        Route::get('/{id}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
     });
 });
 

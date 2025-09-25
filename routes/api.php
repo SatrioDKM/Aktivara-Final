@@ -103,7 +103,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Endpoint untuk Staff
         Route::middleware(['role:HK02,TK02,SC02'])->group(function () {
             Route::get('/available-list', [TaskWorkflowController::class, 'showAvailable'])->name('available_data');
-            Route::post('/{id}/claim', [TaskWorkflowController::class, 'claimTask'])->name('claim')->where('id', '[0--9]+');
+            Route::post('/{id}/claim', [TaskWorkflowController::class, 'claimTask'])->name('claim')->where('id', '[0-9]+');
         });
 
         // Endpoint API BARU untuk riwayat tugas PRIBADI Staff

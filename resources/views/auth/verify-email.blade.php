@@ -32,15 +32,11 @@
     </div>
 
     @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
-        integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcP5nltDl3W+PPTaCiadIYMA2iNT1ebLVR6NoucF5bnraIovFdFnDGeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
     @endpush
 
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"
-        integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0A7atXbqZQlXMVFD+iTNaxwIgajBJI8bXgG2bgweoWocZaOKimEi2o27aZhdGEOQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             @if (session('status') == 'verification-link-sent')

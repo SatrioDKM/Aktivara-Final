@@ -3,107 +3,62 @@
 namespace Database\Seeders;
 
 use App\Models\Asset;
+use App\Models\Room;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class AssetSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Ambil ID user admin untuk kolom created_by/updated_by
         $adminUser = User::where('role_id', 'SA00')->first();
+        $officeRoom = Room::where('name_room', 'Kantor Manajer')->first();
+        $meetingRoom = Room::where('name_room', 'Ruang Rapat Sakura')->first();
+        $storageRoom = Room::where('name_room', 'Gudang Parkir B1')->first();
 
-        // Hentikan seeder jika admin tidak ditemukan
-        if (!$adminUser) {
-            $this->command->info('User dengan role Superadmin (SA00) tidak ditemukan, AssetSeeder dilewati.');
+        if (!$adminUser || !$officeRoom || !$meetingRoom || !$storageRoom) {
+            $this->command->info('Prerequisite User/Room not found, skipping AssetSeeder.');
             return;
         }
 
-        // Data untuk Aset Tetap (Fixed Assets)
+        // Kebutuhan: Aset Tetap (5-10 data)
         $fixedAssets = [
-            [
-                'name_asset' => 'AC Split 2PK',
-                'asset_type' => 'fixed_asset',
-                'category' => 'Elektronik Pendingin',
-                'serial_number' => 'AC-2025-001',
-                'condition' => 'Baik',
-                'current_stock' => 1,
-                'minimum_stock' => 0, // Aset tetap tidak punya stok minimum
-                'status' => 'available',
-                'description' => 'AC di Ruang Rapat Lt. 5',
-                'room_id' => 1, // Pastikan ID ini ada di tabel rooms
-            ],
-            [
-                'name_asset' => 'Proyektor InFocus X1',
-                'asset_type' => 'fixed_asset',
-                'category' => 'Elektronik Presentasi',
-                'serial_number' => 'PROJ-2025-001',
-                'condition' => 'Baik',
-                'current_stock' => 1,
-                'minimum_stock' => 0,
-                'status' => 'available',
-                'description' => 'Proyektor portable untuk meeting.',
-                'room_id' => null, // Disimpan di gudang
-            ],
-            [
-                'name_asset' => 'Meja Kerja Kayu',
-                'asset_type' => 'fixed_asset',
-                'category' => 'Furniture Kantor',
-                'serial_number' => 'FURN-2025-010',
-                'condition' => 'Baik',
-                'current_stock' => 1,
-                'minimum_stock' => 0,
-                'status' => 'in_use',
-                'description' => 'Meja di ruang kerja Manager.',
-                'room_id' => 2, // Pastikan ID ini ada di tabel rooms
-            ],
+            ['name_asset' => 'AC Central Daikin', 'category' => 'Elektronik', 'serial_number' => 'AC-2025-001', 'condition' => 'Baik', 'status' => 'in_use', 'room_id' => $meetingRoom->id],
+            ['name_asset' => 'Proyektor Epson EB-X500', 'category' => 'Elektronik', 'serial_number' => 'PROJ-2025-001', 'condition' => 'Baik', 'status' => 'available', 'room_id' => $storageRoom->id],
+            ['name_asset' => 'Meja Direksi Jati', 'category' => 'Furniture', 'serial_number' => 'FURN-2025-001', 'condition' => 'Baik', 'status' => 'in_use', 'room_id' => $officeRoom->id],
+            ['name_asset' => 'CCTV Hikvision Outdoor', 'category' => 'Keamanan', 'serial_number' => 'CCTV-2025-001', 'condition' => 'Perlu Perbaikan', 'status' => 'available', 'room_id' => $storageRoom->id],
+            ['name_asset' => 'Genset Perkins 100 kVA', 'category' => 'Mekanikal', 'serial_number' => 'GEN-2025-001', 'condition' => 'Baik', 'status' => 'in_use', 'room_id' => $storageRoom->id],
         ];
 
-        // Data untuk Barang Habis Pakai (Consumables)
-        $consumableAssets = [
-            [
-                'name_asset' => 'Spidol Papan Tulis (Hitam)',
-                'asset_type' => 'consumable',
-                'category' => 'Alat Tulis Kantor',
-                'current_stock' => 50,
-                'minimum_stock' => 10, // Ada stok minimum
-                'status' => 'available',
-                'description' => 'Spidol merek Snowman warna hitam.',
-                'room_id' => null, // Disimpan di gudang
-            ],
-            [
-                'name_asset' => 'Cairan Pembersih Lantai (Lemon)',
-                'asset_type' => 'consumable',
-                'category' => 'Peralatan Kebersihan',
-                'current_stock' => 20,
-                'minimum_stock' => 5,
-                'status' => 'available',
-                'description' => 'Super Pell 1 Liter aroma Lemon.',
-                'room_id' => null,
-            ],
-            [
-                'name_asset' => 'Bohlam LED 12W',
-                'asset_type' => 'consumable',
-                'category' => 'Kelistrikan',
-                'current_stock' => 30,
-                'minimum_stock' => 10,
-                'status' => 'available',
-                'description' => 'Bohlam LED Philips 12 Watt warna putih.',
-                'room_id' => null,
-            ],
-        ];
-
-        // Gabungkan semua data aset
-        $allAssets = array_merge($fixedAssets, $consumableAssets);
-
-        foreach ($allAssets as $assetData) {
-            Asset::create(array_merge($assetData, [
+        foreach ($fixedAssets as $asset) {
+            Asset::create(array_merge($asset, [
+                'asset_type' => 'fixed_asset',
+                'current_stock' => 1,
+                'minimum_stock' => 0,
                 'created_by' => $adminUser->id,
-                'updated_by' => $adminUser->id
+                'updated_by' => $adminUser->id,
+            ]));
+        }
+
+        // Kebutuhan: Barang Habis Pakai & Barang Stok Menipis (total 5-10 data)
+        $consumableAssets = [
+            // Stok Normal
+            ['name_asset' => 'Kertas A4 70gr Rim', 'category' => 'ATK', 'current_stock' => 50, 'minimum_stock' => 10, 'status' => 'available'],
+            ['name_asset' => 'Tinta Printer HP 682 Hitam', 'category' => 'ATK', 'current_stock' => 25, 'minimum_stock' => 5, 'status' => 'available'],
+            ['name_asset' => 'Galon Air Mineral', 'category' => 'Konsumsi', 'current_stock' => 15, 'minimum_stock' => 5, 'status' => 'available'],
+            // Stok Menipis
+            ['name_asset' => 'Bohlam LED Philips 12W', 'category' => 'Kelistrikan', 'current_stock' => 8, 'minimum_stock' => 10, 'status' => 'available'],
+            ['name_asset' => 'Cairan Pembersih Lantai 1L', 'category' => 'Kebersihan', 'current_stock' => 4, 'minimum_stock' => 5, 'status' => 'available'],
+            ['name_asset' => 'Baterai AA Alkaline', 'category' => 'Elektronik', 'current_stock' => 20, 'minimum_stock' => 24, 'status' => 'available'],
+            ['name_asset' => 'Spidol Papan Tulis Hitam', 'category' => 'ATK', 'current_stock' => 10, 'minimum_stock' => 12, 'status' => 'available'],
+        ];
+
+        foreach ($consumableAssets as $asset) {
+            Asset::create(array_merge($asset, [
+                'asset_type' => 'consumable',
+                'room_id' => $storageRoom->id,
+                'created_by' => $adminUser->id,
+                'updated_by' => $adminUser->id,
             ]));
         }
     }

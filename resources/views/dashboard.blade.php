@@ -265,7 +265,8 @@
                                     <div class="mb-4 relative">
                                         <div
                                             class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                            <i class="fas fa-search text-gray-400"></i></div>
+                                            <i class="fas fa-search text-gray-400"></i>
+                                        </div>
                                         <input type="text" x-model.debounce.500ms="search" @input="getDashboardData(1)"
                                             placeholder="Cari berdasarkan judul tugas..."
                                             class="block w-full rounded-md border-gray-300 ps-10 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300">
@@ -326,18 +327,14 @@
 
     @push('styles')
     {{-- iziToast, DataTables, Select2 CSS --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
-        integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcP5nltDl3W+PPTaCiadIYMA2iNT1ebLVR6NoucF5bnraIovFdFnDGeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.tailwindcss.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @endpush
 
     @push('scripts')
     {{-- iziToast, DataTables, Select2 JS --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"
-        integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0A7atXbqZQlXMVFD+iTNaxwIgajBJI8bXgG2bgweoWocZaOKimEi2o27aZhdGEOQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.tailwindcss.js"></script>

@@ -158,7 +158,8 @@
                                     :value="__('Password Saat Ini')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-key text-gray-400"></i></div>
+                                        <i class="fas fa-key text-gray-400"></i>
+                                    </div>
                                     <x-text-input id="update_password_current_password" name="current_password"
                                         type="password" class="block w-full ps-10" autocomplete="current-password"
                                         placeholder="Password Anda saat ini" />
@@ -171,7 +172,8 @@
                                 <x-input-label for="update_password_password" :value="__('Password Baru')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i></div>
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
                                     <x-text-input id="update_password_password" name="password" type="password"
                                         class="block w-full ps-10" autocomplete="new-password"
                                         placeholder="Password baru yang kuat" />
@@ -184,7 +186,8 @@
                                     :value="__('Konfirmasi Password Baru')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i></div>
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
                                     <x-text-input id="update_password_password_confirmation"
                                         name="password_confirmation" type="password" class="block w-full ps-10"
                                         autocomplete="new-password" placeholder="Ketik ulang password baru" />
@@ -240,7 +243,8 @@
                                     <div class="relative mt-1">
                                         <div
                                             class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                            <i class="fas fa-key text-gray-400"></i></div>
+                                            <i class="fas fa-key text-gray-400"></i>
+                                        </div>
                                         <x-text-input id="password" name="password" type="password"
                                             class="block w-full ps-10" placeholder="{{ __('Password') }}" />
                                     </div>
@@ -264,15 +268,11 @@
     </div>
 
     @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
-        integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcP5nltDl3W+PPTaCiadIYMA2iNT1ebLVR6NoucF5bnraIovFdFnDGeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
     @endpush
 
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"
-        integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0A7atXbqZQlXMVFD+iTNaxwIgajBJI8bXgG2bgweoWocZaOKimEi2o27aZhdGEOQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
 
     <script>
         // Menampilkan notifikasi iziToast berdasarkan status sesi

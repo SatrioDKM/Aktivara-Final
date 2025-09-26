@@ -20,23 +20,25 @@ class DashboardController extends Controller
      */
     public function viewPage()
     {
-        return view('dashboard');
+        $data = []; // Variabel data dikirim meski kosong untuk konsistensi
+        return view('dashboard', compact('data'));
     }
 
     /**
      * Endpoint API untuk mengambil data statistik agregat berdasarkan peran.
+     * (Penggunaan Request dipertahankan karena ini adalah endpoint API dengan filter kompleks)
      */
     public function getStats(Request $request)
     {
         $user = Auth::user();
         $roleId = $user->role_id;
-        $stats = [];
+        $data = [];
 
         // --- Dashboard untuk Manager & Superadmin ---
         if (in_array($roleId, ['SA00', 'MG00'])) {
             // Filter Rentang Tanggal
-            $startDate = $request->input('start_date', Carbon::now()->subMonth());
-            $endDate = $request->input('end_date', Carbon::now());
+            $startDate = $request->input('start_date', Carbon::now()->subMonth()->toDateString());
+            $endDate = $request->input('end_date', Carbon::now()->toDateString());
 
             // Statistik Pergerakan Aset
             $assetsIn = Asset::whereBetween('created_at', [$startDate, $endDate])->count();
@@ -51,7 +53,7 @@ class DashboardController extends Controller
             $consumableAssetsQuery = Asset::where('asset_type', 'consumable');
             $lowStockAssets = (clone $consumableAssetsQuery)->whereRaw('current_stock <= minimum_stock')->where('minimum_stock', '>', 0)->count();
 
-            $stats = [
+            $data = [
                 'role_type' => 'admin',
                 'total_users' => User::count(),
                 'tasks' => [
@@ -94,12 +96,17 @@ class DashboardController extends Controller
                 $q->where('title', 'like', '%' . $request->search . '%');
             });
 
-            $tasks = $query->latest('updated_at')->paginate(10);
+            // Logic untuk DataTables server-side
+            $tasks = $query->latest('updated_at')->paginate($request->input('length', 10));
 
-            $stats = [
+            $data = [
                 'role_type' => 'leader',
                 'tasks' => $tasks,
                 'staff_list' => $staffInDepartment,
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $tasks->total(),
+                'recordsFiltered' => $tasks->total(),
+                'data' => $tasks->items(),
             ];
         }
         // --- Dashboard untuk Staff ---
@@ -119,7 +126,7 @@ class DashboardController extends Controller
 
             $myTasks = Task::where('user_id', $user->id);
 
-            $stats = [
+            $data = [
                 'role_type' => 'staff',
                 'available_tasks' => $availableTasks,
                 'my_active_tasks_count' => (clone $myTasks)->whereIn('status', ['in_progress', 'rejected'])->count(),
@@ -127,6 +134,6 @@ class DashboardController extends Controller
             ];
         }
 
-        return response()->json($stats);
+        return response()->json($data);
     }
 }

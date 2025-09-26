@@ -2,56 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\View\View;
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Support\Facades\Storage; // <-- Tambahkan ini
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): View
+    public function edit(): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $data = [
+            'user' => Auth::user(),
+        ];
+        // Eager load relasi role untuk menghindari N+1 di view
+        $data['user']->load('role');
+
+        return view('profile.edit', compact('data'));
     }
 
     /**
      * Update the user's profile information.
+     * (Menggunakan ProfileUpdateRequest adalah best practice untuk validasi)
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        // Ambil user yang sedang login
+        $user = $request->user();
+
         // Ambil data yang sudah divalidasi
         $validatedData = $request->validated();
 
         // Handle upload file foto profil
         if ($request->hasFile('profile_picture')) {
-            // Hapus foto profil lama jika ada
-            if ($request->user()->profile_picture) {
-                Storage::disk('public')->delete($request->user()->profile_picture);
+            // Hapus foto profil lama jika ada dan bukan default
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete($user->profile_picture);
             }
             // Simpan foto baru dan dapatkan path-nya
             $path = $request->file('profile_picture')->store('profile-pictures', 'public');
             $validatedData['profile_picture'] = $path;
         }
 
-        // Isi data user dengan data yang sudah divalidasi (termasuk path foto baru jika ada)
-        $request->user()->fill($validatedData);
+        // Isi data user dengan data yang sudah divalidasi
+        $user->fill($validatedData);
 
         // Jika email diubah, reset status verifikasi email
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
         // Simpan semua perubahan
-        $request->user()->save();
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -59,13 +69,16 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+        $user = Auth::user();
 
-        $user = $request->user();
+        // Validasi password secara manual
+        if (!Hash::check(request('password'), $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => __('auth.password'),
+            ])->errorBag('userDeletion');
+        }
 
         Auth::logout();
 
@@ -76,8 +89,9 @@ class ProfileController extends Controller
 
         $user->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $session = request()->session();
+        $session->invalidate();
+        $session->regenerateToken();
 
         return Redirect::to('/');
     }

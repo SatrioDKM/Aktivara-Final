@@ -74,7 +74,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- Rute manual untuk Users (Hanya Superadmin) ---
     Route::middleware('role:SA00')->group(function () {
-        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users', [UserController::class, 'index'])->name('api.users.index');
         Route::post('/users', [UserController::class, 'store']);
         Route::get('/users/{id}', [UserController::class, 'show'])->where('id', '[0-9]+');
         Route::put('/users/{id}', [UserController::class, 'update'])->where('id', '[0-9]+');

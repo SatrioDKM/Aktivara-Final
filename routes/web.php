@@ -80,7 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Rute Khusus Superadmin ---
     Route::middleware(['role:SA00'])->group(function () {
-        Route::get('/admin/users', [UserController::class, 'viewPage'])->name('users.index');
+        Route::get('/users', [UserController::class, 'viewPage'])->name('users.index');
     });
 
 

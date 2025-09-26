@@ -26,7 +26,7 @@ class ProfileController extends Controller
         // Eager load relasi role untuk menghindari N+1 di view
         $data['user']->load('role');
 
-        return view('profile.edit', compact('data'));
+        return view('backend.profile.edit', compact('data'));
     }
 
     /**

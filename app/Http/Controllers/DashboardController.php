@@ -21,7 +21,7 @@ class DashboardController extends Controller
     public function viewPage()
     {
         $data = []; // Variabel data dikirim meski kosong untuk konsistensi
-        return view('dashboard', compact('data'));
+        return view('backend.dashboard', compact('data'));
     }
 
     /**

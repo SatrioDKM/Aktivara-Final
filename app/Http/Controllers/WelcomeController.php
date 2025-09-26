@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request; // Dihapus karena tidak digunakan
 use Illuminate\Routing\Controller;
 
 class WelcomeController extends Controller

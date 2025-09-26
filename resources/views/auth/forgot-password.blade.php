@@ -1,25 +1,61 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+    <div class="mb-6 text-center">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Lupa Password?</h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {{ __('Jangan khawatir. Cukup masukkan alamat email Anda dan kami akan mengirimkan link untuk mengatur ulang
+            password Anda.') }}
+        </p>
     </div>
-
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
+            <x-input-label for="email" :value="__('Alamat Email Anda')" />
+            <div class="relative mt-1">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <i class="fas fa-envelope text-gray-400"></i>
+                </div>
+                <x-text-input id="email" class="block w-full ps-10" type="email" name="email" :value="old('email')"
+                    required autofocus placeholder="Masukkan email terdaftar" />
+            </div>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
+        <div class="flex items-center mt-6">
+            <x-primary-button class="w-full justify-center">
+                {{ __('Kirim Link Reset Password') }}
             </x-primary-button>
         </div>
+
+        <div class="text-center mt-4">
+            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                href="{{ route('login') }}">
+                {{ __('Kembali ke Login') }}
+            </a>
+        </div>
     </form>
+
+    @push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
+        integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcP5nltDl3W+PPTaCiadIYMA2iNT1ebLVR6NoucF5bnraIovFdFnDGeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    @endpush
+
+    @push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"
+        integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0A7atXbqZQlXMVFD+iTNaxwIgajBJI8bXgG2bgweoWocZaOKimEi2o27aZhdGEOQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('status'))
+                iziToast.success({
+                    title: 'Berhasil!',
+                    message: '{{ session('status') }}',
+                    position: 'topRight'
+                });
+            @endif
+        });
+    </script>
+    @endpush
 </x-guest-layout>

@@ -1,31 +1,56 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+    <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <i class="fas fa-envelope-open-text fa-lg text-green-600"></i>
+        </div>
+        <h2 class="mt-4 text-2xl font-bold text-gray-800 dark:text-gray-200">Verifikasi Alamat Email Anda</h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {{ __('Terima kasih telah mendaftar! Sebelum memulai, bisakah Anda memverifikasi alamat email Anda dengan
+            mengklik link yang baru saja kami kirimkan? Jika Anda tidak menerima email, kami akan dengan senang hati
+            mengirimkan yang lain.') }}
+        </p>
     </div>
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </div>
-    @endif
-
-    <div class="mt-4 flex items-center justify-between">
+    <div class="mt-6 flex items-center justify-between">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-
             <div>
                 <x-primary-button>
-                    {{ __('Resend Verification Email') }}
+                    <i class="fas fa-paper-plane me-2"></i>
+                    {{ __('Kirim Ulang Email Verifikasi') }}
                 </x-primary-button>
             </div>
         </form>
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+            <button type="submit"
+                class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
                 {{ __('Log Out') }}
             </button>
         </form>
     </div>
+
+    @push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
+        integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcP5nltDl3W+PPTaCiadIYMA2iNT1ebLVR6NoucF5bnraIovFdFnDGeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    @endpush
+
+    @push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"
+        integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0A7atXbqZQlXMVFD+iTNaxwIgajBJI8bXgG2bgweoWocZaOKimEi2o27aZhdGEOQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('status') == 'verification-link-sent')
+                iziToast.success({
+                    title: 'Terkirim!',
+                    message: 'Link verifikasi baru telah dikirim ke alamat email Anda.',
+                    position: 'topRight'
+                });
+            @endif
+        });
+    </script>
+    @endpush
 </x-guest-layout>

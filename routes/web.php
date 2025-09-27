@@ -79,8 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- Rute Khusus Superadmin ---
-    Route::middleware(['role:SA00'])->group(function () {
-        Route::get('/users', [UserController::class, 'viewPage'])->name('users.index');
+    Route::middleware(['role:SA00'])->prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'viewPage'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::get('/{id}', [UserController::class, 'show'])->name('show')->where('id', '[0-9]+');
+        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
     });
 
 

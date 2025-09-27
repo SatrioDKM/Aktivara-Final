@@ -10,61 +10,89 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
     /**
-     * Method untuk menampilkan halaman Blade.
+     * Method untuk menampilkan halaman utama (index).
      */
-    public function viewPage()
+    public function viewPage(): View
     {
-        // Mengirim data roles ke view untuk filter
-        $data = [
-            'roles' => Role::orderBy('role_name')->get(),
-        ];
+        $data = ['roles' => Role::orderBy('role_name')->get()];
         return view('backend.users.index', compact('data'));
     }
 
     /**
-     * Mengambil daftar pengguna dengan filter dan paginasi manual.
+     * Method untuk menampilkan halaman formulir tambah pengguna.
      */
-    public function index()
+    public function create(): View
     {
-        // Ambil parameter dari request
-        $perPage = request('perPage', 10);
-        $search = request('search', '');
-        $roleFilter = request('role', '');
-        $statusFilter = request('status', '');
-
-        // Query dasar
-        $query = User::with('role')->where('id', '!=', Auth::id());
-
-        // Terapkan filter pencarian
-        $query->when($search, function ($q) use ($search) {
-            $q->where(function ($subq) use ($search) {
-                $subq->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        });
-
-        // Terapkan filter peran (role)
-        $query->when($roleFilter, function ($q) use ($roleFilter) {
-            $q->where('role_id', $roleFilter);
-        });
-
-        // Terapkan filter status
-        $query->when($statusFilter, function ($q) use ($statusFilter) {
-            $q->where('status', $statusFilter);
-        });
-
-        // Ambil data dengan paginasi
-        $users = $query->latest()->paginate($perPage);
-
-        return response()->json($users);
+        $data = ['roles' => Role::orderBy('role_name')->get()];
+        return view('backend.users.create', compact('data'));
     }
 
     /**
-     * Menyimpan data pengguna baru.
+     * Method untuk menampilkan halaman detail pengguna (read-only).
+     */
+    public function show(string $id): View
+    {
+        $data = ['user' => User::with('role')->findOrFail($id)];
+        return view('backend.users.show', compact('data'));
+    }
+
+    /**
+     * Method untuk menampilkan halaman formulir edit pengguna.
+     */
+    public function edit(string $id): View
+    {
+        $data = [
+            'user' => User::with('role')->findOrFail($id),
+            'roles' => Role::orderBy('role_name')->get(),
+        ];
+        return view('backend.users.edit', compact('data'));
+    }
+
+    // ===================================================================
+    // API METHODS
+    // ===================================================================
+
+    /**
+     * Mengambil daftar pengguna dengan filter dan paginasi manual untuk API.
+     */
+    public function index()
+    {
+        $query = User::with('role')->where('id', '!=', Auth::id());
+
+        // Terapkan filter pencarian
+        if (request('search', '')) {
+            $search = request('search', '');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Terapkan filter peran (role)
+        if (request('role', '')) {
+            $query->where('role_id', request('role'));
+        }
+
+        // Terapkan filter status
+        if (request('status', '')) {
+            $query->where('status', request('status'));
+        }
+
+        // ================== BAGIAN YANG DIPERBARUI ==================
+        // Gunakan paginator standar Laravel yang menghasilkan 'links', 'data', dll.
+        $users = $query->latest()->paginate(request('perPage', 10));
+
+        return response()->json($users);
+        // ==========================================================
+    }
+
+    /**
+     * Menyimpan data pengguna baru dari API.
      */
     public function store()
     {
@@ -92,16 +120,7 @@ class UserController extends Controller
     }
 
     /**
-     * Menampilkan satu data pengguna spesifik.
-     */
-    public function show(string $id)
-    {
-        $user = User::with('role')->findOrFail($id);
-        return response()->json($user);
-    }
-
-    /**
-     * Memperbarui data pengguna yang sudah ada.
+     * Memperbarui data pengguna yang sudah ada dari API.
      */
     public function update(string $id)
     {
@@ -121,7 +140,6 @@ class UserController extends Controller
 
         $data = request()->except('password', 'password_confirmation');
 
-        // Jika password diisi, hash dan tambahkan ke data update
         if (request()->filled('password')) {
             $data['password'] = Hash::make(request('password'));
         }
@@ -132,18 +150,16 @@ class UserController extends Controller
     }
 
     /**
-     * Menghapus data pengguna.
+     * Menghapus data pengguna dari API.
      */
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
 
-        // Tambahan keamanan: pastikan user tidak bisa menghapus dirinya sendiri
         if ($user->id === Auth::id()) {
             return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 403);
         }
 
-        // Hapus foto profil jika ada
         if ($user->profile_picture) {
             Storage::disk('public')->delete($user->profile_picture);
         }

@@ -70,7 +70,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Rute Data Master (Hanya Admin & Manager) ---
     Route::middleware(['role:SA00,MG00'])->prefix('master')->name('master.')->group(function () {
-        Route::get('/buildings', [BuildingController::class, 'viewPage'])->name('buildings.index');
+        Route::prefix('buildings')->name('buildings.')->group(function () {
+            Route::get('/', [BuildingController::class, 'viewPage'])->name('index');
+            Route::get('/create', [BuildingController::class, 'create'])->name('create');
+            Route::get('/{id}', [BuildingController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [BuildingController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // Rute lain tetap sama
         Route::get('/floors', [FloorController::class, 'viewPage'])->name('floors.index');
         Route::get('/rooms', [RoomController::class, 'viewPage'])->name('rooms.index');
         Route::get('/task-types', [TaskTypeController::class, 'viewPage'])->name('task_types.index');

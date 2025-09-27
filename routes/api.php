@@ -29,11 +29,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard-stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
 
     // --- Rute manual untuk Buildings ---
-    Route::get('/buildings', [BuildingController::class, 'index']);
-    Route::post('/buildings', [BuildingController::class, 'store']);
-    Route::get('/buildings/{id}', [BuildingController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/buildings/{id}', [BuildingController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/buildings/{id}', [BuildingController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('buildings')->group(function () {
+        Route::get('/', [BuildingController::class, 'index']); // Untuk data tabel
+        Route::post('/', [BuildingController::class, 'store']);
+        Route::get('/{id}', [BuildingController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [BuildingController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [BuildingController::class, 'destroy'])->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Floors ---
     Route::get('/floors', [FloorController::class, 'index']);

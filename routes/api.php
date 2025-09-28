@@ -38,11 +38,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // --- Rute manual untuk Floors ---
-    Route::get('/floors', [FloorController::class, 'index']);
-    Route::post('/floors', [FloorController::class, 'store']);
-    Route::get('/floors/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/floors/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/floors/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('floors')->group(function () {
+        Route::get('/', [FloorController::class, 'index']);
+        Route::post('/', [FloorController::class, 'store']);
+        Route::get('/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Rooms ---
     Route::get('/rooms', [RoomController::class, 'index']);

@@ -77,8 +77,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/edit', [BuildingController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
         });
 
-        // Rute lain tetap sama
-        Route::get('/floors', [FloorController::class, 'viewPage'])->name('floors.index');
+        Route::prefix('floors')->name('floors.')->group(function () {
+            Route::get('/', [FloorController::class, 'viewPage'])->name('index');
+            Route::get('/create', [FloorController::class, 'create'])->name('create');
+            Route::get('/{id}', [FloorController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [FloorController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
         Route::get('/rooms', [RoomController::class, 'viewPage'])->name('rooms.index');
         Route::get('/task-types', [TaskTypeController::class, 'viewPage'])->name('task_types.index');
         Route::get('/assets', [AssetController::class, 'viewPage'])->name('assets.index');

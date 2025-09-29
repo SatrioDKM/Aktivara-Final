@@ -65,12 +65,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // --- Rute manual untuk Assets ---
-    Route::get('/assets', [AssetController::class, 'index']);
-    Route::post('/assets', [AssetController::class, 'store']);
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+');
-    Route::post('/assets/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+'); // Note: Using POST for multipart/form-data updates
-    Route::delete('/assets/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+');
-    Route::post('/assets/{id}/stock-out', [AssetController::class, 'stockOut'])->name('api.assets.stock_out')->where('id', '[0-9]+');
+    Route::prefix('assets')->group(function () {
+        Route::get('/', [AssetController::class, 'index']);
+        Route::post('/', [AssetController::class, 'store']);
+        Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+');
+        Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('api.assets.stock_out')->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Maintenances ---
     Route::get('/maintenances', [AssetMaintenanceController::class, 'index']);

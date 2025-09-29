@@ -98,7 +98,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/edit', [TaskTypeController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
         });
 
-        Route::get('/assets', [AssetController::class, 'viewPage'])->name('assets.index');
+        Route::prefix('assets')->name('assets.')->group(function () {
+            Route::get('/', [AssetController::class, 'viewPage'])->name('index');
+            Route::get('/create', [AssetController::class, 'create'])->name('create');
+            Route::get('/{id}', [AssetController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
         Route::get('/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
     });
 

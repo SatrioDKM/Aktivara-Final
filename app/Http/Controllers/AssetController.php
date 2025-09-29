@@ -2,49 +2,106 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asset;
 use App\Models\Room;
 use App\Models\User;
-use App\Models\Asset;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use App\Notifications\LowStockAlert;
+use Carbon\Carbon;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\View\View;
 
 class AssetController extends Controller
 {
     /**
-     * Menampilkan halaman Blade.
+     * Menampilkan halaman utama (index).
      */
-    public function viewPage()
+    public function viewPage(): View
     {
-        $rooms = Room::with('floor.building')->where('status', 'active')->get();
-        return view('master.assets.index', compact('rooms'));
+        $data = [
+            'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
+        ];
+        return view('backend.master.assets.index', compact('data'));
     }
 
     /**
-     * Menampilkan daftar aset.
+     * Menampilkan halaman formulir tambah.
+     */
+    public function create(): View
+    {
+        $data = [
+            'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
+        ];
+        return view('backend.master.assets.create', compact('data'));
+    }
+
+    /**
+     * Menampilkan halaman detail (show).
+     */
+    public function showPage(string $id): View
+    {
+        $data = [
+            'asset' => Asset::with(['room.floor.building', 'updater:id,name', 'creator:id,name', 'maintenances.technician:id,name', 'tasks.staff:id,name'])->findOrFail($id)
+        ];
+        return view('backend.master.assets.show', compact('data'));
+    }
+
+    /**
+     * Menampilkan halaman formulir edit.
+     */
+    public function edit(string $id): View
+    {
+        $data = [
+            'asset' => Asset::findOrFail($id),
+            'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
+        ];
+        return view('backend.master.assets.edit', compact('data'));
+    }
+
+    // ===================================================================
+    // API METHODS
+    // ===================================================================
+
+    /**
+     * API: Menampilkan daftar aset dengan paginasi dan filter.
      */
     public function index()
     {
-        $assets = Asset::with(['room.floor.building', 'updater:id,name', 'creator:id,name', 'maintenances.technician:id,name', 'tasks.staff:id,name'])
-            ->latest()
-            ->get();
+        $query = Asset::with(['room.floor.building', 'creator:id,name']);
+
+        // Filter Tipe Aset (Tab)
+        if (request('asset_type', '')) {
+            $query->where('asset_type', request('asset_type'));
+        }
+
+        // Filter Pencarian
+        if (request('search', '')) {
+            $search = request('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name_asset', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        $assets = $query->latest()->paginate(request('perPage', 10));
+
         return response()->json($assets);
     }
 
     /**
-     * Menyimpan data aset baru (bisa lebih dari satu).
+     * API: Menyimpan data aset baru (bisa lebih dari satu).
      */
-    public function store(Request $request)
+    public function store()
     {
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make(request()->all(), [
             'assets' => 'required|array|min:1',
             'assets.*.name_asset' => 'required|string|max:100',
             'assets.*.asset_type' => 'required|in:fixed_asset,consumable',
-            'assets.*.category' => 'required|string|max:3',
+            'assets.*.category' => 'required|string|max:100', // Diperbarui untuk nama kategori
             'assets.*.room_id' => 'nullable|exists:rooms,id',
             'assets.*.purchase_date' => 'nullable|date',
             'assets.*.current_stock' => 'required|integer|min:1',
@@ -54,7 +111,6 @@ class AssetController extends Controller
         ], [
             'assets.*.name_asset.required' => 'Nama aset di baris #:position wajib diisi.',
             'assets.*.category.required' => 'Kategori di baris #:position wajib diisi.',
-            'assets.*.category.max' => 'Kode Kategori di baris #:position maksimal 3 karakter.',
             'assets.*.current_stock.min' => 'Stok di baris #:position minimal 1.',
             'assets.*.condition.required_if' => 'Kondisi untuk Aset Tetap di baris #:position wajib diisi.',
         ]);
@@ -64,8 +120,8 @@ class AssetController extends Controller
         }
 
         $createdAssets = [];
-        DB::transaction(function () use ($request, &$createdAssets) {
-            foreach ($request->assets as $assetData) {
+        DB::transaction(function () use (&$createdAssets) {
+            foreach (request('assets') as $assetData) {
                 $data = $assetData;
                 $data['created_by'] = Auth::id();
                 $data['updated_by'] = Auth::id();
@@ -93,7 +149,7 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan satu data aset spesifik.
+     * API: Menampilkan satu data aset spesifik.
      */
     public function show(string $id)
     {
@@ -102,17 +158,16 @@ class AssetController extends Controller
     }
 
     /**
-     * Memperbarui data aset yang sudah ada.
-     * (REVISI TOTAL)
+     * API: Memperbarui data aset yang sudah ada.
      */
-    public function update(Request $request, string $id)
+    public function update(string $id)
     {
         $asset = Asset::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make(request()->all(), [
             'name_asset' => 'required|string|max:100',
             'room_id' => 'nullable|exists:rooms,id',
-            'category' => 'required|string|max:100', // Disesuaikan dengan form
+            'category' => 'required|string|max:100',
             'serial_number' => 'nullable|string|max:100|unique:assets,serial_number,' . $asset->id,
             'purchase_date' => 'nullable|date',
             'condition' => 'required_if:asset_type,fixed_asset|in:Baik,Rusak Ringan,Rusak Berat',
@@ -120,29 +175,25 @@ class AssetController extends Controller
             'current_stock' => 'required|integer|min:0',
             'minimum_stock' => 'nullable|integer|min:0',
             'description' => 'nullable|string',
-            'asset_type' => 'required|in:fixed_asset,consumable', // Sertakan untuk validasi
+            'asset_type' => 'required|in:fixed_asset,consumable',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Ambil hanya data yang sudah divalidasi
         $data = $validator->validated();
         $data['updated_by'] = Auth::id();
-
-        // Jangan izinkan perubahan tipe aset setelah dibuat
         unset($data['asset_type']);
 
         $asset->update($data);
-
         $this->checkAndNotifyLowStock($asset);
 
         return response()->json($asset->load(['room.floor.building', 'updater:id,name']));
     }
 
     /**
-     * Menghapus data aset.
+     * API: Menghapus data aset.
      */
     public function destroy(string $id)
     {
@@ -152,11 +203,11 @@ class AssetController extends Controller
     }
 
     /**
-     * Mengurangi stok untuk barang habis pakai.
+     * API: Mengurangi stok untuk barang habis pakai.
      */
-    public function stockOut(Request $request, string $id)
+    public function stockOut(string $id)
     {
-        $validator = Validator::make($request->all(), ['amount' => 'required|integer|min:1']);
+        $validator = Validator::make(request()->all(), ['amount' => 'required|integer|min:1']);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -166,12 +217,11 @@ class AssetController extends Controller
         if ($asset->asset_type !== 'consumable') {
             return response()->json(['message' => 'Hanya barang habis pakai yang bisa dikurangi stoknya.'], 400);
         }
-
-        if ($asset->current_stock < $request->amount) {
+        if ($asset->current_stock < request('amount')) {
             return response()->json(['message' => 'Stok tidak mencukupi.'], 422);
         }
 
-        $asset->current_stock -= $request->amount;
+        $asset->decrement('current_stock', request('amount'));
         $asset->updated_by = Auth::id();
         $asset->save();
 
@@ -181,16 +231,12 @@ class AssetController extends Controller
     }
 
     /**
-     * Helper method untuk memeriksa stok dan mengirim notifikasi.
-     * (LOGIKA DIPERBARUI)
+     * Helper: Memeriksa stok dan mengirim notifikasi.
      */
     private function checkAndNotifyLowStock(Asset $asset)
     {
-        if ($asset->asset_type === 'consumable' && $asset->current_stock <= $asset->minimum_stock && $asset->minimum_stock > 0) {
-            // Kirim notifikasi HANYA ke Warehouse, Superadmin, dan Manager
-            $recipients = User::whereIn('role_id', ['SA00', 'MG00', 'WH01', 'WH02'])
-                ->get();
-
+        if ($asset->asset_type === 'consumable' && $asset->minimum_stock > 0 && $asset->current_stock <= $asset->minimum_stock) {
+            $recipients = User::whereIn('role_id', ['SA00', 'MG00', 'WH01', 'WH02'])->get();
             if ($recipients->isNotEmpty()) {
                 Notification::send($recipients, new LowStockAlert($asset));
             }
@@ -198,26 +244,14 @@ class AssetController extends Controller
     }
 
     /**
-     * Helper method untuk membuat nomor seri unik.
+     * Helper: Membuat nomor seri unik.
      */
-    private function generateSerialNumber(string $categoryCode): string
+    private function generateSerialNumber(string $categoryName): string
     {
-        $categoryCode = strtoupper(substr($categoryCode, 0, 3));
-        $datePart = date('dmy');
-        $prefix = $categoryCode . $datePart;
-
-        $lastAsset = Asset::where('serial_number', 'like', $prefix . '%')
-            ->orderBy('serial_number', 'desc')
-            ->first();
-
-        $nextNumber = 1;
-        if ($lastAsset) {
-            $lastSequence = (int) substr($lastAsset->serial_number, -4);
-            $nextNumber = $lastSequence + 1;
-        }
-
-        $sequencePart = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-
-        return $prefix . $sequencePart;
+        $categoryCode = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $categoryName), 0, 3));
+        $prefix = $categoryCode . date('dmy');
+        $lastAsset = Asset::where('serial_number', 'like', $prefix . '%')->orderBy('serial_number', 'desc')->first();
+        $nextNumber = $lastAsset ? ((int) substr($lastAsset->serial_number, -4)) + 1 : 1;
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -56,8 +56,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // --- Rute Leader, Manager, & Admin ---
+
+    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->prefix('complaints')->name('complaints.')->group(function () {
+        Route::get('/', [ComplaintController::class, 'viewPage'])->name('index');
+        Route::get('/create', [ComplaintController::class, 'create'])->name('create');
+        Route::get('/{id}', [ComplaintController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+    });
+
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(function () {
-        Route::get('/complaints', [ComplaintController::class, 'viewPage'])->name('complaints.index');
         Route::get('/tasks/monitoring', [TaskWorkflowController::class, 'monitoringPage'])->name('tasks.monitoring');
         Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 

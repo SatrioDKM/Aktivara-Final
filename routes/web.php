@@ -49,9 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
 
     // --- Rute untuk Manajemen Stok (Warehouse, Admin, Manager) ---
-    Route::get('/stock-management', [StockManagementController::class, 'viewPage'])
-        ->middleware('role:SA00,MG00,WH01,WH02')
-        ->name('stock.index');
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('stock-management')->name('stock.')->group(function () {
+        Route::get('/', [StockManagementController::class, 'viewPage'])->name('index');
+    });
 
 
     // --- Rute Leader, Manager, & Admin ---

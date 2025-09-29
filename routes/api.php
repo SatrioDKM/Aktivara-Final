@@ -94,9 +94,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     // --- API untuk Manajemen Stok ---
-    Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
-        Route::get('/stock-management', [StockManagementController::class, 'index'])->name('api.stock.index');
-        Route::put('/stock-management/{id}', [StockManagementController::class, 'update'])->name('api.stock.update')->where('id', '[0-9]+');
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('stock-management')->name('api.stock.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StockManagementController::class, 'index'])->name('index');
+        Route::put('/{id}', [\App\Http\Controllers\StockManagementController::class, 'update'])->name('update')->where('id', '[0-9]+');
     });
 
     // --- GRUP ENDPOINT UNTUK ALUR KERJA TUGAS ---

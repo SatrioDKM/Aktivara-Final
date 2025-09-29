@@ -144,8 +144,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- GRUP ENDPOINT UNTUK LAPORAN/KELUHAN ---
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->prefix('complaints')->name('api.complaints.')->group(function () {
-        Route::get('/', [ComplaintController::class, 'index']);
-        Route::post('/', [ComplaintController::class, 'store']);
+        Route::get('/', [ComplaintController::class, 'index'])->name('index');
+        // ================== PERBAIKAN DI SINI ==================
+        Route::post('/', [ComplaintController::class, 'store'])->name('store');
+        // =======================================================
         Route::get('/{id}', [ComplaintController::class, 'show'])->where('id', '[0-9]+');
         Route::delete('/{id}', [ComplaintController::class, 'destroy'])->where('id', '[0-9]+');
         Route::post('/{id}/convert', [ComplaintController::class, 'convertToTask'])->name('convert')->where('id', '[0-9]+');

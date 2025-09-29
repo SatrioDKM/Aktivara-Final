@@ -105,7 +105,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
         });
 
-        Route::get('/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
+        Route::prefix('maintenances')->name('maintenances.')->group(function () {
+            Route::get('/', [AssetMaintenanceController::class, 'viewPage'])->name('index');
+            Route::get('/create', [AssetMaintenanceController::class, 'create'])->name('create');
+            Route::get('/{id}', [AssetMaintenanceController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [AssetMaintenanceController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
     });
 
     // --- Rute Khusus Superadmin ---

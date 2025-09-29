@@ -2,53 +2,107 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
 use App\Models\Asset;
-use App\Models\TaskType;
-use Illuminate\Http\Request;
 use App\Models\AssetsMaintenance;
+use App\Models\Task;
+use App\Models\TaskType;
+use App\Models\User;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\View\View;
 
 class AssetMaintenanceController extends Controller
 {
     /**
-     * Menampilkan halaman Blade untuk Maintenance Aset.
+     * Menampilkan halaman utama (index).
      */
-    public function viewPage()
+    public function viewPage(): View
     {
-        // Ambil hanya aset tetap, karena hanya itu yang bisa di-maintenance
-        $assets = Asset::where('asset_type', 'fixed_asset')
-            ->where('status', '!=', 'disposed')
-            ->orderBy('name_asset')
-            ->get();
-
-        return view('maintenance.index', compact('assets'));
+        $data = [
+            'assets' => Asset::where('asset_type', 'fixed_asset')->where('status', '!=', 'disposed')->orderBy('name_asset')->get(),
+            'technicians' => User::whereIn('role_id', ['TK01', 'TK02'])->orderBy('name')->get(['id', 'name']),
+        ];
+        return view('backend.master.maintenances.index', compact('data'));
     }
 
     /**
-     * Menampilkan daftar semua riwayat maintenance.
+     * Menampilkan halaman formulir tambah.
+     */
+    public function create(): View
+    {
+        $data = [
+            'assets' => Asset::where('asset_type', 'fixed_asset')->where('status', 'available')->orderBy('name_asset')->get(),
+        ];
+        return view('backend.master.maintenances.create', compact('data'));
+    }
+
+    /**
+     * Menampilkan halaman detail (show).
+     */
+    public function showPage(string $id): View
+    {
+        $data = [
+            'maintenance' => AssetsMaintenance::with(['asset.room.floor.building', 'technician:id,name', 'generatedTask:id,assets_maintenance_id'])->findOrFail($id)
+        ];
+        return view('backend.master.maintenances.show', compact('data'));
+    }
+
+    /**
+     * Menampilkan halaman formulir edit.
+     */
+    public function edit(string $id): View
+    {
+        $data = [
+            'maintenance' => AssetsMaintenance::with('asset')->findOrFail($id),
+            'technicians' => User::whereIn('role_id', ['TK01', 'TK02'])->orderBy('name')->get(['id', 'name']),
+        ];
+        return view('backend.master.maintenances.edit', compact('data'));
+    }
+
+    // ===================================================================
+    // API METHODS
+    // ===================================================================
+
+    /**
+     * API: Menampilkan daftar riwayat maintenance dengan paginasi dan filter.
      */
     public function index()
     {
-        // Pastikan relasi technician dimuat
-        $maintenances = AssetsMaintenance::with(['asset', 'technician:id,name'])->latest()->get();
+        $query = AssetsMaintenance::with(['asset', 'technician:id,name']);
+
+        if (request('search', '')) {
+            $search = request('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhereHas('asset', fn($assetQuery) => $assetQuery->where('name_asset', 'like', "%{$search}%"));
+            });
+        }
+
+        if (request('status', '')) {
+            $query->where('status', request('status'));
+        }
+
+        if (request('technician', '')) {
+            $query->where('user_id', request('technician'));
+        }
+
+        $maintenances = $query->latest()->paginate(request('perPage', 10));
         return response()->json($maintenances);
     }
 
     /**
-     * Menyimpan laporan kerusakan baru dan memicu pembuatan tugas.
-     * **(REVISI)**
+     * API: Menyimpan laporan kerusakan baru dan memicu pembuatan tugas.
      */
-    public function store(Request $request)
+    public function store()
     {
-        $validator = Validator::make($request->all(), [
-            'asset_id' => 'required|exists:assets,id,asset_type,fixed_asset', // Pastikan hanya Aset Tetap
+        $validator = Validator::make(request()->all(), [
+            'asset_id' => 'required|exists:assets,id,asset_type,fixed_asset',
             'maintenance_type' => 'required|in:repair,routine_check,replacement',
-            'description_text' => 'required|string|min:10',
+            'description' => 'required|string|min:10',
             'start_date' => 'nullable|date',
+            'priority' => 'required|in:low,medium,high,critical',
         ]);
 
         if ($validator->fails()) {
@@ -56,38 +110,33 @@ class AssetMaintenanceController extends Controller
         }
 
         try {
-            $maintenance = DB::transaction(function () use ($request) {
-                $asset = Asset::find($request->asset_id);
-
-                // 1. Buat record maintenance
-                $newMaintenance = AssetsMaintenance::create([
-                    'asset_id' => $asset->id,
-                    'maintenance_type' => $request->maintenance_type,
-                    'description_text' => $request->description_text,
-                    'start_date' => $request->start_date,
-                    'status' => 'scheduled', // Status awal
-                ]);
-
-                // 2. Ubah status aset menjadi 'maintenance'
+            $maintenance = DB::transaction(function () {
+                $asset = Asset::find(request('asset_id'));
                 $asset->update(['status' => 'maintenance']);
 
-                // 3. Cari atau buat TaskType untuk perbaikan
+                $newMaintenance = AssetsMaintenance::create([
+                    'asset_id' => $asset->id,
+                    'maintenance_type' => request('maintenance_type'),
+                    'description' => request('description'),
+                    'start_date' => request('start_date') ?: now(),
+                    'status' => 'scheduled',
+                ]);
+
                 $taskType = TaskType::firstOrCreate(
                     ['name_task' => 'Perbaikan Aset', 'departemen' => 'TK'],
-                    ['description' => 'Tugas perbaikan aset yang dilaporkan rusak.']
+                    ['description' => 'Tugas perbaikan aset yang dilaporkan rusak.', 'priority_level' => 'high']
                 );
 
-                // 4. Buat Task baru dan tautkan dengan maintenance_id
                 Task::create([
                     'title' => "Perbaikan Aset: " . $asset->name_asset,
                     'task_type_id' => $taskType->id,
-                    'assets_maintenance_id' => $newMaintenance->id, // <-- TAUTAN DIBUAT DI SINI
+                    'assets_maintenance_id' => $newMaintenance->id,
                     'asset_id' => $asset->id,
                     'room_id' => $asset->room_id,
-                    'priority' => 'high', // Tambahkan prioritas
-                    'description' => "Laporan Kerusakan: " . $request->description_text,
+                    'priority' => request('priority'),
+                    'description' => "Laporan Kerusakan: " . request('description'),
                     'created_by' => Auth::id(),
-                    'status' => 'unassigned', // Dilempar ke job pool Teknisi
+                    'status' => 'unassigned',
                 ]);
 
                 return $newMaintenance;
@@ -95,21 +144,30 @@ class AssetMaintenanceController extends Controller
 
             return response()->json($maintenance->load(['asset', 'technician']), 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal membuat laporan maintenance: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal membuat laporan: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * Memperbarui data maintenance.
-     * **(REVISI)**
+     * API: Menampilkan satu data maintenance spesifik.
      */
-    public function update(Request $request, string $id)
+    public function show(string $id)
+    {
+        $maintenance = AssetsMaintenance::with(['asset', 'technician:id,name'])->findOrFail($id);
+        return response()->json($maintenance);
+    }
+
+    /**
+     * API: Memperbarui data maintenance.
+     */
+    public function update(string $id)
     {
         $maintenance = AssetsMaintenance::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make(request()->all(), [
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
             'notes' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
@@ -119,19 +177,15 @@ class AssetMaintenanceController extends Controller
 
         $data = $validator->validated();
 
-        // Tetapkan teknisi yang mengerjakan hanya jika belum ada & statusnya relevan
-        if (!$maintenance->user_id && in_array($data['status'], ['in_progress', 'completed'])) {
-            $data['user_id'] = Auth::id();
+        if (in_array($data['status'], ['in_progress', 'completed']) && empty($data['user_id'])) {
+            $data['user_id'] = $maintenance->user_id ?: Auth::id();
         }
 
         $maintenance->update($data);
 
-        // Jika maintenance selesai, kembalikan status aset menjadi 'available'
         if ($data['status'] === 'completed') {
             $maintenance->asset->update(['status' => 'available', 'condition' => 'Baik']);
-        }
-        // Jika dibatalkan, kembalikan status aset juga
-        else if ($data['status'] === 'cancelled') {
+        } elseif ($data['status'] === 'cancelled') {
             $maintenance->asset->update(['status' => 'available']);
         }
 
@@ -139,19 +193,15 @@ class AssetMaintenanceController extends Controller
     }
 
     /**
-     * Menghapus data maintenance.
+     * API: Menghapus data maintenance.
      */
     public function destroy(string $id)
     {
         $maintenance = AssetsMaintenance::findOrFail($id);
-
-        // Kembalikan status aset sebelum menghapus record
-        if ($maintenance->asset->status === 'maintenance') {
+        if ($maintenance->asset && $maintenance->asset->status === 'maintenance') {
             $maintenance->asset->update(['status' => 'available']);
         }
-
         $maintenance->delete();
-
         return response()->json(null, 204);
     }
 }

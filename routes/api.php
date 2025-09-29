@@ -75,11 +75,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // --- Rute manual untuk Maintenances ---
-    Route::get('/maintenances', [AssetMaintenanceController::class, 'index']);
-    Route::post('/maintenances', [AssetMaintenanceController::class, 'store']);
-    Route::get('/maintenances/{id}', [AssetMaintenanceController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/maintenances/{id}', [AssetMaintenanceController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/maintenances/{id}', [AssetMaintenanceController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('maintenances')->group(function () {
+        Route::get('/', [AssetMaintenanceController::class, 'index']);
+        Route::post('/', [AssetMaintenanceController::class, 'store']);
+        Route::get('/{id}', [AssetMaintenanceController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [AssetMaintenanceController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [AssetMaintenanceController::class, 'destroy'])->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Users (Hanya Superadmin) ---
     Route::middleware('role:SA00')->group(function () {

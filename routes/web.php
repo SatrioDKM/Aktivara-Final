@@ -84,8 +84,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/edit', [FloorController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
         });
 
-        Route::get('/rooms', [RoomController::class, 'viewPage'])->name('rooms.index');
-        Route::get('/task-types', [TaskTypeController::class, 'viewPage'])->name('task_types.index');
+        Route::prefix('rooms')->name('rooms.')->group(function () {
+            Route::get('/', [RoomController::class, 'viewPage'])->name('index');
+            Route::get('/create', [RoomController::class, 'create'])->name('create');
+            Route::get('/{id}', [RoomController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        Route::prefix('task-types')->name('task_types.')->group(function () {
+            Route::get('/', [TaskTypeController::class, 'viewPage'])->name('index');
+            Route::get('/create', [TaskTypeController::class, 'create'])->name('create');
+            Route::get('/{id}', [TaskTypeController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [TaskTypeController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
         Route::get('/assets', [AssetController::class, 'viewPage'])->name('assets.index');
         Route::get('/maintenances', [AssetMaintenanceController::class, 'viewPage'])->name('maintenances.index');
     });

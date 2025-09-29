@@ -47,19 +47,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // --- Rute manual untuk Rooms ---
-    Route::get('/rooms', [RoomController::class, 'index']);
-    Route::post('/rooms', [RoomController::class, 'store']);
-    Route::get('/rooms/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/rooms/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('rooms')->group(function () {
+        Route::get('/', [RoomController::class, 'index']);
+        Route::post('/', [RoomController::class, 'store']);
+        Route::get('/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Task Types ---
-    Route::get('/task-types', [TaskTypeController::class, 'index']);
-    Route::post('/task-types', [TaskTypeController::class, 'store']);
-    Route::get('/task-types/by-department/{department_code}', [TaskTypeController::class, 'getByDepartment'])->name('api.task-types.by-department');
-    Route::get('/task-types/{id}', [TaskTypeController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/task-types/{id}', [TaskTypeController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/task-types/{id}', [TaskTypeController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('task-types')->group(function () {
+        Route::get('/', [TaskTypeController::class, 'index']);
+        Route::post('/', [TaskTypeController::class, 'store']);
+        Route::get('/{id}', [TaskTypeController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [TaskTypeController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}', [TaskTypeController::class, 'destroy'])->where('id', '[0-9]+');
+    });
 
     // --- Rute manual untuk Assets ---
     Route::get('/assets', [AssetController::class, 'index']);

@@ -2,13 +2,11 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <title>{{ $packingList->document_number }}</title>
+    <title>Packing List - {{ $packingList->document_number }}</title>
     <style>
         body {
             font-family: 'Helvetica', sans-serif;
             font-size: 12px;
-            color: #333;
         }
 
         .container {
@@ -16,29 +14,27 @@
             margin: 0 auto;
         }
 
-        .header {
+        .header,
+        .footer {
             text-align: center;
-            margin-bottom: 20px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 24px;
         }
 
-        .header p {
-            margin: 5px 0;
+        .content {
+            margin-top: 20px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
         }
 
         th,
         td {
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
@@ -47,30 +43,31 @@
             background-color: #f2f2f2;
         }
 
-        .details {
-            margin-bottom: 30px;
+        .info-table {
+            border: none;
+            margin-bottom: 20px;
         }
 
-        .details td {
+        .info-table td {
             border: none;
-            padding: 3px 0;
+            padding: 2px 0;
         }
 
         .signatures {
-            margin-top: 60px;
+            margin-top: 40px;
             width: 100%;
         }
 
         .signature-box {
-            width: 45%;
             display: inline-block;
+            width: 30%;
             text-align: center;
+            margin: 0 1.5%;
         }
 
-        .signature-box .name {
+        .signature-box .line {
+            border-top: 1px solid #000;
             margin-top: 60px;
-            border-top: 1px solid #333;
-            padding-top: 5px;
         }
     </style>
 </head>
@@ -78,59 +75,72 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>PACKING LIST</h1>
+            <h1>PACKING LIST / SURAT JALAN</h1>
             <p><strong>Nomor Dokumen:</strong> {{ $packingList->document_number }}</p>
         </div>
 
-        <table class="details">
-            <tr>
-                <td width="150px"><strong>Tanggal Dibuat:</strong></td>
-                <td>{{ $packingList->created_at->format('d F Y') }}</td>
-            </tr>
-            <tr>
-                <td><strong>Dibuat Oleh (Warehouse):</strong></td>
-                <td>{{ $packingList->creator->name }}</td>
-            </tr>
-            <tr>
-                <td><strong>Nama Penerima:</strong></td>
-                <td>{{ $packingList->recipient_name }}</td>
-            </tr>
-            <tr>
-                <td><strong>Catatan:</strong></td>
-                <td>{{ $packingList->notes ?? '-' }}</td>
-            </tr>
-        </table>
+        <div class="content">
+            <table class="info-table">
+                <tr>
+                    <td width="15%"><strong>Tanggal</strong></td>
+                    <td width="1%">:</td>
+                    <td>{{ \Carbon\Carbon::parse($packingList->created_at)->translatedFormat('d F Y') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Nama Penerima</strong></td>
+                    <td>:</td>
+                    <td>{{ $packingList->recipient_name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Dibuat Oleh</strong></td>
+                    <td>:</td>
+                    <td>{{ $packingList->creator->name }}</td>
+                </tr>
+                <tr>
+                    <td valign="top"><strong>Catatan</strong></td>
+                    <td valign="top">:</td>
+                    <td valign="top">{{ $packingList->notes ?? '-' }}</td>
+                </tr>
+            </table>
 
-        <h3>Daftar Barang Keluar</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th width="5%">No.</th>
-                    <th>Nama Aset</th>
-                    <th>Serial Number (S/N)</th>
-                    <th>Kategori</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($packingList->assets as $index => $asset)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $asset->name_asset }}</td>
-                    <td>{{ $asset->serial_number ?? 'N/A' }}</td>
-                    <td>{{ $asset->category }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+            <h4>Daftar Aset/Barang:</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">No.</th>
+                        <th>Nama Aset/Barang</th>
+                        <th>Nomor Seri</th>
+                        <th>Jumlah</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($packingList->assets as $index => $asset)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $asset->name_asset }}</td>
+                        <td>{{ $asset->serial_number ?? '-' }}</td>
+                        <td>1 Unit</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
         <div class="signatures">
-            <div class="signature-box" style="float: left;">
+            <div class="signature-box">
                 <p>Disiapkan Oleh,</p>
-                <p class="name">{{ $packingList->creator->name }}</p>
+                <div class="line"></div>
+                <p>{{ $packingList->creator->name }}</p>
             </div>
-            <div class="signature-box" style="float: right;">
+            <div class="signature-box">
+                <p>Disetujui Oleh,</p>
+                <div class="line"></div>
+                <p>(Manager)</p>
+            </div>
+            <div class="signature-box">
                 <p>Diterima Oleh,</p>
-                <p class="name">{{ $packingList->recipient_name }}</p>
+                <div class="line"></div>
+                <p>{{ $packingList->recipient_name }}</p>
             </div>
         </div>
     </div>

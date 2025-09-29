@@ -11,6 +11,7 @@ use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\PackingListController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\StockManagementController;
@@ -92,11 +93,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->where('id', '[0-9]+');
     });
 
-
     // --- API untuk Manajemen Stok ---
     Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('stock-management')->name('api.stock.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\StockManagementController::class, 'index'])->name('index');
-        Route::put('/{id}', [\App\Http\Controllers\StockManagementController::class, 'update'])->name('update')->where('id', '[0-9]+');
+        Route::get('/', [StockManagementController::class, 'index'])->name('index');
+        Route::put('/{id}', [StockManagementController::class, 'update'])->name('update')->where('id', '[0-9]+');
+    });
+
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('packing-lists')->name('api.packing_lists.')->group(function () {
+        Route::get('/', [PackingListController::class, 'index'])->name('index');
+        Route::post('/', [PackingListController::class, 'store'])->name('store');
+        // Rute baru untuk Select2
+        Route::get('/get-assets', [PackingListController::class, 'getAvailableAssets'])->name('get_assets');
     });
 
     // --- GRUP ENDPOINT UNTUK ALUR KERJA TUGAS ---

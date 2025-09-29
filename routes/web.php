@@ -44,9 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // --- RUTE UNTUK BARANG KELUAR / PACKING LIST ---
-    Route::get('/packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
-    Route::post('/packing-lists', [PackingListController::class, 'store'])->name('packing_lists.store');
-    Route::get('/packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('packing-lists')->name('packing_lists.')->group(function () {
+        Route::get('/', [PackingListController::class, 'viewPage'])->name('index');
+        Route::get('/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('pdf')->where('id', '[0-9]+');
+    });
 
     // --- Rute untuk Manajemen Stok (Warehouse, Admin, Manager) ---
     Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('stock-management')->name('stock.')->group(function () {

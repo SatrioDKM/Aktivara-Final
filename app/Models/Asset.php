@@ -2,81 +2,69 @@
 
 namespace App\Models;
 
-use App\Models\Room;
-use App\Models\Task;
-use App\Models\User;
-use App\Models\PackingList;
-use App\Models\AssetsMaintenance;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Asset extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'room_id',
         'name_asset',
+        'description',
         'asset_type',
         'category',
         'serial_number',
-        'description',
         'purchase_date',
         'condition',
         'status',
         'current_stock',
         'minimum_stock',
+        'room_id',
         'created_by',
         'updated_by',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'purchase_date' => 'date',
-            'asset_type' => 'string',
-            'status' => 'string',
             'current_stock' => 'integer',
             'minimum_stock' => 'integer',
         ];
     }
 
     /**
-     * Relasi ke Room (lokasi aset)
+     * Relasi ke Room (lokasi aset).
      */
-    public function room()
+    public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
     /**
-     * Relasi ke Maintenance Logs (untuk historikal maintenance)
-     * (Nama relasi ini sudah benar, kita akan manfaatkan ini)
+     * Relasi ke riwayat pemeliharaan aset ini.
      */
-    public function maintenances()
+    public function maintenances(): HasMany
     {
         return $this->hasMany(AssetsMaintenance::class);
     }
 
     /**
-     * Relasi ke Tasks untuk melihat history pemakaian/pergerakan.
-     * (INI RELASI BARU)
+     * Relasi ke semua tugas yang terkait dengan aset ini.
      */
-    public function tasks()
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class)->latest();
     }
 
     /**
      * Relasi ke User yang membuat aset.
-     * (INI YANG DITAMBAHKAN)
      */
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -84,15 +72,15 @@ class Asset extends Model
     /**
      * Relasi ke User yang terakhir memperbarui aset.
      */
-    public function updater()
+    public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**
-     * Relasi ke Packing Lists (banyak ke banyak).
+     * Relasi ke Packing Lists di mana aset ini terdaftar.
      */
-    public function packingLists()
+    public function packingLists(): BelongsToMany
     {
         return $this->belongsToMany(PackingList::class, 'asset_packing_list');
     }

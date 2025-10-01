@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Building;
 use App\Models\Floor;
+use App\Models\Building;
+use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
 
 class FloorController extends Controller
 {
@@ -61,25 +63,18 @@ class FloorController extends Controller
     // ===================================================================
 
     /**
-     * API: Menampilkan daftar semua lantai dengan paginasi dan filter.
+     * Mengambil daftar lantai, bisa difilter berdasarkan building_id.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        $query = Floor::with(['building:id,name_building', 'creator:id,name']);
+        $query = Floor::query()->orderBy('name_floor');
 
-        // Filter pencarian
-        if (request('search', '')) {
-            $query->where('name_floor', 'like', '%' . request('search') . '%');
+        // Filter berdasarkan building_id jika ada di request
+        if ($request->has('building_id')) {
+            $query->where('building_id', $request->input('building_id'));
         }
 
-        // Filter gedung
-        if (request('building', '')) {
-            $query->where('building_id', request('building'));
-        }
-
-        $floors = $query->latest()->paginate(request('perPage', 10));
-
-        return response()->json($floors);
+        return response()->json($query->get(['id', 'name_floor']));
     }
 
     /**

@@ -1,112 +1,173 @@
 <x-app-layout>
+    {{-- Slot untuk Header Halaman --}}
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            <i class="fas fa-history mr-2"></i>
             {{ __('Riwayat Tugas Saya') }}
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="myHistoryPage()">
+    <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
+            <div x-data="myHistory()" x-cloak>
 
-                    <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                            <a href="#" @click.prevent="changeTab('active')"
-                                :class="{ 'border-indigo-500 text-indigo-600 dark:text-indigo-400': filters.status === 'active', 'border-transparent text-gray-500 hover:text-gray-700': filters.status !== 'active' }"
-                                class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
-                                Tugas Aktif
-                            </a>
-                            <a href="#" @click.prevent="changeTab('completed')"
-                                :class="{ 'border-indigo-500 text-indigo-600 dark:text-indigo-400': filters.status === 'completed', 'border-transparent text-gray-500 hover:text-gray-700': filters.status !== 'completed' }"
-                                class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
-                                Tugas Selesai
-                            </a>
-                        </nav>
+                {{-- Card untuk Panel Filter --}}
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                            <i class="fas fa-filter mr-3 text-gray-400"></i>Filter Pencarian
+                        </h3>
                     </div>
-
-                    <div
-                        class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-b-lg mb-6 flex flex-col md:flex-row md:items-center gap-4">
-                        <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="date" x-model="filters.start_date"
-                                class="w-full rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700"
-                                placeholder="Dari Tanggal">
-                            <input type="date" x-model="filters.end_date"
-                                class="w-full rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700"
-                                placeholder="Sampai Tanggal">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none"><i
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                            {{-- Filter Dari Tanggal --}}
+                            <div>
+                                <label for="start_date"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dari
+                                    Tanggal</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
+                                            class="fas fa-calendar-day text-gray-400"></i></div>
+                                    <input type="date" x-model="filters.start_date" id="start_date"
+                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
+                                </div>
+                            </div>
+                            {{-- Filter Sampai Tanggal --}}
+                            <div>
+                                <label for="end_date"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sampai
+                                    Tanggal</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
+                                            class="fas fa-calendar-week text-gray-400"></i></div>
+                                    <input type="date" x-model="filters.end_date" id="end_date"
+                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
+                                </div>
+                            </div>
+                            {{-- Filter Status --}}
+                            <div>
+                                <label for="status"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status
+                                    Tugas</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
+                                            class="fas fa-tag text-gray-400"></i></div>
+                                    <select x-model="filters.status" id="status"
+                                        class="block w-full pl-10 border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700">
+                                        <option value="">Semua Status</option>
+                                        <option value="active">Aktif (Dikerjakan/Ditolak)</option>
+                                        <option value="pending_review">Menunggu Review</option>
+                                        <option value="completed">Selesai</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {{-- Tombol Aksi Filter --}}
+                            <div class="flex space-x-2">
+                                <button @click="applyFilters"
+                                    class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                    <i class="fas fa-search mr-2"></i>Filter
+                                </button>
+                                <button @click="resetFilters"
+                                    class="p-2 border rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {{-- Filter Pencarian Teks --}}
+                        <div>
+                            <label for="search" class="sr-only">Cari</label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
                                         class="fas fa-search text-gray-400"></i></div>
-                                <input type="search" x-model.debounce.500ms="filters.search"
-                                    placeholder="Cari judul tugas..."
-                                    class="w-full ps-10 rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                <input type="text" x-model.debounce.500ms="filters.search" @input="applyFilters"
+                                    id="search" placeholder="Cari berdasarkan judul tugas..."
+                                    class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
                             </div>
                         </div>
                     </div>
+                </div>
 
+                {{-- Card untuk Tabel Hasil --}}
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
                     <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Judul
-                                        Tugas</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis
-                                    </th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tgl.
-                                        Diperbarui</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi
-                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Judul Tugas</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Dibuat Oleh</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Tgl. Update</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Status</th>
+                                    <th scope="col" class="relative px-6 py-3"><span class="sr-only">Aksi</span></th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody
+                                class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 relative">
+                                {{-- Overlay Loading --}}
                                 <template x-if="isLoading">
-                                    <tr>
-                                        <td colspan="5" class="text-center py-10"><i
-                                                class="fas fa-spinner fa-spin fa-2x text-gray-400"></i></td>
+                                    <tr
+                                        class="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 flex items-center justify-center z-10">
+                                        <td class="text-center text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-circle-notch fa-spin text-2xl"></i>
+                                            <p class="mt-2">Memuat riwayat...</p>
+                                        </td>
                                     </tr>
                                 </template>
-                                <template x-if="!isLoading && tasks.length === 0">
-                                    <tr>
-                                        <td colspan="5" class="text-center py-10 text-gray-500 dark:text-gray-400">Tidak
-                                            ada data ditemukan.</td>
-                                    </tr>
-                                </template>
-                                <template x-for="task in tasks" :key="task.id">
+                                <template x-for="task in history.data" :key="task.id">
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                        <td class="px-6 py-4 font-medium" x-text="task.title"></td>
-                                        <td class="px-6 py-4 text-sm" x-text="task.task_type.name_task"></td>
-                                        <td class="px-6 py-4 text-center"><span
-                                                class="px-3 py-1 text-xs capitalize font-semibold rounded-full"
-                                                :class="statusClass(task.status)"
-                                                x-text="task.status.replace('_', ' ')"></span></td>
-                                        <td class="px-6 py-4 text-sm"
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                                x-text="task.title"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+                                            x-text="task.creator ? task.creator.name : 'N/A'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
                                             x-text="new Date(task.updated_at).toLocaleDateString('id-ID')"></td>
-                                        <td class="px-6 py-4 text-center">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                :class="statusColor(task.status)"
+                                                x-text="statusText(task.status)"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a :href="`/tasks/${task.id}`"
-                                                class="text-indigo-600 hover:underline text-sm font-semibold">Lihat
+                                                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat
                                                 Detail</a>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="!isLoading && (!history.data || history.data.length === 0)">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-10 text-center">
+                                            <i class="fas fa-folder-open text-4xl text-gray-400"></i>
+                                            <p class="mt-4 text-gray-500 dark:text-gray-400">Tidak ada riwayat tugas
+                                                yang cocok dengan filter Anda.</p>
                                         </td>
                                     </tr>
                                 </template>
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="mt-4 flex flex-col md:flex-row justify-between items-center">
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-0">
-                            Menampilkan <span x-text="pagination.from || 0"></span> sampai <span
-                                x-text="pagination.to || 0"></span> dari <span x-text="pagination.total || 0"></span>
-                            entri
+                    {{-- Kontrol Paginasi --}}
+                    <div class="p-4 flex justify-between items-center bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700"
+                        x-show="history.total > 0">
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            Menampilkan <span class="font-medium" x-text="history.from || 0"></span> - <span
+                                class="font-medium" x-text="history.to || 0"></span> dari <span class="font-medium"
+                                x-text="history.total || 0"></span> hasil
                         </p>
-                        <nav x-show="pagination.last_page > 1" class="flex items-center space-x-1">
-                            <template x-for="link in pagination.links">
-                                <button @click="changePage(link.url)" :disabled="!link.url"
-                                    :class="{ 'bg-indigo-600 text-white': link.active, 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700': !link.active && link.url, 'text-gray-400 cursor-not-allowed dark:text-gray-600': !link.url }"
-                                    class="px-3 py-2 rounded-md text-sm" x-html="link.label"></button>
-                            </template>
-                        </nav>
+                        <div class="flex space-x-2">
+                            <button @click="fetchHistory(history.current_page - 1)" :disabled="!history.prev_page_url"
+                                class="px-3 py-1 text-sm rounded-md bg-gray-200 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">Sebelumnya</button>
+                            <button @click="fetchHistory(history.current_page + 1)" :disabled="!history.next_page_url"
+                                class="px-3 py-1 text-sm rounded-md bg-gray-200 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">Berikutnya</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -115,57 +176,66 @@
 
     @push('scripts')
     <script>
-        function myHistoryPage() {
-                return {
-                    tasks: [],
-                    pagination: {},
-                    isLoading: true,
-                    filters: {
-                        status: 'active',
-                        start_date: '',
-                        end_date: '',
-                        search: ''
-                    },
-                    init() {
-                        this.fetchHistory();
-                        this.$watch('filters', () => this.applyFilters(), { deep: true });
-                    },
-                    changeTab(tab) {
-                        this.filters.status = tab;
-                        // applyFilters akan otomatis terpanggil oleh $watch
-                    },
-                    applyFilters() {
-                        this.fetchHistory(1);
-                    },
-                    fetchHistory(page = 1) {
-                        this.isLoading = true;
-                        const params = new URLSearchParams({ page, ...this.filters });
-                        fetch(`/api/tasks/my-history?${params.toString()}`, { headers: {'Accept': 'application/json'} })
-                        .then(res => res.json()).then(data => {
-                            this.tasks = data.data;
-                            data.links.forEach(link => {
-                                if (link.label.includes('Previous')) link.label = '<i class="fas fa-chevron-left"></i>';
-                                if (link.label.includes('Next')) link.label = '<i class="fas fa-chevron-right"></i>';
-                            });
-                            this.pagination = data;
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('myHistory', () => ({
+                isLoading: true,
+                history: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
+                filters: { start_date: '', end_date: '', status: '', search: '' },
+
+                init() {
+                    this.fetchHistory(1);
+                },
+
+                applyFilters() {
+                    this.fetchHistory(1); // Selalu kembali ke halaman 1 saat filter baru diterapkan
+                },
+
+                resetFilters() {
+                    this.filters = { start_date: '', end_date: '', status: '', search: '' };
+                    this.fetchHistory(1);
+                },
+
+                fetchHistory(page) {
+                    if (page < 1 || (page > this.history.last_page && this.history.last_page !== null)) return;
+
+                    this.isLoading = true;
+                    const activeFilters = Object.fromEntries(Object.entries(this.filters).filter(([_, v]) => v !== null && v !== ''));
+                    const params = new URLSearchParams({ page: page, ...activeFilters }).toString();
+
+                    axios.get(`{{ route('api.tasks.my_history_data') }}?${params}`)
+                        .then(response => {
+                            this.history = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Gagal memuat riwayat tugas:', error);
+                            alert('Gagal memuat riwayat. Silakan coba lagi.');
+                        })
+                        .finally(() => {
                             this.isLoading = false;
                         });
-                    },
-                    changePage(url) {
-                        if (!url) return;
-                        this.fetchHistory(new URL(url).searchParams.get('page'));
-                    },
-                    statusClass(status) {
-                        const colors = {
-                            in_progress: 'bg-blue-100 text-blue-800',
-                            rejected: 'bg-red-100 text-red-800',
-                            completed: 'bg-green-100 text-green-800',
-                            pending_review: 'bg-yellow-100 text-yellow-800'
-                        };
-                        return colors[status] || 'bg-gray-100';
-                    }
+                },
+
+                statusColor(status) {
+                    const colors = {
+                        'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                        'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                        'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    };
+                    return colors[status] || 'bg-gray-100 text-gray-800';
+                },
+
+                statusText(status) {
+                    const texts = {
+                        'in_progress': 'Dikerjakan',
+                        'pending_review': 'Review',
+                        'completed': 'Selesai',
+                        'rejected': 'Ditolak'
+                    };
+                    return texts[status] || status.replace(/_/g, ' ');
                 }
-            }
+            }));
+        });
     </script>
     @endpush
 </x-app-layout>

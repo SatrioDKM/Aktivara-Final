@@ -6,105 +6,90 @@ use App\Models\Room;
 use App\Models\User;
 use App\Models\Asset;
 use App\Models\TaskType;
-use App\Models\DailyReport;
 use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'task_type_id',
-        'user_id', // Staff yang mengerjakan
-        'asset_id',
-        'room_id',
         'title',
         'description',
         'status',
+        'priority',
+        'rejection_notes',
         'due_date',
-        'created_by', // Leader yang membuat
+        'image_before',
+        'image_after',
+        'report_text', // Pastikan ini juga ada
+        'task_type_id',
+        'user_id',
+        'asset_id',
+        'room_id',
+        'created_by', // Ini adalah kolom database
         'assets_maintenance_id',
-        'report_text',
-        'image_before', // Kolom baru untuk foto sebelum
-        'image_after',  // Kolom baru untuk foto sesudah
-        'reviewed_by',
-        'review_notes',
-        'rejection_notes', // Kolom untuk catatan penolakan
-        'priority', // Ditambahkan dari migrasi
-        'department_code', // Ditambahkan dari migrasi
+        'reviewed_by', // Pastikan ini juga ada
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'due_date' => 'datetime',
-            'status' => 'string',
-            'priority' => 'string',
         ];
     }
 
     /**
-     * Relasi ke User (staff yang mengerjakan)
+     * Relasi ke User (staff yang ditugaskan).
+     * Nama: assignee
      */
-    public function staff()
+    public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
-     * Relasi ke User (leader yang membuat)
+     * Relasi ke User (leader yang membuat).
+     * PERBAIKAN UTAMA: Nama method adalah 'creator', bukan 'createdBy'.
+     * Ini untuk menghindari konflik dengan kolom 'created_by'.
      */
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
-     * Relasi ke TaskType
+     * Relasi ke TaskType.
      */
-    public function taskType()
+    public function taskType(): BelongsTo
     {
         return $this->belongsTo(TaskType::class);
     }
 
     /**
-     * Relasi ke Room
+     * Relasi ke Room.
      */
-    public function room()
+    public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
     /**
-     * Relasi ke Asset
+     * Relasi ke Asset.
      */
-    public function asset()
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
     }
 
     /**
-     * Relasi ke DailyReports (jika masih digunakan)
+     * Relasi ke record maintenance yang terkait.
      */
-    public function dailyReports()
-    {
-        return $this->hasMany(DailyReport::class);
-    }
-
-    /**
-     * Relasi ke record maintenance yang menghasilkan tugas ini.
-     */
-    public function maintenanceRecord()
+    public function maintenanceRecord(): BelongsTo
     {
         return $this->belongsTo(AssetsMaintenance::class, 'assets_maintenance_id');
     }

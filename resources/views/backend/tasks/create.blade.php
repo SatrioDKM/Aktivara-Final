@@ -1,101 +1,181 @@
 <x-app-layout>
+    {{-- Slot untuk Header Halaman --}}
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            <i class="fas fa-plus-circle mr-2"></i>
             {{ __('Buat Tugas Baru') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 md:p-8 text-gray-900 dark:text-gray-100" x-data="taskForm()">
-                    <form @submit.prevent="save()">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2">
+            {{-- Inisialisasi komponen Alpine.js dan passing data dari controller --}}
+            <div x-data="createTaskForm({
+                buildings: {{ Js::from($data['buildings']) }},
+                assets: {{ Js::from($data['assets']) }}
+            })" x-cloak>
+
+                {{-- Komponen Notifikasi Global --}}
+                <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-2"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100 transform translate-y-0"
+                    x-transition:leave-end="opacity-0 transform translate-y-2"
+                    class="fixed top-20 right-5 z-50 rounded-lg shadow-lg"
+                    :class="{ 'bg-green-500 text-white': notification.type === 'success', 'bg-red-500 text-white': notification.type === 'error' }">
+                    <div class="flex items-center p-4">
+                        <i class="fas"
+                            :class="{ 'fa-check-circle': notification.type === 'success', 'fa-times-circle': notification.type === 'error' }"></i>
+                        <div class="ml-3">
+                            <p class="font-bold" x-text="notification.type === 'success' ? 'Berhasil!' : 'Oops!'"></p>
+                            <p class="text-sm" x-text="notification.message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card Form Utama --}}
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
+                    <form @submit.prevent="submitForm" class="p-6 md:p-8" novalidate>
+                        <div class="space-y-6">
+
+                            {{-- Judul Tugas --}}
+                            <div>
                                 <label for="title"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Judul
-                                    Tugas</label>
-                                <div class="relative mt-1">
-                                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-heading text-gray-400"></i></div>
-                                    <input type="text" x-model="formData.title" id="title"
-                                        class="block w-full ps-10 border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Contoh: Perbaikan AC di Ruang Rapat" required>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Judul Tugas <span
+                                        class="text-red-500">*</span></label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
+                                            class="fas fa-heading text-gray-400"></i></div>
+                                    <input type="text" id="title" x-model="formData.title"
+                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="Contoh: Perbaikan AC di Ruang Meeting" required>
+                                </div>
+                                <template x-if="errors.title">
+                                    <p x-text="errors.title[0]" class="text-xs text-red-500 mt-1"></p>
+                                </template>
+                            </div>
+
+                            {{-- Prioritas & Jenis Tugas --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="priority"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tingkat
+                                        Prioritas <span class="text-red-500">*</span></label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-exclamation-triangle text-gray-400"></i></div>
+                                        <select id="priority" x-model="formData.priority"
+                                            class="block w-full pl-10 border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                            required>
+                                            <option value="low">Rendah (Low)</option>
+                                            <option value="medium">Sedang (Medium)</option>
+                                            <option value="high">Tinggi (High)</option>
+                                            <option value="critical">Kritis (Critical)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="task_type_id"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis Tugas
+                                        <span class="text-red-500">*</span></label>
+                                    <div class="mt-1" wire:ignore>
+                                        <select id="task_type_id" class="block w-full" required>
+                                            <option></option> {{-- Option kosong untuk placeholder Select2 --}}
+                                            @foreach($data['taskTypes'] as $type)
+                                            <option value="{{ $type->id }}">{{ $type->name_task }}
+                                                ({{$type->departemen}})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <template x-if="errors.task_type_id">
+                                        <p x-text="errors.task_type_id[0]" class="text-xs text-red-500 mt-1"></p>
+                                    </template>
                                 </div>
                             </div>
+
+                            {{-- Detail Lokasi & Aset (Opsional) --}}
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-6">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Detail Lokasi & Aset (Opsional)</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {{-- Gedung --}}
+                                    <div>
+                                        <label for="building_id"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gedung</label>
+                                        <div class="mt-1" wire:ignore>
+                                            <select id="building_id" class="block w-full">
+                                                <option></option>
+                                                @foreach($data['buildings'] as $building)
+                                                <option value="{{ $building->id }}">{{ $building->name_building }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {{-- Lantai --}}
+                                    <div>
+                                        <label for="floor_id"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lantai</label>
+                                        <div class="mt-1" wire:ignore>
+                                            <select id="floor_id" class="block w-full" :disabled="!selected.building">
+                                                <option></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {{-- Ruangan --}}
+                                    <div>
+                                        <label for="room_id"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ruangan</label>
+                                        <div class="mt-1" wire:ignore>
+                                            <select id="room_id" class="block w-full" :disabled="!selected.floor">
+                                                <option></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {{-- Aset Terkait --}}
+                                    <div>
+                                        <label for="asset_id"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset
+                                            Terkait</label>
+                                        <div class="mt-1" wire:ignore>
+                                            <select id="asset_id" class="block w-full">
+                                                <option></option>
+                                                @foreach($data['assets'] as $asset)
+                                                <option value="{{ $asset->id }}">{{ $asset->name_asset }} ({{
+                                                    $asset->serial_number ?? 'No S/N' }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Deskripsi Tugas --}}
                             <div>
-                                <label for="task_type_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis
-                                    Tugas</label>
-                                <select id="task_type_id" class="mt-1 block w-full" required>
-                                    <option value="">-- Pilih Jenis Tugas --</option>
-                                    @foreach($data['taskTypes'] as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name_task }} ({{$type->departemen}})
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="priority"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prioritas</label>
-                                <select id="priority" class="mt-1 block w-full" required>
-                                    <option value="low">Rendah</option>
-                                    <option value="medium">Sedang</option>
-                                    <option value="high">Tinggi</option>
-                                    <option value="critical">Kritis</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="user_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tugaskan Langsung
-                                    ke (Opsional)</label>
-                                <select id="user_id" class="mt-1 block w-full">
-                                    <option value="">-- Tidak Ditugaskan (Umum) --</option>
-                                    @foreach($data['staffUsers'] as $staff)
-                                    <option value="{{ $staff->id }}">{{ $staff->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="room_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lokasi/Ruangan
-                                    (Opsional)</label>
-                                <select id="room_id" class="mt-1 block w-full">
-                                    <option value="">-- Pilih Lokasi --</option>
-                                    @foreach($data['rooms'] as $room)
-                                    <option value="{{ $room->id }}">{{ $room->floor->building->name_building }} / {{
-                                        $room->floor->name_floor }} / {{ $room->name_room }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="asset_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset Terkait
-                                    (Opsional)</label>
-                                <select id="asset_id" class="mt-1 block w-full">
-                                    <option value="">-- Pilih Aset --</option>
-                                    @foreach($data['assets'] as $asset)
-                                    <option value="{{ $asset->id }}">{{ $asset->name_asset }} ({{ $asset->serial_number
-                                        ?? 'Non-Serial' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
                                 <label for="description"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi Tugas
                                     (Opsional)</label>
-                                <textarea x-model="formData.description" id="description" rows="4"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="Berikan detail tambahan mengenai tugas ini..."></textarea>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none"><i
+                                            class="fas fa-align-left text-gray-400"></i></div>
+                                    <textarea id="description" x-model="formData.description" rows="4"
+                                        class="block w-full pl-10 border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="Jelaskan detail pekerjaan, instruksi khusus, atau informasi pendukung lainnya..."></textarea>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-8 flex justify-end space-x-3">
-                            <a href="{{ url()->previous() }}"
-                                class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">Batal</a>
-                            <x-primary-button type="submit" ::disabled="isSubmitting">
-                                <span x-show="!isSubmitting">Buat Tugas</span>
-                                <span x-show="isSubmitting">Menyimpan...</span>
-                            </x-primary-button>
+
+                        {{-- Tombol Aksi --}}
+                        <div
+                            class="flex items-center justify-end mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="submit" :disabled="isSubmitting"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                <i class="fas fa-circle-notch fa-spin mr-2" x-show="isSubmitting"
+                                    style="display: none;"></i>
+                                <i class="fas fa-paper-plane mr-2" x-show="!isSubmitting"></i>
+                                <span x-text="isSubmitting ? 'Menyimpan...' : 'Buat Tugas'"></span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -103,56 +183,99 @@
         </div>
     </div>
 
-    @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    @endpush
-
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        function taskForm() {
-                return {
-                    isSubmitting: false,
-                    formData: { title: '', task_type_id: '', priority: 'medium', description: '', room_id: '', asset_id: '', user_id: '' },
-                    init() {
-                        $('#task_type_id, #priority, #user_id, #room_id, #asset_id').select2({ theme: 'classic', width: '100%' });
-                        $('#priority').val('medium').trigger('change');
-                    },
-                    getCsrfToken() {
-                        const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-                        return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : '';
-                    },
-                    async save() {
-                        this.isSubmitting = true;
-                        this.formData.task_type_id = $('#task_type_id').val();
-                        this.formData.priority = $('#priority').val();
-                        this.formData.user_id = $('#user_id').val();
-                        this.formData.room_id = $('#room_id').val();
-                        this.formData.asset_id = $('#asset_id').val();
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('createTaskForm', (data) => ({
+                formData: {
+                    title: '',
+                    priority: 'medium',
+                    description: '',
+                    task_type_id: '',
+                    room_id: '',
+                    asset_id: ''
+                },
+                isSubmitting: false,
+                notification: { show: false, message: '', type: 'success' },
+                errors: {},
 
-                        await fetch('/sanctum/csrf-cookie');
-                        fetch("{{ route('api.tasks.store') }}", {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
-                            body: JSON.stringify(this.formData)
-                        })
-                        .then(res => res.ok ? res.json() : Promise.reject(res.json()))
-                        .then(data => {
-                            sessionStorage.setItem('toastMessage', data.message);
-                            window.location.href = "{{ route('tasks.monitoring') }}";
-                        })
-                        .catch(err => {
-                            let msg = 'Gagal menyimpan. Periksa kembali isian Anda.';
-                            if (err.errors) msg = Object.values(err.errors).flat().join('<br>');
-                            iziToast.error({ title: 'Gagal!', message: msg, position: 'topRight', timeout: 5000 });
-                        })
-                        .finally(() => this.isSubmitting = false);
-                    }
+                selected: { building: '', floor: '' },
+
+                init() {
+                    const self = this;
+
+                    $('#task_type_id').select2({ theme: "classic", width: '100%', placeholder: '-- Pilih Jenis Tugas --' }).on('change', function () { self.formData.task_type_id = $(this).val(); });
+                    $('#building_id').select2({ theme: "classic", width: '100%', placeholder: '-- Pilih Gedung --' }).on('change', function () { self.selected.building = $(this).val(); });
+                    const floorSelect = $('#floor_id').select2({ theme: "classic", width: '100%', placeholder: '-- Pilih Lantai --' }).on('change', function () { self.selected.floor = $(this).val(); });
+                    const roomSelect = $('#room_id').select2({ theme: "classic", width: '100%', placeholder: '-- Pilih Ruangan --' }).on('change', function () { self.formData.room_id = $(this).val(); });
+                    $('#asset_id').select2({ theme: "classic", width: '100%', placeholder: '-- Pilih Aset --' }).on('change', function () { self.formData.asset_id = $(this).val(); });
+
+                    this.$watch('selected.building', (buildingId) => {
+                        self.selected.floor = ''; floorSelect.val(null).trigger('change');
+                        floorSelect.empty().append($('<option>')).select2({
+                            theme: "classic", width: '100%', placeholder: '-- Loading... --', data: []
+                        });
+                        if(buildingId) {
+                            axios.get(`/api/floors?building_id=${buildingId}`).then(res => {
+                                // --- PERBAIKAN DI SINI ---
+                                // Mengakses `res.data` karena controller mengembalikan array langsung
+                                const dataArray = Array.isArray(res.data) ? res.data : [];
+                                const floors = dataArray.map(f => ({ id: f.id, text: f.name_floor }));
+                                floorSelect.select2({
+                                    theme: "classic", width: '100%', placeholder: '-- Pilih Lantai --', data: floors
+                                });
+                            });
+                        }
+                    });
+
+                    this.$watch('selected.floor', (floorId) => {
+                        self.formData.room_id = ''; roomSelect.val(null).trigger('change');
+                        roomSelect.empty().append($('<option>')).select2({
+                            theme: "classic", width: '100%', placeholder: '-- Loading... --', data: []
+                        });
+                        if(floorId) {
+                             axios.get(`/api/rooms?floor_id=${floorId}`).then(res => {
+                                // --- PERBAIKAN DI SINI ---
+                                const dataArray = Array.isArray(res.data) ? res.data : [];
+                                const rooms = dataArray.map(r => ({ id: r.id, text: r.name_room }));
+                                roomSelect.select2({
+                                    theme: "classic", width: '100%', placeholder: '-- Pilih Ruangan --', data: rooms
+                                });
+                            });
+                        }
+                    });
+                },
+
+                submitForm() {
+                    this.isSubmitting = true; this.errors = {};
+                    axios.post('{{ route("api.tasks.store") }}', this.formData)
+                    .then(response => {
+                        this.showNotification(response.data.message, 'success');
+                        setTimeout(() => {
+                            if (response.data.redirect_url) { window.location.href = response.data.redirect_url; }
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        let errorMessage = 'Gagal membuat tugas. Silakan coba lagi.';
+                        if (error.response && error.response.status === 422) {
+                            this.errors = error.response.data.errors;
+                            errorMessage = 'Harap periksa kembali isian form Anda.';
+                        } else if(error.response && error.response.data.message) {
+                            errorMessage = error.response.data.message;
+                        }
+                        this.showNotification(errorMessage, 'error');
+                    })
+                    .finally(() => { this.isSubmitting = false; });
+                },
+
+                showNotification(message, type) {
+                    this.notification.message = message;
+                    this.notification.type = type;
+                    this.notification.show = true;
+                    setTimeout(() => this.notification.show = false, 3000);
                 }
-            }
+            }));
+        });
     </script>
     @endpush
 </x-app-layout>

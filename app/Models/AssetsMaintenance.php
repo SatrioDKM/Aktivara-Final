@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Asset;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AssetsMaintenance extends Model
 {
@@ -18,46 +17,39 @@ class AssetsMaintenance extends Model
         'start_date',
         'end_date',
         'maintenance_type',
-        'description', // Disesuaikan dengan migrasi
+        'description',
         'notes',
         'status',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'start_date' => 'datetime',
             'end_date' => 'datetime',
-            'maintenance_type' => 'string',
-            'status' => 'string',
         ];
     }
 
     /**
-     * Relasi ke Asset
+     * Relasi ke Asset yang sedang dalam pemeliharaan.
      */
-    public function asset()
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
     }
 
     /**
-     * Relasi ke User (teknisi)
+     * Relasi ke User (teknisi) yang bertanggung jawab.
      */
-    public function technician()
+    public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
-     * Relasi ke tugas yang dihasilkan oleh laporan maintenance ini.
+     * Relasi ke tugas yang dihasilkan oleh jadwal maintenance ini.
      */
-    public function generatedTask()
+    public function task(): HasOne
     {
         return $this->hasOne(Task::class, 'assets_maintenance_id');
     }

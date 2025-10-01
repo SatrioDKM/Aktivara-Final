@@ -52,13 +52,11 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan key:generate --ansi"
         ],
         "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:work --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+            "echo 'Starting development environment...'",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" --names \"SERVER,QUEUE,LOGS,VITE\" \"php artisan serve\" \"php artisan queue:work --tries=1\" \"php artisan pail\" \"npm run dev\""
         ]
     },
     "extra": {

@@ -6,11 +6,13 @@ use App\Models\Complaint;
 use App\Models\Task;
 use App\Models\TaskType;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request; // Menggunakan Request class
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class GuestComplaintController extends Controller
 {
@@ -19,18 +21,21 @@ class GuestComplaintController extends Controller
      */
     public function create(): View
     {
+        // Query sudah dioptimalkan dan tidak menyebabkan N+1
         $data = [
-            'taskTypes' => TaskType::whereIn('departemen', ['HK', 'TK', 'SC', 'UMUM'])->orderBy('name_task')->get(),
+            'taskTypes' => TaskType::whereIn('departemen', ['HK', 'TK', 'SC', 'UMUM'])
+                ->orderBy('name_task')
+                ->get(),
         ];
         return view('backend.complaints.guest-form', compact('data'));
     }
 
     /**
-     * Menyimpan keluhan dari tamu dan secara otomatis membuat tugas.
+     * Menyimpan keluhan dari tamu via API dan secara otomatis membuat tugas.
      */
-    public function store(): RedirectResponse
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:10',
             'reporter_name' => 'required|string|max:100',
@@ -39,40 +44,49 @@ class GuestComplaintController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
-            DB::transaction(function () {
-                // Karena ini dari tamu, tidak ada 'created_by'
-                // Kita bisa menggunakan user Superadmin sebagai default jika diperlukan
+            // Menggunakan DB::transaction untuk memastikan integritas data
+            $complaint = DB::transaction(function () use ($request) {
+                // Mengambil user Superadmin sebagai pencatat default
                 $superadmin = User::where('role_id', 'SA00')->first();
+                $creatorId = $superadmin ? $superadmin->id : 1; // Fallback ke ID 1 jika tidak ada
 
                 // 1. Buat tugas baru secara langsung
                 $newTask = Task::create([
-                    'title' => request('title'),
-                    'description' => request('description'),
-                    'task_type_id' => request('task_type_id'),
+                    'title' => $request->input('title'),
+                    'description' => $request->input('description'),
+                    'task_type_id' => $request->input('task_type_id'),
                     'priority' => 'medium', // Default priority untuk laporan tamu
                     'status' => 'unassigned',
-                    'created_by' => $superadmin ? $superadmin->id : 1, // Dibuat oleh sistem/superadmin
+                    'created_by' => $creatorId,
                 ]);
 
                 // 2. Buat record di tabel keluhan untuk arsip
-                Complaint::create([
-                    'title' => request('title'),
-                    'description' => request('description'),
-                    'reporter_name' => request('reporter_name'),
-                    'location_text' => request('location_text'),
-                    'status' => 'converted_to_task', // Langsung dianggap sudah jadi tugas
-                    'created_by' => $superadmin ? $superadmin->id : 1,
-                    'task_id' => $newTask->id, // Tautkan ke tugas yang baru dibuat
+                return Complaint::create([
+                    'title' => $request->input('title'),
+                    'description' => $request->input('description'),
+                    'reporter_name' => $request->input('reporter_name'),
+                    'location_text' => $request->input('location_text'),
+                    'status' => 'converted_to_task',
+                    'created_by' => $creatorId,
+                    'task_id' => $newTask->id,
                 ]);
             });
 
-            return redirect()->back()->with('success', 'Terima kasih! Laporan Anda telah berhasil dikirim dan akan segera kami proses.');
+            return response()->json([
+                'message' => 'Terima kasih! Laporan Anda telah berhasil dikirim dan akan segera kami proses.'
+            ], 201); // 201 Created
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan. Mohon coba lagi.')->withInput();
+            // Logging error untuk debugging
+            Log::error('Gagal membuat laporan tamu: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan pada server. Mohon coba lagi nanti.'
+            ], 500);
         }
     }
 }

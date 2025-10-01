@@ -2,12 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\Room;
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Asset;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Complaint extends Model
 {
@@ -28,7 +25,7 @@ class Complaint extends Model
     /**
      * Relasi ke User yang mencatat laporan.
      */
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -36,7 +33,7 @@ class Complaint extends Model
     /**
      * Relasi ke Tugas yang dihasilkan dari laporan ini.
      */
-    public function generatedTask()
+    public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'task_id');
     }
@@ -44,7 +41,7 @@ class Complaint extends Model
     /**
      * Relasi ke Ruangan (jika ada).
      */
-    public function room()
+    public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
@@ -52,7 +49,7 @@ class Complaint extends Model
     /**
      * Relasi ke Aset (jika ada).
      */
-    public function asset()
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
     }

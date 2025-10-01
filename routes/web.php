@@ -1,76 +1,66 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
-use App\Http\Controllers\FloorController;
-use App\Http\Controllers\ExportController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\AssetMaintenanceController;
 use App\Http\Controllers\BuildingController;
-use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PackingListController;
-use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\FloorController;
 use App\Http\Controllers\GuestComplaintController;
+use App\Http\Controllers\PackingListController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\StockManagementController;
-use App\Http\Controllers\AssetMaintenanceController;
+use App\Http\Controllers\TaskTypeController;
+use App\Http\Controllers\TaskWorkflowController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WelcomeController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Direvisi menggunakan Route::resource untuk menyederhanakan
+| definisi rute halaman web dan mengikuti konvensi Laravel.
+|
 */
 
-// ===================================================================
-// RUTE PUBLIK (Dapat diakses tanpa login)
-// ===================================================================
+// === Rute Publik ===
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
-
 Route::prefix('lapor-keluhan')->name('guest.complaint.')->group(function () {
     Route::get('/', [GuestComplaintController::class, 'create'])->name('create');
-    Route::post('/', [GuestComplaintController::class, 'store'])->name('store');
 });
 
 
-// ===================================================================
-// RUTE YANG MEMERLUKAN AUTENTIKASI
-// ===================================================================
+// === Rute Autentikasi ===
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // --- Rute Umum (Semua Role Setelah Login) ---
+    // --- Rute Umum ---
     Route::get('/dashboard', [DashboardController::class, 'viewPage'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTE UNTUK BARANG KELUAR / PACKING LIST ---
-    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('packing-lists')->name('packing_lists.')->group(function () {
-        Route::get('/', [PackingListController::class, 'viewPage'])->name('index');
-        Route::get('/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('pdf')->where('id', '[0-9]+');
+    // --- Fitur Spesifik dengan Hak Akses ---
+
+    Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
+        Route::get('packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
+        Route::get('packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
+        Route::get('stock-management', [StockManagementController::class, 'viewPage'])->name('stock.index');
     });
 
-    // --- Rute untuk Manajemen Stok (Warehouse, Admin, Manager) ---
-    Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('stock-management')->name('stock.')->group(function () {
-        Route::get('/', [StockManagementController::class, 'viewPage'])->name('index');
-    });
-
-
-    // --- Rute Leader, Manager, & Admin ---
-
-    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->prefix('complaints')->name('complaints.')->group(function () {
-        Route::get('/', [ComplaintController::class, 'viewPage'])->name('index');
-        Route::get('/create', [ComplaintController::class, 'create'])->name('create');
-        Route::get('/{id}', [ComplaintController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {
+        Route::get('complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
+        Route::resource('complaints', ComplaintController::class)->only(['index', 'show']);
     });
 
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(function () {
         Route::get('/tasks/monitoring', [TaskWorkflowController::class, 'monitoringPage'])->name('tasks.monitoring');
         Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 
-        // Grup untuk Halaman Ekspor
         Route::prefix('export')->name('export.')->group(function () {
             Route::get('/', [ExportController::class, 'viewPage'])->name('index');
             Route::get('/assets', [ExportController::class, 'exportAssets'])->name('assets');
@@ -80,57 +70,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Rute Data Master (Hanya Admin & Manager) ---
     Route::middleware(['role:SA00,MG00'])->prefix('master')->name('master.')->group(function () {
-        Route::prefix('buildings')->name('buildings.')->group(function () {
-            Route::get('/', [BuildingController::class, 'viewPage'])->name('index');
-            Route::get('/create', [BuildingController::class, 'create'])->name('create');
-            Route::get('/{id}', [BuildingController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [BuildingController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
-
-        Route::prefix('floors')->name('floors.')->group(function () {
-            Route::get('/', [FloorController::class, 'viewPage'])->name('index');
-            Route::get('/create', [FloorController::class, 'create'])->name('create');
-            Route::get('/{id}', [FloorController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [FloorController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
-
-        Route::prefix('rooms')->name('rooms.')->group(function () {
-            Route::get('/', [RoomController::class, 'viewPage'])->name('index');
-            Route::get('/create', [RoomController::class, 'create'])->name('create');
-            Route::get('/{id}', [RoomController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
-
-        Route::prefix('task-types')->name('task_types.')->group(function () {
-            Route::get('/', [TaskTypeController::class, 'viewPage'])->name('index');
-            Route::get('/create', [TaskTypeController::class, 'create'])->name('create');
-            Route::get('/{id}', [TaskTypeController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [TaskTypeController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
-
-        Route::prefix('assets')->name('assets.')->group(function () {
-            Route::get('/', [AssetController::class, 'viewPage'])->name('index');
-            Route::get('/create', [AssetController::class, 'create'])->name('create');
-            Route::get('/{id}', [AssetController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
-
-        Route::prefix('maintenances')->name('maintenances.')->group(function () {
-            Route::get('/', [AssetMaintenanceController::class, 'viewPage'])->name('index');
-            Route::get('/create', [AssetMaintenanceController::class, 'create'])->name('create');
-            Route::get('/{id}', [AssetMaintenanceController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
-            Route::get('/{id}/edit', [AssetMaintenanceController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-        });
+        // Menggunakan Route::resource untuk semua data master.
+        // Controller Anda menggunakan 'viewPage' untuk index dan 'showPage' untuk show.
+        // Jika nama method di controller diubah ke standar (index, show), .names() tidak perlu.
+        Route::resource('buildings', BuildingController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'buildings.index', 'create' => 'buildings.create', 'show' => 'buildings.show', 'edit' => 'buildings.edit']);
+        Route::resource('floors', FloorController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'floors.index', 'create' => 'floors.create', 'show' => 'floors.show', 'edit' => 'floors.edit']);
+        Route::resource('rooms', RoomController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'rooms.index', 'create' => 'rooms.create', 'show' => 'rooms.show', 'edit' => 'rooms.edit']);
+        Route::resource('task-types', TaskTypeController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'task_types.index', 'create' => 'task_types.create', 'show' => 'task_types.show', 'edit' => 'task_types.edit']);
+        Route::resource('assets', AssetController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'assets.index', 'create' => 'assets.create', 'show' => 'assets.show', 'edit' => 'assets.edit']);
+        Route::resource('maintenances', AssetMaintenanceController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'maintenances.index', 'create' => 'maintenances.create', 'show' => 'maintenances.show', 'edit' => 'maintenances.edit']);
     });
 
     // --- Rute Khusus Superadmin ---
-    Route::middleware(['role:SA00'])->prefix('users')->name('users.')->group(function () {
-        Route::get('/', [UserController::class, 'viewPage'])->name('index');
-        Route::get('/create', [UserController::class, 'create'])->name('create');
-        Route::get('/{id}', [UserController::class, 'show'])->name('show')->where('id', '[0-9]+');
-        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
-    });
-
+    Route::resource('users', UserController::class)->middleware('role:SA00')->only(['index', 'create', 'show', 'edit']);
 
     // --- GRUP ROUTE UNTUK ALUR KERJA TUGAS ---
     Route::prefix('tasks')->name('tasks.')->group(function () {
@@ -143,12 +95,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware(['role:HK02,TK02,SC02,PK02,WH02'])->group(function () {
             Route::get('/available', [TaskWorkflowController::class, 'availablePage'])->name('available');
             Route::get('/my-history', [TaskWorkflowController::class, 'showMyHistoryPage'])->name('my_history');
-            Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks'); // Rute lama
-            Route::get('/completed-history', [TaskWorkflowController::class, 'completedHistoryPage'])->name('completed_history'); // Rute lama
+            Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks');
         });
 
-        // Rute Detail Tugas (ditempatkan di akhir)
-        Route::get('/{id}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+        // ===================================================================
+        // --- PERBAIKAN UTAMA DI SINI ---
+        // Pastikan parameter rute adalah `{taskId}` agar cocok dengan
+        // variabel `$taskId` di metode showPage(taskId) pada controller.
+        // ===================================================================
+        Route::get('/{taskId}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('taskId', '[0-9]+');
     });
 });
 

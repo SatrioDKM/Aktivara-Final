@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Building;
-use App\Models\Floor;
 use App\Models\Room;
+use App\Models\Floor;
+use App\Models\Building;
+use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
 
 class RoomController extends Controller
 {
@@ -65,33 +67,18 @@ class RoomController extends Controller
     // ===================================================================
 
     /**
-     * API: Menampilkan daftar semua ruangan dengan paginasi dan filter.
+     * Mengambil daftar ruangan, bisa difilter berdasarkan floor_id.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        $query = Room::with(['floor.building', 'creator:id,name']);
+        $query = Room::query()->orderBy('name_room');
 
-        // Filter pencarian
-        if (request('search', '')) {
-            $query->where('name_room', 'like', '%' . request('search') . '%');
+        // Filter berdasarkan floor_id jika ada di request
+        if ($request->has('floor_id')) {
+            $query->where('floor_id', $request->input('floor_id'));
         }
 
-        // Filter gedung
-        if (request('building', '')) {
-            $buildingId = request('building');
-            $query->whereHas('floor', function ($q) use ($buildingId) {
-                $q->where('building_id', $buildingId);
-            });
-        }
-
-        // Filter lantai
-        if (request('floor', '')) {
-            $query->where('floor_id', request('floor'));
-        }
-
-        $rooms = $query->latest()->paginate(request('perPage', 10));
-
-        return response()->json($rooms);
+        return response()->json($query->get(['id', 'name_room']));
     }
 
     /**

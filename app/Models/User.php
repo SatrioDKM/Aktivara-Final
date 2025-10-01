@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\Role;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -50,21 +51,36 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi ke Role
+     * Relasi ke Role.
      */
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 
     /**
+     * Relasi ke tugas yang DIKERJAKAN oleh user ini.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke tugas yang DIBUAT oleh user ini.
+     */
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /**
      * Route notifications for the Telegram channel.
-     * (INI METODE BARU)
      *
      * @param  \Illuminate\Notifications\Notification  $notification
      * @return string|null
      */
-    public function routeNotificationForTelegram()
+    public function routeNotificationForTelegram($notification): ?string
     {
         return $this->telegram_chat_id;
     }

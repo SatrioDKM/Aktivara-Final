@@ -1,8 +1,31 @@
 import "./bootstrap";
+
+// Import CSS dari Font Awesome yang sudah diinstall via NPM
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
+// Import Chart.js dan jadikan global agar bisa diakses di script lain jika perlu
+import Chart from "chart.js/auto";
+window.Chart = Chart;
+
+// Import jQuery
+import jQuery from "jquery";
+window.$ = window.jQuery = jQuery;
+
+// Import Select2
+import select2 from "select2";
+import "select2/dist/css/select2.min.css";
+select2(); // Inisialisasi fungsi select2() secara global
+
+// Import iziToast
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
+window.iziToast = iziToast;
+
 import Alpine from "alpinejs";
 
 /**
  * Logika untuk komponen notifikasi real-time.
+ * Direvisi untuk menggunakan Axios agar lebih bersih dan terintegrasi.
  */
 function notifications() {
     return {
@@ -19,51 +42,38 @@ function notifications() {
             }
         },
 
-        // Ambil data notifikasi dari API
+        // Ambil data notifikasi dari API menggunakan Axios
         fetchNotifications() {
-            // URL diubah menjadi string manual
-            fetch("/api/notifications", {
-                headers: {
-                    Accept: "application/json",
-                },
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    this.unread = data.unread;
-                    this.read = data.read;
-                    this.unreadCount = data.unread.length;
+            // Axios sudah dikonfigurasi di bootstrap.js
+            axios
+                .get("/api/notifications")
+                .then((response) => {
+                    this.unread = response.data.unread;
+                    this.read = response.data.read;
+                    this.unreadCount = response.data.unread.length;
+                })
+                .catch((error) => {
+                    console.error("Gagal mengambil notifikasi:", error);
                 });
         },
 
-        // Tandai semua notifikasi sebagai sudah dibaca
+        // Tandai semua notifikasi sebagai sudah dibaca menggunakan Axios
         async markAllAsRead() {
-            // Kita butuh CSRF token untuk request POST
-            await fetch("/sanctum/csrf-cookie");
-
-            // URL diubah menjadi string manual
-            fetch("/api/notifications/mark-as-read", {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "X-XSRF-TOKEN": this.getCsrfToken(),
-                },
-            }).then(() => {
+            // Axios akan secara otomatis menangani header X-XSRF-TOKEN.
+            // Tidak perlu lagi mengambil token secara manual dari cookie.
+            try {
+                await axios.post("/api/notifications/mark-as-read");
+                // Setelah berhasil, panggil fetchNotifications lagi untuk memperbarui UI
                 this.fetchNotifications();
-            });
-        },
-
-        // Helper untuk mendapatkan CSRF token dari cookie
-        getCsrfToken() {
-            const c = document.cookie
-                .split("; ")
-                .find((r) => r.startsWith("XSRF-TOKEN="));
-            return c ? decodeURIComponent(c.split("=")[1]) : "";
+            } catch (error) {
+                console.error("Gagal menandai notifikasi:", error);
+            }
         },
 
         // Inisialisasi: ambil notifikasi saat halaman dimuat dan refresh setiap 1 menit
         init() {
             this.fetchNotifications();
-            setInterval(() => this.fetchNotifications(), 60000);
+            setInterval(() => this.fetchNotifications(), 60000); // 60 detik
         },
     };
 }

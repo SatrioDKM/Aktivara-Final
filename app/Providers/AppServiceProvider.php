@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +36,15 @@ class AppServiceProvider extends ServiceProvider
         // Penggunaan di Blade: @tanggal($model->created_at) -> akan menampilkan "24 September 2025"
         Blade::directive('tanggal', function ($expression) {
             return "<?php echo ($expression) ? \Carbon\Carbon::parse($expression)->translatedFormat('d F Y') : ''; ?>";
+        });
+
+        // Directive untuk memeriksa jika user memiliki SALAH SATU dari peran yang diberikan.
+        // Contoh: @role('SA00', 'MG00')
+        Blade::if('role', function (...$roles) {
+            if (!Auth::check()) {
+                return false;
+            }
+            return in_array(Auth::user()->role_id, $roles);
         });
     }
 }

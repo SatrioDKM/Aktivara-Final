@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\Floor;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Building extends Model
 {
@@ -20,32 +20,26 @@ class Building extends Model
         'status',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'lat_building' => 'double',
             'long_building' => 'double',
-            'status' => 'string',
         ];
     }
 
     /**
-     * Relasi ke Floors
+     * Relasi ke semua lantai di gedung ini.
      */
-    public function floors()
+    public function floors(): HasMany
     {
         return $this->hasMany(Floor::class);
     }
 
     /**
-     * Relasi ke User yang membuat
+     * Relasi ke User yang membuat data gedung ini.
      */
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }

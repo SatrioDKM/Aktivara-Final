@@ -260,15 +260,23 @@ class TaskWorkflowController extends Controller
 
     /**
      * API: Mengambil detail tugas untuk ditampilkan.
-     * Pastikan metode ini memuat semua relasi yang diperlukan.
+     * * --- PERBAIKAN TOTAL DI SINI ---
+     * Mengganti Route-Model Binding (Task $task) dengan manual fetching ($id)
+     * untuk memastikan semua atribut model termuat sebelum otorisasi.
      */
-    public function show(Task $task): JsonResponse
+    public function show(string $id): JsonResponse
     {
+        // 1. Ambil data Task secara manual menggunakan findOrFail.
+        // Ini memastikan semua kolom dari database (termasuk created_by dan user_id) termuat.
+        $task = Task::findOrFail($id);
+
+        // 2. Lakukan otorisasi. Sekarang $task->created_by dan $task->user_id memiliki nilai yang benar.
         $this->authorizeTaskAccess($task);
 
-        // PERBAIKAN: Ganti 'staff' menjadi 'assignee' dan pastikan semua relasi ada
+        // 3. Load relasi yang dibutuhkan untuk ditampilkan di frontend.
         $task->load(['taskType', 'room.floor.building', 'asset', 'creator', 'assignee']);
 
+        // 4. Kembalikan data sebagai JSON.
         return response()->json($task);
     }
 

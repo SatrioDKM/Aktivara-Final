@@ -28,8 +28,11 @@ use App\Http\Controllers\AssetMaintenanceController;
 // RUTE PUBLIK (Dapat diakses tanpa login)
 // ===================================================================
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
-Route::get('/lapor-keluhan', [GuestComplaintController::class, 'create'])->name('guest.complaint.create');
-Route::post('/lapor-keluhan', [GuestComplaintController::class, 'store'])->name('guest.complaint.store');
+
+Route::prefix('lapor-keluhan')->name('guest.complaint.')->group(function () {
+    Route::get('/', [GuestComplaintController::class, 'create'])->name('create');
+    Route::post('/', [GuestComplaintController::class, 'store'])->name('store');
+});
 
 
 // ===================================================================

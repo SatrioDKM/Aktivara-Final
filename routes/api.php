@@ -23,74 +23,77 @@ use App\Http\Controllers\AssetMaintenanceController;
 |--------------------------------------------------------------------------
 */
 
-// Endpoint API ini akan dilindungi oleh Sanctum
-// Pastikan pengguna sudah login untuk mengaksesnya
 Route::middleware(['auth:sanctum'])->group(function () {
-    // Endpoint untuk mengambil data statistik dashboard
     Route::get('/dashboard-stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
 
     // --- Rute manual untuk Buildings ---
-    Route::prefix('buildings')->group(function () {
-        Route::get('/', [BuildingController::class, 'index']); // Untuk data tabel
-        Route::post('/', [BuildingController::class, 'store']);
-        Route::get('/{id}', [BuildingController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [BuildingController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [BuildingController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('buildings')->name('api.buildings.')->group(function () {
+        Route::get('/', [BuildingController::class, 'index'])->name('index');
+        Route::post('/', [BuildingController::class, 'store'])->name('store');
+        Route::get('/{id}', [BuildingController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [BuildingController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [BuildingController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
     // --- Rute manual untuk Floors ---
-    Route::prefix('floors')->group(function () {
-        Route::get('/', [FloorController::class, 'index']);
-        Route::post('/', [FloorController::class, 'store']);
-        Route::get('/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('floors')->name('api.floors.')->group(function () {
+        Route::get('/', [FloorController::class, 'index'])->name('index');
+        Route::post('/', [FloorController::class, 'store'])->name('store');
+        Route::get('/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
     // --- Rute manual untuk Rooms ---
-    Route::prefix('rooms')->group(function () {
-        Route::get('/', [RoomController::class, 'index']);
-        Route::post('/', [RoomController::class, 'store']);
-        Route::get('/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('rooms')->name('api.rooms.')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('index');
+        Route::post('/', [RoomController::class, 'store'])->name('store');
+        Route::get('/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
+    // ================== BAGIAN YANG DIPERBARUI ==================
     // --- Rute manual untuk Task Types ---
-    Route::prefix('task-types')->group(function () {
-        Route::get('/', [TaskTypeController::class, 'index']);
-        Route::post('/', [TaskTypeController::class, 'store']);
-        Route::get('/{id}', [TaskTypeController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [TaskTypeController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [TaskTypeController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('task-types')->name('api.task-types.')->group(function () {
+        Route::get('/', [TaskTypeController::class, 'index'])->name('index');
+        Route::post('/', [TaskTypeController::class, 'store'])->name('store');
+        Route::get('/{id}', [TaskTypeController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [TaskTypeController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [TaskTypeController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
+
+    // Rute API tambahan untuk mengambil jenis tugas berdasarkan departemen (YANG HILANG)
+    Route::get('/task-types/by-department/{department_code}', [TaskTypeController::class, 'getByDepartment'])
+        ->name('api.task-types.by-department');
+    // ==========================================================
 
     // --- Rute manual untuk Assets ---
-    Route::prefix('assets')->group(function () {
-        Route::get('/', [AssetController::class, 'index']);
-        Route::post('/', [AssetController::class, 'store']);
-        Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+');
-        Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('api.assets.stock_out')->where('id', '[0-9]+');
+    Route::prefix('assets')->name('api.assets.')->group(function () {
+        Route::get('/', [AssetController::class, 'index'])->name('index');
+        Route::post('/', [AssetController::class, 'store'])->name('store');
+        Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+        Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('stock_out')->where('id', '[0-9]+');
     });
 
     // --- Rute manual untuk Maintenances ---
-    Route::prefix('maintenances')->group(function () {
-        Route::get('/', [AssetMaintenanceController::class, 'index']);
-        Route::post('/', [AssetMaintenanceController::class, 'store']);
-        Route::get('/{id}', [AssetMaintenanceController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/{id}', [AssetMaintenanceController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [AssetMaintenanceController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::prefix('maintenances')->name('api.maintenances.')->group(function () {
+        Route::get('/', [AssetMaintenanceController::class, 'index'])->name('index');
+        Route::post('/', [AssetMaintenanceController::class, 'store'])->name('store');
+        Route::get('/{id}', [AssetMaintenanceController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [AssetMaintenanceController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [AssetMaintenanceController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
     // --- Rute manual untuk Users (Hanya Superadmin) ---
-    Route::middleware('role:SA00')->group(function () {
-        Route::get('/users', [UserController::class, 'index'])->name('api.users.index');
-        Route::post('/users', [UserController::class, 'store']);
-        Route::get('/users/{id}', [UserController::class, 'show'])->where('id', '[0-9]+');
-        Route::put('/users/{id}', [UserController::class, 'update'])->where('id', '[0-9]+');
-        Route::delete('/users/{id}', [UserController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::middleware('role:SA00')->prefix('users')->name('api.users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{id}', [UserController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [UserController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
     // --- API untuk Manajemen Stok ---
@@ -99,11 +102,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [StockManagementController::class, 'update'])->name('update')->where('id', '[0-9]+');
     });
 
+    // --- API untuk Packing List ---
     Route::middleware(['role:SA00,MG00,WH01,WH02'])->prefix('packing-lists')->name('api.packing_lists.')->group(function () {
         Route::get('/', [PackingListController::class, 'index'])->name('index');
         Route::post('/', [PackingListController::class, 'store'])->name('store');
-        // Rute baru untuk Select2
         Route::get('/get-assets', [PackingListController::class, 'getAvailableAssets'])->name('get_assets');
+    });
+
+    // --- GRUP ENDPOINT UNTUK LAPORAN/KELUHAN ---
+    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->prefix('complaints')->name('api.complaints.')->group(function () {
+        Route::get('/', [ComplaintController::class, 'index'])->name('index');
+        Route::post('/', [ComplaintController::class, 'store'])->name('store');
+        Route::get('/{id}', [ComplaintController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::delete('/{id}', [ComplaintController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+        Route::post('/{id}/convert', [ComplaintController::class, 'convertToTask'])->name('convert')->where('id', '[0-9]+');
     });
 
     // --- GRUP ENDPOINT UNTUK ALUR KERJA TUGAS ---
@@ -141,15 +153,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-
-    // --- GRUP ENDPOINT UNTUK LAPORAN/KELUHAN ---
-    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->prefix('complaints')->name('api.complaints.')->group(function () {
-        Route::get('/', [ComplaintController::class, 'index'])->name('index');
-        // ================== PERBAIKAN DI SINI ==================
-        Route::post('/', [ComplaintController::class, 'store'])->name('store');
-        // =======================================================
-        Route::get('/{id}', [ComplaintController::class, 'show'])->where('id', '[0-9]+');
-        Route::delete('/{id}', [ComplaintController::class, 'destroy'])->where('id', '[0-9]+');
-        Route::post('/{id}/convert', [ComplaintController::class, 'convertToTask'])->name('convert')->where('id', '[0-9]+');
-    });
 });

@@ -23,7 +23,8 @@
                     <div
                         class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-6 flex flex-col md:flex-row md:items-center gap-4">
                         <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <select id="statusFilter" class="w-full">
+                            <select id="statusFilter" x-model="statusFilter"
+                                class="w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">Semua Status</option>
                                 <option value="open">Terbuka</option>
                                 <option value="converted_to_task">Jadi Tugas</option>
@@ -126,7 +127,6 @@
             </div>
         </div>
 
-        {{-- Modal Konversi ke Tugas --}}
         <div x-show="showConversionModal" x-transition x-cloak style="display: none;"
             class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen">
@@ -146,7 +146,9 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis
                                         Tugas</label>
-                                    <select id="task_type_id" class="mt-1 block w-full rounded-md" required>
+                                    <select x-model="conversionData.task_type_id"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                        required>
                                         <option value="">-- Pilih Jenis Tugas --</option>
                                         <template x-for="tt in taskTypes" :key="tt.id">
                                             <option :value="tt.id" x-text="`${tt.name_task} (${tt.departemen})`">
@@ -157,7 +159,9 @@
                                 <div>
                                     <label
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prioritas</label>
-                                    <select id="priority" class="mt-1 block w-full rounded-md" required>
+                                    <select x-model="conversionData.priority"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                        required>
                                         <option value="low">Rendah</option>
                                         <option value="medium">Sedang</option>
                                         <option value="high">Tinggi</option>
@@ -181,13 +185,11 @@
 
     @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @endpush
 
     @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- jQuery dan Select2 tidak lagi dibutuhkan di halaman ini --}}
 
     <script>
         function complaintsPage(taskTypes) {
@@ -205,9 +207,6 @@
                     init() {
                         this.fetchComplaints();
                         this.$watch('search', () => this.applyFilters());
-
-                        $('#statusFilter').select2({ theme: "classic", width: '100%', placeholder: 'Filter Status', allowClear: true })
-                            .on('change', (e) => this.statusFilter = e.target.value);
                         this.$watch('statusFilter', () => this.applyFilters());
 
                         const toastMessage = sessionStorage.getItem('toastMessage');
@@ -242,18 +241,14 @@
                         return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : '';
                     },
                     openConversionModal(item) {
-                        this.conversionData = { id: item.id, title: item.title };
+                        this.conversionData = { id: item.id, title: item.title, task_type_id: '', priority: 'medium' };
                         this.showConversionModal = true;
-                        this.$nextTick(() => {
-                            $('#task_type_id, #priority').select2({ theme: "classic", width: '100%', dropdownParent: $('#task_type_id').parent().parent() });
-                            $('#priority').val('medium').trigger('change');
-                        });
                     },
                     async convertItem() {
                         this.isSubmitting = true;
                         const payload = {
-                            task_type_id: $('#task_type_id').val(),
-                            priority: $('#priority').val()
+                            task_type_id: this.conversionData.task_type_id,
+                            priority: this.conversionData.priority
                         };
                         await fetch('/sanctum/csrf-cookie');
                         fetch(`/api/complaints/${this.conversionData.id}/convert`, {

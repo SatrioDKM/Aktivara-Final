@@ -64,9 +64,13 @@ class TaskWorkflowController extends Controller
         return view('backend.tasks.available', compact('data'));
     }
 
-    public function myHistoryPage(): View
+    /**
+     * Menampilkan halaman gabungan untuk Riwayat Tugas Staff.
+     * INI ADALAH METHOD YANG DIPERBAIKI SESUAI PERMINTAAN ANDA.
+     */
+    public function showMyHistoryPage(): View
     {
-        $data = []; // Data diambil via API
+        $data = []; // Data untuk tabel diambil oleh API, jadi ini dikosongkan.
         return view('backend.tasks.my_history', compact('data'));
     }
 

@@ -13,12 +13,12 @@
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="-mb-px flex space-x-6" aria-label="Tabs">
                             <a href="#" @click.prevent="changeTab('active')"
-                                :class="{ 'border-indigo-500 text-indigo-600': currentTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'active' }"
+                                :class="{ 'border-indigo-500 text-indigo-600 dark:text-indigo-400': filters.status === 'active', 'border-transparent text-gray-500 hover:text-gray-700': filters.status !== 'active' }"
                                 class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
                                 Tugas Aktif
                             </a>
                             <a href="#" @click.prevent="changeTab('completed')"
-                                :class="{ 'border-indigo-500 text-indigo-600': currentTab === 'completed', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'completed' }"
+                                :class="{ 'border-indigo-500 text-indigo-600 dark:text-indigo-400': filters.status === 'completed', 'border-transparent text-gray-500 hover:text-gray-700': filters.status !== 'completed' }"
                                 class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
                                 Tugas Selesai
                             </a>
@@ -39,7 +39,7 @@
                                         class="fas fa-search text-gray-400"></i></div>
                                 <input type="search" x-model.debounce.500ms="filters.search"
                                     placeholder="Cari judul tugas..."
-                                    class="w-full ps-10 rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700">
+                                    class="w-full ps-10 rounded-md border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                         </div>
                     </div>
@@ -69,22 +69,24 @@
                                 </template>
                                 <template x-if="!isLoading && tasks.length === 0">
                                     <tr>
-                                        <td colspan="5" class="text-center py-10 text-gray-500">Tidak ada data
-                                            ditemukan.</td>
+                                        <td colspan="5" class="text-center py-10 text-gray-500 dark:text-gray-400">Tidak
+                                            ada data ditemukan.</td>
                                     </tr>
                                 </template>
                                 <template x-for="task in tasks" :key="task.id">
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td class="px-6 py-4 font-medium" x-text="task.title"></td>
-                                        <td class="px-6 py-4" x-text="task.task_type.name_task"></td>
+                                        <td class="px-6 py-4 text-sm" x-text="task.task_type.name_task"></td>
                                         <td class="px-6 py-4 text-center"><span
                                                 class="px-3 py-1 text-xs capitalize font-semibold rounded-full"
+                                                :class="statusClass(task.status)"
                                                 x-text="task.status.replace('_', ' ')"></span></td>
-                                        <td class="px-6 py-4"
+                                        <td class="px-6 py-4 text-sm"
                                             x-text="new Date(task.updated_at).toLocaleDateString('id-ID')"></td>
                                         <td class="px-6 py-4 text-center">
                                             <a :href="`/tasks/${task.id}`"
-                                                class="text-indigo-600 hover:underline text-sm">Lihat Detail</a>
+                                                class="text-indigo-600 hover:underline text-sm font-semibold">Lihat
+                                                Detail</a>
                                         </td>
                                     </tr>
                                 </template>
@@ -101,7 +103,7 @@
                         <nav x-show="pagination.last_page > 1" class="flex items-center space-x-1">
                             <template x-for="link in pagination.links">
                                 <button @click="changePage(link.url)" :disabled="!link.url"
-                                    :class="{ 'bg-indigo-600 text-white': link.active, 'text-gray-500 hover:bg-gray-200': !link.active }"
+                                    :class="{ 'bg-indigo-600 text-white': link.active, 'text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700': !link.active && link.url, 'text-gray-400 cursor-not-allowed dark:text-gray-600': !link.url }"
                                     class="px-3 py-2 rounded-md text-sm" x-html="link.label"></button>
                             </template>
                         </nav>
@@ -115,24 +117,28 @@
     <script>
         function myHistoryPage() {
                 return {
-                    tasks: [], pagination: {}, isLoading: true,
-                    currentTab: 'active',
-                    filters: { status: 'active', start_date: '', end_date: '', search: '' },
+                    tasks: [],
+                    pagination: {},
+                    isLoading: true,
+                    filters: {
+                        status: 'active',
+                        start_date: '',
+                        end_date: '',
+                        search: ''
+                    },
                     init() {
                         this.fetchHistory();
-                        this.$watch('filters.start_date', () => this.applyFilters());
-                        this.$watch('filters.end_date', () => this.applyFilters());
-                        this.$watch('filters.search', () => this.applyFilters());
+                        this.$watch('filters', () => this.applyFilters(), { deep: true });
                     },
                     changeTab(tab) {
-                        this.currentTab = tab;
                         this.filters.status = tab;
-                        this.applyFilters();
+                        // applyFilters akan otomatis terpanggil oleh $watch
                     },
-                    applyFilters() { this.fetchHistory(1); },
+                    applyFilters() {
+                        this.fetchHistory(1);
+                    },
                     fetchHistory(page = 1) {
                         this.isLoading = true;
-                        this.filters.status = this.currentTab;
                         const params = new URLSearchParams({ page, ...this.filters });
                         fetch(`/api/tasks/my-history?${params.toString()}`, { headers: {'Accept': 'application/json'} })
                         .then(res => res.json()).then(data => {
@@ -148,6 +154,15 @@
                     changePage(url) {
                         if (!url) return;
                         this.fetchHistory(new URL(url).searchParams.get('page'));
+                    },
+                    statusClass(status) {
+                        const colors = {
+                            in_progress: 'bg-blue-100 text-blue-800',
+                            rejected: 'bg-red-100 text-red-800',
+                            completed: 'bg-green-100 text-green-800',
+                            pending_review: 'bg-yellow-100 text-yellow-800'
+                        };
+                        return colors[status] || 'bg-gray-100';
                     }
                 }
             }

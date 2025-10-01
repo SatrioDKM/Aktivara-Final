@@ -140,7 +140,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/review', [TaskWorkflowController::class, 'reviewPage'])->middleware('role:SA00,MG00,HK01,TK01,SC01,PK01')->name('review_list');
 
         // Rute Khusus Staff
-        Route::middleware(['role:HK02,TK02,SC02,PK02'])->group(function () {
+        Route::middleware(['role:HK02,TK02,SC02,PK02,WH02'])->group(function () {
             Route::get('/available', [TaskWorkflowController::class, 'availablePage'])->name('available');
             Route::get('/my-history', [TaskWorkflowController::class, 'showMyHistoryPage'])->name('my_history');
             Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks'); // Rute lama

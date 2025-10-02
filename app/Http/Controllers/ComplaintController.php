@@ -7,6 +7,8 @@ use App\Models\Complaint;
 use App\Models\Room;
 use App\Models\Task;
 use App\Models\TaskType;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ use Illuminate\View\View;
 class ComplaintController extends Controller
 {
     /**
-     * Menampilkan halaman utama (index).
+     * Menampilkan halaman daftar laporan (index).
      */
     public function viewPage(): View
     {
@@ -27,7 +29,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir tambah.
+     * Menampilkan halaman formulir untuk mencatat laporan baru.
      */
     public function create(): View
     {
@@ -39,12 +41,12 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail (show).
+     * Menampilkan halaman detail laporan.
      */
     public function showPage(string $id): View
     {
         $data = [
-            'complaint' => Complaint::with(['creator:id,name', 'room.floor.building', 'asset', 'generatedTask:id,title'])->findOrFail($id)
+            'complaint' => Complaint::with(['creator:id,name', 'room.floor.building', 'asset', 'task:id,title'])->findOrFail($id)
         ];
         return view('backend.complaints.show', compact('data'));
     }
@@ -56,32 +58,31 @@ class ComplaintController extends Controller
     /**
      * API: Mengambil semua data keluhan dengan paginasi dan filter.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        $query = Complaint::with(['creator:id,name', 'generatedTask:id,title']);
+        $query = Complaint::with(['creator:id,name', 'task:id,title']);
 
-        if (request('search', '')) {
-            $search = request('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subq) use ($search) {
+                $subq->where('title', 'like', "%{$search}%")
                     ->orWhere('reporter_name', 'like', "%{$search}%");
             });
-        }
+        });
 
-        if (request('status', '')) {
-            $query->where('status', request('status'));
-        }
+        $query->when($request->input('status'), function ($q, $status) {
+            $q->where('status', $status);
+        });
 
-        $complaints = $query->latest()->paginate(request('perPage', 10));
+        $complaints = $query->latest()->paginate($request->input('perPage', 10));
         return response()->json($complaints);
     }
 
     /**
      * API: Menyimpan keluhan baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:10',
             'reporter_name' => 'required|string|max:100',
@@ -105,34 +106,34 @@ class ComplaintController extends Controller
     /**
      * API: Menampilkan satu data keluhan spesifik.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $complaint = Complaint::with(['creator:id,name', 'generatedTask:id,title'])->findOrFail($id);
+        $complaint = Complaint::with(['creator:id,name', 'task:id,title'])->findOrFail($id);
         return response()->json($complaint);
     }
 
     /**
      * API: Menghapus data keluhan.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $complaint = Complaint::where('status', 'open')->findOrFail($id);
         $complaint->delete();
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Laporan berhasil dihapus.'], 200);
     }
 
     /**
      * API: Mengonversi keluhan menjadi tugas.
      */
-    public function convertToTask(string $id)
+    public function convertToTask(Request $request, string $id): JsonResponse
     {
         $complaint = Complaint::findOrFail($id);
 
         if ($complaint->status !== 'open') {
-            return response()->json(['message' => 'Laporan ini sudah diproses.'], 409);
+            return response()->json(['message' => 'Laporan ini sudah diproses atau dikonversi.'], 409); // 409 Conflict
         }
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'task_type_id' => 'required|exists:task_types,id',
             'priority' => 'required|in:low,medium,high,critical',
         ]);
@@ -142,12 +143,12 @@ class ComplaintController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($complaint) {
+            DB::transaction(function () use ($complaint, $request) {
                 $newTask = Task::create([
                     'title' => $complaint->title,
                     'description' => $complaint->description,
-                    'task_type_id' => request('task_type_id'),
-                    'priority' => request('priority'),
+                    'task_type_id' => $request->input('task_type_id'),
+                    'priority' => $request->input('priority'),
                     'room_id' => $complaint->room_id,
                     'asset_id' => $complaint->asset_id,
                     'status' => 'unassigned',
@@ -162,7 +163,7 @@ class ComplaintController extends Controller
 
             return response()->json(['message' => 'Laporan berhasil dikonversi menjadi tugas.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Terjadi kesalahan internal: ' . $e->getMessage()], 500);
         }
     }
 }

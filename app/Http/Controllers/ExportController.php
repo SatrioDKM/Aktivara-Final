@@ -4,20 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Exports\AssetsExport;
-use Illuminate\Routing\Controller;
 use App\Exports\DailyReportsExport;
+use Illuminate\Routing\Controller;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
-
     /**
-     * Menampilkan halaman utama untuk ekspor data.
-     * (INI METODE BARU)
+     * Menampilkan halaman utama untuk menu ekspor data.
+     * Metode ini hanya me-render view tanpa mengirim data.
      */
-    public function viewPage()
+    public function viewPage(): View
     {
-        return view('export.index');
+        // Path view diperbarui ke 'backend.export.index'
+        return view('backend.export.index');
     }
 
     /**
@@ -33,11 +34,17 @@ class ExportController extends Controller
     }
 
     /**
-     * Memicu download file Excel untuk data laporan harian.
+     * Memicu download file Excel untuk data riwayat & laporan tugas.
+     * Nama fungsi disesuaikan agar lebih relevan.
      */
-    public function exportDailyReports()
+    public function exportTaskHistory()
     {
-        $fileName = 'laporan-harian-' . now()->format('Y-m-d') . '.xlsx';
-        return Excel::download(new DailyReportsExport, $fileName);
+        // Implementasi export untuk riwayat tugas akan ditambahkan di sini
+        // Contoh:
+        // $fileName = 'riwayat-tugas-' . now()->format('Y-m-d') . '.xlsx';
+        // return Excel::download(new TaskHistoryExport, $fileName);
+
+        // Untuk saat ini, kita kembalikan ke halaman sebelumnya dengan pesan
+        return back()->with('info', 'Fitur ekspor riwayat tugas sedang dalam pengembangan.');
     }
 }

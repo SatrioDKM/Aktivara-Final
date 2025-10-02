@@ -53,8 +53,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {
+        // Rute untuk menampilkan halaman daftar laporan (menunjuk ke viewPage)
+        Route::get('complaints', [ComplaintController::class, 'viewPage'])->name('complaints.index');
+        // Rute untuk menampilkan halaman form tambah
         Route::get('complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
-        Route::resource('complaints', ComplaintController::class)->only(['index', 'show']);
+        // Rute untuk menampilkan halaman detail laporan (menunjuk ke showPage)
+        Route::get('complaints/{id}', [ComplaintController::class, 'showPage'])->name('complaints.show')->where('id', '[0-9]+');
     });
 
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(function () {
@@ -62,9 +66,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 
         Route::prefix('export')->name('export.')->group(function () {
+            // Rute untuk menampilkan halaman index
             Route::get('/', [ExportController::class, 'viewPage'])->name('index');
+            // Rute untuk download file aset
             Route::get('/assets', [ExportController::class, 'exportAssets'])->name('assets');
-            Route::get('/daily-reports', [ExportController::class, 'exportDailyReports'])->name('daily_reports');
+            // Rute untuk download riwayat tugas (nama diperbarui)
+            Route::get('/task-history', [ExportController::class, 'exportTaskHistory'])->name('task_history');
         });
     });
 

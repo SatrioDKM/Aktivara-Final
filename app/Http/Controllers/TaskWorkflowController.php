@@ -120,16 +120,17 @@ class TaskWorkflowController extends Controller
     }
 
     /**
-     * Menampilkan halaman Riwayat Tugas dengan data untuk filter.
-     * (INI YANG DIPERBARUI)
+     * Menampilkan halaman riwayat & laporan tugas untuk atasan (Leader, Manager, Admin).
+     * Metode ini mengirim data filter yang diperlukan oleh view.
+     * --- PERBAIKAN TOTAL DI SINI ---
      */
-    public function historyPage()
+    public function historyPage(): View
     {
         $user = Auth::user();
         $roleId = $user->role_id;
 
         // Ambil daftar Staff
-        $staffQuery = User::whereIn('role_id', ['HK02', 'TK02', 'SC02', 'PK02']);
+        $staffQuery = User::whereIn('role_id', ['HK02', 'TK02', 'SC02', 'PK02', 'WH02']);
         // Jika user adalah Leader, hanya tampilkan staff di departemennya
         if (str_ends_with($roleId, '01')) {
             $departmentCode = substr($roleId, 0, 2);
@@ -142,12 +143,19 @@ class TaskWorkflowController extends Controller
         if (in_array($roleId, ['SA00', 'MG00'])) {
             $departments = TaskType::whereNotNull('departemen')
                 ->distinct()
+                ->orderBy('departemen')
                 ->pluck('departemen');
         }
 
-        return view('history.tasks', compact('staffUsers', 'departments'));
-    }
+        // Gabungkan semua data ke dalam satu variabel $data
+        $data = [
+            'staffUsers' => $staffUsers,
+            'departments' => $departments
+        ];
 
+        // Arahkan ke path view yang benar
+        return view('backend.tasks.history', compact('data'));
+    }
 
     // ===================================================================
     // METODE UNTUK ENDPOINT API (JSON)

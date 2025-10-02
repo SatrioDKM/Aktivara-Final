@@ -8,17 +8,19 @@ use App\Models\Asset;
 use App\Models\DailyReport;
 use App\Models\PackingList;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     /**
      * Menampilkan halaman Blade untuk Dashboard.
      */
-    public function viewPage()
+    public function viewPage(): View
     {
         $data = []; // Variabel data dikirim meski kosong untuk konsistensi
         return view('backend.dashboard', compact('data'));
@@ -26,9 +28,8 @@ class DashboardController extends Controller
 
     /**
      * Endpoint API untuk mengambil data statistik agregat berdasarkan peran.
-     * (Penggunaan Request dipertahankan karena ini adalah endpoint API dengan filter kompleks)
      */
-    public function getStats(Request $request)
+    public function getStats(Request $request): JsonResponse
     {
         $user = Auth::user();
         $roleId = $user->role_id;
@@ -36,18 +37,14 @@ class DashboardController extends Controller
 
         // --- Dashboard untuk Manager & Superadmin ---
         if (in_array($roleId, ['SA00', 'MG00'])) {
-            // Filter Rentang Tanggal
+            // ... (logika untuk admin tidak berubah, sudah benar) ...
             $startDate = $request->input('start_date', Carbon::now()->subMonth()->toDateString());
             $endDate = $request->input('end_date', Carbon::now()->toDateString());
-
-            // Statistik Pergerakan Aset
             $assetsIn = Asset::whereBetween('created_at', [$startDate, $endDate])->count();
             $assetsOut = DB::table('asset_packing_list')
                 ->join('packing_lists', 'asset_packing_list.packing_list_id', '=', 'packing_lists.id')
                 ->whereBetween('packing_lists.created_at', [$startDate, $endDate])
                 ->count();
-
-            // Statistik Lainnya
             $taskStats = Task::query()->select('status', DB::raw('count(*) as total'))->groupBy('status')->pluck('total', 'status');
             $fixedAssetsQuery = Asset::where('asset_type', 'fixed_asset');
             $consumableAssetsQuery = Asset::where('asset_type', 'consumable');
@@ -79,7 +76,10 @@ class DashboardController extends Controller
             $departmentCode = substr($roleId, 0, 2);
             $staffInDepartment = User::where('role_id', $departmentCode . '02')->orderBy('name')->get(['id', 'name']);
 
-            $query = Task::with(['staff:id,name', 'taskType:id,name_task'])
+            // =======================================================
+            // --- PERBAIKAN DI SINI: Ganti 'staff' menjadi 'assignee' ---
+            // =======================================================
+            $query = Task::with(['assignee:id,name', 'taskType:id,name_task'])
                 ->where('created_by', $user->id);
 
             $query->when($request->filled('status'), function ($q) use ($request) {
@@ -92,11 +92,12 @@ class DashboardController extends Controller
             $query->when($request->filled('staff_id'), fn($q) => $q->where('user_id', $request->staff_id));
             $query->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date));
             $query->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date));
-            $query->when($request->filled('search'), function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%');
+
+            $query->when($request->input('search.value'), function ($q) use ($request) {
+                $searchTerm = '%' . $request->input('search.value') . '%';
+                $q->where('title', 'like', $searchTerm);
             });
 
-            // Logic untuk DataTables server-side
             $tasks = $query->latest('updated_at')->paginate($request->input('length', 10));
 
             $data = [
@@ -111,19 +112,16 @@ class DashboardController extends Controller
         }
         // --- Dashboard untuk Staff ---
         else {
+            // ... (logika untuk staff tidak berubah, sudah benar) ...
             $userDepartment = substr($roleId, 0, 2);
-
             $query = Task::with(['creator:id,name', 'room.floor.building'])
                 ->where('status', 'unassigned')
                 ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment)->orWhere('departemen', 'UMUM'));
-
             $query->when($request->filled('search'), function ($q) use ($request) {
                 $searchTerm = '%' . $request->search . '%';
                 $q->where('title', 'like', $searchTerm);
             });
-
             $availableTasks = $query->latest()->paginate(5);
-
             $myTasks = Task::where('user_id', $user->id);
 
             $data = [

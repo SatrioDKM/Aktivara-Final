@@ -7,12 +7,32 @@
                 {{ __('Detail Tugas') }}
             </h2>
 
-            {{-- === TOMBOL KEMBALI DITAMBAHKAN DI SINI === --}}
-            <a href="{{ route('tasks.monitoring') }}"
-                class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Kembali ke Monitoring
-            </a>
+            <div>
+                {{-- ======================================================== --}}
+                {{-- === PERUBAHAN DI SINI: Tombol Kembali Kondisional === --}}
+                {{-- ======================================================== --}}
+                @php
+                // Daftar role atasan (Leader, Manager, Admin)
+                $atasanRoles = ['SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01'];
+                // Daftar role staff
+                $staffRoles = ['HK02', 'TK02', 'SC02', 'PK02', 'WH02'];
+                @endphp
+
+                @if(in_array(Auth::user()->role_id, $atasanRoles))
+                <a href="{{ route('tasks.monitoring') }}"
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali ke Monitoring
+                </a>
+                @elseif(in_array(Auth::user()->role_id, $staffRoles))
+                <a href="{{ route('tasks.my_tasks') }}"
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali ke Tugas Aktif
+                </a>
+                @endif
+                {{-- ======================================================== --}}
+            </div>
         </div>
     </x-slot>
 
@@ -372,11 +392,18 @@
                         .then(response => {
                             this.showNotification(response.data.message, 'success');
                             this.getTaskDetails();
+
                             this.formData = { report_text: '', image_before: null, image_after: null };
                             this.imageBeforePreview = null;
                             this.imageAfterPreview = null;
-                            this.$el.querySelector('input[type="file"][@change*="before"]').value = null;
-                            this.$el.querySelector('input[type="file"][@change*="after"]').value = null;
+
+                            // === PERBAIKAN 3: Gunakan x-ref untuk mereset file input ===
+                            if (this.$refs.fileInputBefore) {
+                                this.$refs.fileInputBefore.value = null;
+                            }
+                            if (this.$refs.fileInputAfter) {
+                                this.$refs.fileInputAfter.value = null;
+                            }
                         })
                         .catch(error => {
                             let msg = error.response?.data?.message || 'Terjadi kesalahan saat mengirim laporan.';

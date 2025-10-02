@@ -32,8 +32,7 @@ class TaskWorkflowController extends Controller
     // ===================================================================
 
     /**
-     * Menampilkan halaman form untuk membuat tugas.
-     * Query dioptimalkan dengan memilih kolom spesifik untuk data master.
+     * Menampilkan halaman form untuk membuat tugas baru.
      */
     public function createPage(): View
     {
@@ -41,71 +40,83 @@ class TaskWorkflowController extends Controller
             'taskTypes' => TaskType::orderBy('name_task')->get(),
             'buildings' => Building::where('status', 'active')->orderBy('name_building')->get(['id', 'name_building']),
             'assets' => Asset::orderBy('name_asset')->get(['id', 'name_asset', 'serial_number']),
-            // Data lantai dan ruangan akan diambil via API untuk performa lebih baik
         ];
         return view('backend.tasks.create', compact('data'));
     }
 
+
     /**
-     * Menampilkan halaman detail tugas.
-     * PERBAIKAN TOTAL: Memastikan $task selalu ada dan relasi di-load dengan aman.
+     * Menampilkan halaman detail tugas spesifik.
      */
     public function showPage($taskId): View
     {
-        // Gunakan findOrFail untuk mendapatkan tugas atau menampilkan error 404 jika tidak ditemukan.
         $task = Task::with([
             'taskType',
             'room.floor.building',
             'asset',
             'creator',
-            'assignee' // Pastikan nama relasi ini benar
+            'assignee'
         ])->findOrFail($taskId);
 
-        // Panggil otorisasi setelah task ditemukan
         $this->authorizeTaskAccess($task);
 
-        // Siapkan data untuk dikirim ke view
         $data = [
             'task' => $task,
             'assets' => Asset::where('asset_type', 'fixed_asset')
                 ->orderBy('name_asset')
                 ->get(['id', 'name_asset', 'serial_number']),
         ];
-
         return view('backend.tasks.show', compact('data'));
     }
 
-    public function availablePage()
+    /**
+     * Menampilkan halaman papan tugas (job board) untuk staff.
+     */
+    public function availablePage(): View
     {
-        return view('tasks.available');
-    }
-
-    public function myTasksPage()
-    {
-        return view('tasks.my_tasks');
-    }
-
-    public function reviewPage()
-    {
-        return view('tasks.review_list');
-    }
-
-    public function monitoringPage()
-    {
-        return view('tasks.monitoring');
+        return view('backend.tasks.available');
     }
 
     /**
-     * Menampilkan halaman gabungan untuk Riwayat Tugas Staff.
+     * Menampilkan halaman tugas aktif milik staff.
      */
-    public function myHistoryPage()
+    public function myTasksPage(): View
     {
-        return view('tasks.my_history');
+        return view('backend.tasks.my_tasks');
     }
 
-    public function completedHistoryPage()
+    /**
+     * Menampilkan halaman untuk mereview laporan tugas dari staff.
+     */
+    public function reviewPage(): View
     {
-        return view('tasks.completed_history');
+        return view('backend.tasks.review_list');
+    }
+
+    /**
+     * Menampilkan halaman monitoring tugas aktif untuk atasan.
+     */
+    public function monitoringPage(): View
+    {
+        return view('backend.tasks.monitoring');
+    }
+
+    /**
+     * Menampilkan halaman riwayat tugas pribadi untuk staff.
+     */
+    public function showMyHistoryPage(): View
+    {
+        return view('backend.tasks.my_history');
+    }
+
+    /**
+     * Menampilkan halaman riwayat tugas yang telah selesai.
+     * --- PERBAIKAN PATH VIEW DI SINI ---
+     */
+    public function completedHistoryPage(): View
+    {
+        // Path diubah dari 'tasks.completed_history' menjadi 'backend.tasks.completed_history'
+        return view('backend.tasks.completed_history');
     }
 
     /**
@@ -191,15 +202,16 @@ class TaskWorkflowController extends Controller
 
     /**
      * API: Staff mengklaim tugas yang tersedia.
-     * (LOGIKA NOTIFIKASI DIPERBARUI)
+     * Logika di-update untuk memberikan pesan error yang lebih deskriptif.
      */
-    public function claimTask(Task $task)
+    public function claimTask(Request $request, string $id): JsonResponse
     {
         try {
-            DB::transaction(function () use ($task) {
-                $taskToClaim = Task::where('id', $task->id)->lockForUpdate()->first();
+            $claimedTask = null;
+            DB::transaction(function () use ($id, &$claimedTask) {
+                $taskToClaim = Task::where('id', $id)->lockForUpdate()->firstOrFail();
 
-                if ($taskToClaim->status !== 'unassigned') {
+                if ($taskToClaim->status !== 'unassigned' || $taskToClaim->user_id !== null) {
                     throw new \Exception('Tugas ini sudah diambil oleh staff lain.');
                 }
 
@@ -208,33 +220,50 @@ class TaskWorkflowController extends Controller
                     'status' => 'in_progress',
                 ]);
 
-                // --- BLOK PENGIRIMAN NOTIFIKASI YANG LEBIH AMAN ---
+                $claimedTask = $taskToClaim;
+            });
+
+            // Kirim notifikasi setelah transaksi berhasil
+            if ($claimedTask && $claimedTask->creator) {
                 try {
-                    if ($taskToClaim->creator) {
-                        Notification::send($taskToClaim->creator, new TaskClaimed($taskToClaim, Auth::user()));
-                    }
+                    Notification::send($claimedTask->creator, new TaskClaimed($claimedTask, Auth::user()));
                 } catch (\Exception $e) {
-                    // Jika notifikasi gagal, catat error tapi jangan hentikan proses
                     Log::error('Gagal mengirim notifikasi klaim tugas: ' . $e->getMessage());
                 }
-                // -------------------------------------------------
-            });
+            }
 
             return response()->json(['message' => 'Tugas berhasil diambil!']);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal mengambil tugas. Mungkin sudah diambil staff lain.'], 409);
+            // --- PERBAIKAN PESAN ERROR DI SINI ---
+            // Ambil data terbaru dari tugas untuk memberikan info debug yang lebih baik.
+            $freshTask = Task::with('assignee:id,name')->find($id);
+            $message = 'Gagal mengambil tugas.';
+
+            if ($freshTask) {
+                $message .= " Status saat ini: '{$freshTask->status}'.";
+                if ($freshTask->assignee) {
+                    $message .= " Telah diambil oleh: {$freshTask->assignee->name}.";
+                }
+            } else {
+                $message .= " Tugas tidak ditemukan.";
+            }
+
+            return response()->json(['message' => $message], 409); // 409 Conflict
         }
     }
 
     /**
-     * API: Menampilkan daftar tugas yang tersedia untuk departemen staff.
+     * API: Menampilkan daftar tugas yang tersedia untuk staff.
+     * Query diperketat untuk memastikan user_id juga NULL.
      */
     public function showAvailable(): JsonResponse
     {
         $userDepartment = substr(Auth::user()->role_id, 0, 2);
 
         $availableTasks = Task::with(['room.floor.building', 'creator:id,name', 'taskType'])
+            // --- PERBAIKAN QUERY DI SINI ---
             ->where('status', 'unassigned')
+            ->whereNull('user_id') // Pastikan tugas belum dimiliki siapa pun
             ->whereHas('taskType', function ($query) use ($userDepartment) {
                 $query->where('departemen', $userDepartment)
                     ->orWhere('departemen', 'UMUM');
@@ -282,14 +311,21 @@ class TaskWorkflowController extends Controller
 
     /**
      * API: Staff mengirimkan laporan pengerjaan tugas.
+     * Metode inilah yang seharusnya dipanggil oleh form Anda.
      */
-    public function submitReport(Request $request, string $id)
+    public function submitReport(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        // Langkah 1: Temukan tugas berdasarkan ID-nya terlebih dahulu.
+        $task = Task::findOrFail($id);
 
+        // Langkah 2: Lakukan verifikasi kepemilikan secara eksplisit.
+        if ($task->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Anda tidak berhak melaporkan tugas ini.'], 403);
+        }
+
+        // Langkah 3: Lakukan validasi input sesuai dengan form
         $validator = Validator::make($request->all(), [
             'report_text' => 'required|string|min:10',
-            'asset_id' => 'nullable|exists:assets,id',
             'image_before' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'image_after' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -298,9 +334,10 @@ class TaskWorkflowController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Langkah 4: Proses update data dan upload file.
         try {
             DB::transaction(function () use ($request, $task) {
-                $dataToUpdate = $request->only(['report_text', 'asset_id']);
+                $dataToUpdate['report_text'] = $request->input('report_text');
 
                 if ($request->hasFile('image_before')) {
                     if ($task->image_before) Storage::disk('public')->delete($task->image_before);

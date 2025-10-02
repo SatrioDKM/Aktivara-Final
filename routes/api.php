@@ -98,7 +98,9 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
         Route::get('/my-tasks-list', [TaskWorkflowController::class, 'myTasks'])->name('my_tasks_data');
         Route::get('/{id}', [TaskWorkflowController::class, 'show'])->name('show_data')->where('id', '[0-9]+');
         Route::get('/history/completed', [TaskWorkflowController::class, 'getCompletedHistory'])->name('completed_history_data');
-        Route::post('/{id}/report', [DailyReportController::class, 'storeApi'])->name('reports.store_api')->where('id', '[0-9]+');
+
+        // Route::post('/{id}/report', [DailyReportController::class, 'storeApi'])->name('reports.store_api')->where('id', '[0-9]+');
+        Route::post('/{id}/report', [TaskWorkflowController::class, 'submitReport'])->name('reports.store')->where('id', '[0-9]+');
     });
 });
 

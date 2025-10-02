@@ -18,6 +18,9 @@
                     @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
                     <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
                         __('Papan Tugas') }}</x-nav-link>
+                    <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                        {{ __('Tugas Aktif Saya') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
                         __('Riwayat Tugas') }}</x-nav-link>
                     @endrole
@@ -100,6 +103,10 @@
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('history.tasks')">{{ __('Riwayat Tugas') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('tasks.completed_history')">
+                                    {{ __('Riwayat Tugas Selesai') }}
+                                </x-dropdown-link>
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <x-dropdown-link :href="route('export.index')">{{ __('Ekspor Data') }}</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
@@ -204,6 +211,9 @@
             @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
             <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
                 __('Papan Tugas') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                {{ __('Tugas Aktif Saya') }}
+            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
                 __('Riwayat Tugas') }}</x-responsive-nav-link>
             @endrole
@@ -263,9 +273,15 @@
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">Laporan</div>
                 </div>
                 <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('history.tasks')">{{ __('Riwayat Tugas') }}
+                    <x-responsive-nav-link :href="route('history.tasks')">
+                        {{ __('Riwayat Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('export.index')">{{ __('Ekspor Data') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('tasks.completed_history')">
+                        {{ __('Riwayat Tugas Selesai') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('export.index')">
+                        {{ __('Ekspor Data') }}
+                    </x-responsive-nav-link>
                 </div>
             </div>
             @endrole

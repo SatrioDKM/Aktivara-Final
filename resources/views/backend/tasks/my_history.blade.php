@@ -29,7 +29,7 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
                                             class="fas fa-calendar-day text-gray-400"></i></div>
                                     <input type="date" x-model="filters.start_date" id="start_date"
-                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
+                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                             </div>
                             {{-- Filter Sampai Tanggal --}}
@@ -41,7 +41,7 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
                                             class="fas fa-calendar-week text-gray-400"></i></div>
                                     <input type="date" x-model="filters.end_date" id="end_date"
-                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
+                                        class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                             </div>
                             {{-- Filter Status --}}
@@ -53,9 +53,10 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i
                                             class="fas fa-tag text-gray-400"></i></div>
                                     <select x-model="filters.status" id="status"
-                                        class="block w-full pl-10 border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700">
+                                        class="block w-full pl-10 border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                         <option value="">Semua Status</option>
-                                        <option value="active">Aktif (Dikerjakan/Ditolak)</option>
+                                        <option value="in_progress">Dikerjakan</option>
+                                        <option value="rejected">Ditolak</option>
                                         <option value="pending_review">Menunggu Review</option>
                                         <option value="completed">Selesai</option>
                                     </select>
@@ -64,11 +65,11 @@
                             {{-- Tombol Aksi Filter --}}
                             <div class="flex space-x-2">
                                 <button @click="applyFilters"
-                                    class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                    class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500">
                                     <i class="fas fa-search mr-2"></i>Filter
                                 </button>
-                                <button @click="resetFilters"
-                                    class="p-2 border rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                <button @click="resetFilters" title="Reset Filter"
+                                    class="p-2 border rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 focus:ring-indigo-500">
                                     <i class="fas fa-undo"></i>
                                 </button>
                             </div>
@@ -81,7 +82,7 @@
                                         class="fas fa-search text-gray-400"></i></div>
                                 <input type="text" x-model.debounce.500ms="filters.search" @input="applyFilters"
                                     id="search" placeholder="Cari berdasarkan judul tugas..."
-                                    class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700">
+                                    class="block w-full pl-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
                     </div>
@@ -179,7 +180,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('myHistory', () => ({
                 isLoading: true,
-                history: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
+                history: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null, last_page: 1 },
                 filters: { start_date: '', end_date: '', status: '', search: '' },
 
                 init() {
@@ -187,7 +188,7 @@
                 },
 
                 applyFilters() {
-                    this.fetchHistory(1); // Selalu kembali ke halaman 1 saat filter baru diterapkan
+                    this.fetchHistory(1);
                 },
 
                 resetFilters() {

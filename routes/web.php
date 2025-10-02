@@ -98,11 +98,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks');
         });
 
-        // ===================================================================
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // Pastikan parameter rute adalah `{taskId}` agar cocok dengan
-        // variabel `$taskId` di metode showPage(taskId) pada controller.
-        // ===================================================================
+        Route::get('/completed-history', [TaskWorkflowController::class, 'completedHistoryPage'])->name('completed_history');
+
         Route::get('/{taskId}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('taskId', '[0-9]+');
     });
 });

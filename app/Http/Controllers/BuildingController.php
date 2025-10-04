@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +13,7 @@ use Illuminate\View\View;
 class BuildingController extends Controller
 {
     /**
-     * Menampilkan halaman utama (index).
+     * Menampilkan halaman daftar gedung (index).
      */
     public function viewPage(): View
     {
@@ -19,7 +21,7 @@ class BuildingController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir tambah.
+     * Menampilkan halaman formulir tambah gedung.
      */
     public function create(): View
     {
@@ -27,7 +29,7 @@ class BuildingController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail (show).
+     * Menampilkan halaman detail gedung.
      */
     public function showPage(string $id): View
     {
@@ -38,7 +40,7 @@ class BuildingController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir edit.
+     * Menampilkan halaman formulir edit gedung.
      */
     public function edit(string $id): View
     {
@@ -55,26 +57,24 @@ class BuildingController extends Controller
     /**
      * API: Menampilkan daftar semua gedung dengan paginasi dan filter.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         $query = Building::with('creator:id,name');
 
-        // Terapkan filter pencarian
-        if (request('search', '')) {
-            $query->where('name_building', 'like', '%' . request('search') . '%');
-        }
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where('name_building', 'like', '%' . $search . '%');
+        });
 
-        $buildings = $query->latest()->paginate(request('perPage', 10));
-
+        $buildings = $query->latest()->paginate($request->input('perPage', 10));
         return response()->json($buildings);
     }
 
     /**
      * API: Menyimpan data gedung baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_building' => 'required|string|max:100|unique:buildings,name_building',
             'address' => 'nullable|string',
             'status' => 'required|in:active,inactive',
@@ -85,9 +85,9 @@ class BuildingController extends Controller
         }
 
         $building = Building::create([
-            'name_building' => request('name_building'),
-            'address' => request('address'),
-            'status' => request('status'),
+            'name_building' => $request->input('name_building'),
+            'address' => $request->input('address'),
+            'status' => $request->input('status'),
             'created_by' => Auth::id(),
         ]);
 
@@ -97,7 +97,7 @@ class BuildingController extends Controller
     /**
      * API: Menampilkan satu data gedung spesifik.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $building = Building::with('creator:id,name')->findOrFail($id);
         return response()->json($building);
@@ -106,11 +106,11 @@ class BuildingController extends Controller
     /**
      * API: Memperbarui data gedung yang sudah ada.
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $building = Building::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_building' => 'required|string|max:100|unique:buildings,name_building,' . $building->id,
             'address' => 'nullable|string',
             'status' => 'required|in:active,inactive',
@@ -120,7 +120,7 @@ class BuildingController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $building->update(request()->all());
+        $building->update($request->all());
 
         return response()->json($building->load('creator:id,name'));
     }
@@ -128,10 +128,10 @@ class BuildingController extends Controller
     /**
      * API: Menghapus data gedung.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $building = Building::findOrFail($id);
         $building->delete();
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Data gedung berhasil dihapus.'], 200);
     }
 }

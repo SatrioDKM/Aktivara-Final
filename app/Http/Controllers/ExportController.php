@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Exports\AssetsExport;
-use App\Exports\DailyReportsExport;
+use App\Exports\TaskHistoryExport;
 use Illuminate\Routing\Controller;
-use Illuminate\View\View;
+use App\Exports\DailyReportsExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
@@ -39,12 +40,8 @@ class ExportController extends Controller
      */
     public function exportTaskHistory()
     {
-        // Implementasi export untuk riwayat tugas akan ditambahkan di sini
-        // Contoh:
-        // $fileName = 'riwayat-tugas-' . now()->format('Y-m-d') . '.xlsx';
-        // return Excel::download(new TaskHistoryExport, $fileName);
-
-        // Untuk saat ini, kita kembalikan ke halaman sebelumnya dengan pesan
-        return back()->with('info', 'Fitur ekspor riwayat tugas sedang dalam pengembangan.');
+        // Menggunakan class export yang baru dan benar
+        $fileName = 'riwayat-tugas-' . now()->format('Y-m-d') . '.xlsx';
+        return Excel::download(new TaskHistoryExport, $fileName);
     }
 }

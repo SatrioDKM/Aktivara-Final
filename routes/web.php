@@ -77,19 +77,67 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Rute Data Master (Hanya Admin & Manager) ---
     Route::middleware(['role:SA00,MG00'])->prefix('master')->name('master.')->group(function () {
-        // Menggunakan Route::resource untuk semua data master.
-        // Controller Anda menggunakan 'viewPage' untuk index dan 'showPage' untuk show.
-        // Jika nama method di controller diubah ke standar (index, show), .names() tidak perlu.
-        Route::resource('buildings', BuildingController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'buildings.index', 'create' => 'buildings.create', 'show' => 'buildings.show', 'edit' => 'buildings.edit']);
-        Route::resource('floors', FloorController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'floors.index', 'create' => 'floors.create', 'show' => 'floors.show', 'edit' => 'floors.edit']);
-        Route::resource('rooms', RoomController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'rooms.index', 'create' => 'rooms.create', 'show' => 'rooms.show', 'edit' => 'rooms.edit']);
-        Route::resource('task-types', TaskTypeController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'task_types.index', 'create' => 'task_types.create', 'show' => 'task_types.show', 'edit' => 'task_types.edit']);
-        Route::resource('assets', AssetController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'assets.index', 'create' => 'assets.create', 'show' => 'assets.show', 'edit' => 'assets.edit']);
-        Route::resource('maintenances', AssetMaintenanceController::class)->only(['index', 'create', 'show', 'edit'])->names(['index' => 'maintenances.index', 'create' => 'maintenances.create', 'show' => 'maintenances.show', 'edit' => 'maintenances.edit']);
+
+        // --- Rute untuk Buildings ---
+        Route::prefix('buildings')->name('buildings.')->group(function () {
+            Route::get('/', [BuildingController::class, 'viewPage'])->name('index');
+            Route::get('/create', [BuildingController::class, 'create'])->name('create');
+            Route::get('/{id}', [BuildingController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [BuildingController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // --- Rute untuk Floors ---
+        Route::prefix('floors')->name('floors.')->group(function () {
+            Route::get('/', [FloorController::class, 'viewPage'])->name('index');
+            Route::get('/create', [FloorController::class, 'create'])->name('create');
+            Route::get('/{id}', [FloorController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [FloorController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // --- Rute untuk Rooms ---
+        Route::prefix('rooms')->name('rooms.')->group(function () {
+            Route::get('/', [RoomController::class, 'viewPage'])->name('index');
+            Route::get('/create', [RoomController::class, 'create'])->name('create');
+            Route::get('/{id}', [RoomController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // --- Rute untuk Task Types ---
+        Route::prefix('task-types')->name('task_types.')->group(function () {
+            Route::get('/', [TaskTypeController::class, 'viewPage'])->name('index');
+            Route::get('/create', [TaskTypeController::class, 'create'])->name('create');
+            Route::get('/{id}', [TaskTypeController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [TaskTypeController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // --- Rute untuk Assets ---
+        Route::prefix('assets')->name('assets.')->group(function () {
+            Route::get('/', [AssetController::class, 'viewPage'])->name('index');
+            Route::get('/create', [AssetController::class, 'create'])->name('create');
+            Route::get('/{id}', [AssetController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
+
+        // --- Rute untuk Maintenances ---
+        Route::prefix('maintenances')->name('maintenances.')->group(function () {
+            Route::get('/', [AssetMaintenanceController::class, 'viewPage'])->name('index');
+            Route::get('/create', [AssetMaintenanceController::class, 'create'])->name('create');
+            Route::get('/{id}', [AssetMaintenanceController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
+            Route::get('/{id}/edit', [AssetMaintenanceController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+        });
     });
 
     // --- Rute Khusus Superadmin ---
-    Route::resource('users', UserController::class)->middleware('role:SA00')->only(['index', 'create', 'show', 'edit']);
+    Route::middleware(['role:SA00'])->prefix('users')->name('users.')->group(function () {
+        // Rute untuk menampilkan halaman daftar pengguna (menunjuk ke viewPage)
+        Route::get('/', [UserController::class, 'viewPage'])->name('index');
+        // Rute untuk menampilkan halaman form tambah
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        // Rute untuk menampilkan halaman detail
+        Route::get('/{id}', [UserController::class, 'show'])->name('show')->where('id', '[0-9]+');
+        // Rute untuk menampilkan halaman form edit
+        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+    });
 
     // --- GRUP ROUTE UNTUK ALUR KERJA TUGAS ---
     Route::prefix('tasks')->name('tasks.')->group(function () {

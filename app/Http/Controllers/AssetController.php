@@ -6,7 +6,8 @@ use App\Models\Asset;
 use App\Models\Room;
 use App\Models\User;
 use App\Notifications\LowStockAlert;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,18 +18,17 @@ use Illuminate\View\View;
 class AssetController extends Controller
 {
     /**
-     * Menampilkan halaman utama (index).
+     * Menampilkan halaman daftar aset (index).
      */
     public function viewPage(): View
     {
-        $data = [
-            'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
-        ];
-        return view('backend.master.assets.index', compact('data'));
+        // Data tidak dikirim dari sini karena halaman ini sepenuhnya
+        // dikendalikan oleh API dan Alpine.js
+        return view('backend.master.assets.index');
     }
 
     /**
-     * Menampilkan halaman formulir tambah.
+     * Menampilkan halaman formulir untuk menambah aset baru.
      */
     public function create(): View
     {
@@ -39,18 +39,25 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail (show).
+     * Menampilkan halaman detail aset.
      */
     public function showPage(string $id): View
     {
+        // PERBAIKAN: Mengganti relasi 'tasks.staff' menjadi 'tasks.assignee'
         $data = [
-            'asset' => Asset::with(['room.floor.building', 'updater:id,name', 'creator:id,name', 'maintenances.technician:id,name', 'tasks.staff:id,name'])->findOrFail($id)
+            'asset' => Asset::with([
+                'room.floor.building',
+                'updater:id,name',
+                'creator:id,name',
+                'maintenances.technician:id,name',
+                'tasks.assignee:id,name'
+            ])->findOrFail($id)
         ];
         return view('backend.master.assets.show', compact('data'));
     }
 
     /**
-     * Menampilkan halaman formulir edit.
+     * Menampilkan halaman formulir untuk mengedit aset.
      */
     public function edit(string $id): View
     {
@@ -67,47 +74,50 @@ class AssetController extends Controller
 
     /**
      * API: Menampilkan daftar aset dengan paginasi dan filter.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         $query = Asset::with(['room.floor.building', 'creator:id,name']);
 
-        // Filter Tipe Aset (Tab)
-        if (request('asset_type', '')) {
-            $query->where('asset_type', request('asset_type'));
-        }
+        $query->when($request->input('asset_type'), function ($q, $type) {
+            $q->where('asset_type', $type);
+        });
 
-        // Filter Pencarian
-        if (request('search', '')) {
-            $search = request('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name_asset', 'like', "%{$search}%")
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subq) use ($search) {
+                $subq->where('name_asset', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%");
             });
-        }
+        });
 
-        $assets = $query->latest()->paginate(request('perPage', 10));
+        $assets = $query->latest()->paginate($request->input('perPage', 10));
 
         return response()->json($assets);
     }
 
     /**
      * API: Menyimpan data aset baru (bisa lebih dari satu).
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'assets' => 'required|array|min:1',
             'assets.*.name_asset' => 'required|string|max:100',
             'assets.*.asset_type' => 'required|in:fixed_asset,consumable',
-            'assets.*.category' => 'required|string|max:100', // Diperbarui untuk nama kategori
+            'assets.*.category' => 'required|string|max:100',
             'assets.*.room_id' => 'nullable|exists:rooms,id',
             'assets.*.purchase_date' => 'nullable|date',
             'assets.*.current_stock' => 'required|integer|min:1',
             'assets.*.minimum_stock' => 'nullable|integer|min:0',
             'assets.*.description' => 'nullable|string',
-            'assets.*.condition' => 'required_if:assets.*.asset_type,fixed_asset|in:Baik,Rusak Ringan,Rusak Berat',
+            'assets.*.condition' => 'required_if:assets.*.asset_type,fixed_asset|nullable|in:Baik,Rusak Ringan,Rusak Berat',
         ], [
             'assets.*.name_asset.required' => 'Nama aset di baris #:position wajib diisi.',
             'assets.*.category.required' => 'Kategori di baris #:position wajib diisi.',
@@ -120,8 +130,8 @@ class AssetController extends Controller
         }
 
         $createdAssets = [];
-        DB::transaction(function () use (&$createdAssets) {
-            foreach (request('assets') as $assetData) {
+        DB::transaction(function () use ($request, &$createdAssets) {
+            foreach ($request->input('assets') as $assetData) {
                 $data = $assetData;
                 $data['created_by'] = Auth::id();
                 $data['updated_by'] = Auth::id();
@@ -150,8 +160,11 @@ class AssetController extends Controller
 
     /**
      * API: Menampilkan satu data aset spesifik.
+     *
+     * @param string $id
+     * @return JsonResponse
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $asset = Asset::with(['room.floor.building', 'updater:id,name'])->findOrFail($id);
         return response()->json($asset);
@@ -159,18 +172,22 @@ class AssetController extends Controller
 
     /**
      * API: Memperbarui data aset yang sudah ada.
+     *
+     * @param Request $request
+     * @param string $id
+     * @return JsonResponse
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $asset = Asset::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_asset' => 'required|string|max:100',
             'room_id' => 'nullable|exists:rooms,id',
             'category' => 'required|string|max:100',
             'serial_number' => 'nullable|string|max:100|unique:assets,serial_number,' . $asset->id,
             'purchase_date' => 'nullable|date',
-            'condition' => 'required_if:asset_type,fixed_asset|in:Baik,Rusak Ringan,Rusak Berat',
+            'condition' => 'required_if:asset_type,fixed_asset|nullable|in:Baik,Rusak Ringan,Rusak Berat',
             'status' => 'required|in:available,in_use,maintenance,disposed',
             'current_stock' => 'required|integer|min:0',
             'minimum_stock' => 'nullable|integer|min:0',
@@ -184,7 +201,7 @@ class AssetController extends Controller
 
         $data = $validator->validated();
         $data['updated_by'] = Auth::id();
-        unset($data['asset_type']);
+        unset($data['asset_type']); // Mencegah perubahan tipe aset setelah dibuat
 
         $asset->update($data);
         $this->checkAndNotifyLowStock($asset);
@@ -194,20 +211,27 @@ class AssetController extends Controller
 
     /**
      * API: Menghapus data aset.
+     *
+     * @param string $id
+     * @return JsonResponse
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $asset = Asset::findOrFail($id);
         $asset->delete();
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Aset berhasil dihapus.'], 200);
     }
 
     /**
      * API: Mengurangi stok untuk barang habis pakai.
+     *
+     * @param Request $request
+     * @param string $id
+     * @return JsonResponse
      */
-    public function stockOut(string $id)
+    public function stockOut(Request $request, string $id): JsonResponse
     {
-        $validator = Validator::make(request()->all(), ['amount' => 'required|integer|min:1']);
+        $validator = Validator::make($request->all(), ['amount' => 'required|integer|min:1']);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -217,11 +241,11 @@ class AssetController extends Controller
         if ($asset->asset_type !== 'consumable') {
             return response()->json(['message' => 'Hanya barang habis pakai yang bisa dikurangi stoknya.'], 400);
         }
-        if ($asset->current_stock < request('amount')) {
+        if ($asset->current_stock < $request->input('amount')) {
             return response()->json(['message' => 'Stok tidak mencukupi.'], 422);
         }
 
-        $asset->decrement('current_stock', request('amount'));
+        $asset->decrement('current_stock', $request->input('amount'));
         $asset->updated_by = Auth::id();
         $asset->save();
 
@@ -231,9 +255,12 @@ class AssetController extends Controller
     }
 
     /**
-     * Helper: Memeriksa stok dan mengirim notifikasi.
+     * Helper privat untuk memeriksa stok dan mengirim notifikasi jika stok menipis.
+     *
+     * @param Asset $asset
+     * @return void
      */
-    private function checkAndNotifyLowStock(Asset $asset)
+    private function checkAndNotifyLowStock(Asset $asset): void
     {
         if ($asset->asset_type === 'consumable' && $asset->minimum_stock > 0 && $asset->current_stock <= $asset->minimum_stock) {
             $recipients = User::whereIn('role_id', ['SA00', 'MG00', 'WH01', 'WH02'])->get();
@@ -244,7 +271,10 @@ class AssetController extends Controller
     }
 
     /**
-     * Helper: Membuat nomor seri unik.
+     * Helper privat untuk membuat nomor seri unik berdasarkan kategori dan tanggal.
+     *
+     * @param string $categoryName
+     * @return string
      */
     private function generateSerialNumber(string $categoryName): string
     {

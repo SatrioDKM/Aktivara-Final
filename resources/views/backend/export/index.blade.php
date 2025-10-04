@@ -45,7 +45,7 @@
                                 dari semua departemen, termasuk detail status, staff, dan tanggal.</p>
                             <div class="mt-4">
                                 {{-- Arahkan ke rute export.task_history (akan kita buat di langkah 3) --}}
-                                <a href="#"
+                                <a href="{{ route('export.task_history') }}"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-800">
                                     <i class="fas fa-download mr-2"></i>
                                     Unduh Riwayat

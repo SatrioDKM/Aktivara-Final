@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +17,7 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
     /**
-     * Method untuk menampilkan halaman utama (index).
+     * Menampilkan halaman daftar pengguna (index).
      */
     public function viewPage(): View
     {
@@ -24,7 +26,7 @@ class UserController extends Controller
     }
 
     /**
-     * Method untuk menampilkan halaman formulir tambah pengguna.
+     * Menampilkan halaman formulir tambah pengguna.
      */
     public function create(): View
     {
@@ -33,7 +35,7 @@ class UserController extends Controller
     }
 
     /**
-     * Method untuk menampilkan halaman detail pengguna (read-only).
+     * Menampilkan halaman detail pengguna.
      */
     public function show(string $id): View
     {
@@ -42,7 +44,7 @@ class UserController extends Controller
     }
 
     /**
-     * Method untuk menampilkan halaman formulir edit pengguna.
+     * Menampilkan halaman formulir edit pengguna.
      */
     public function edit(string $id): View
     {
@@ -58,45 +60,32 @@ class UserController extends Controller
     // ===================================================================
 
     /**
-     * Mengambil daftar pengguna dengan filter dan paginasi manual untuk API.
+     * API: Mengambil daftar pengguna dengan filter dan paginasi.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         $query = User::with('role')->where('id', '!=', Auth::id());
 
-        // Terapkan filter pencarian
-        if (request('search', '')) {
-            $search = request('search', '');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subq) use ($search) {
+                $subq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
             });
-        }
+        });
 
-        // Terapkan filter peran (role)
-        if (request('role', '')) {
-            $query->where('role_id', request('role'));
-        }
+        $query->when($request->input('role'), fn($q, $role) => $q->where('role_id', $role));
+        $query->when($request->input('status'), fn($q, $status) => $q->where('status', $status));
 
-        // Terapkan filter status
-        if (request('status', '')) {
-            $query->where('status', request('status'));
-        }
-
-        // ================== BAGIAN YANG DIPERBARUI ==================
-        // Gunakan paginator standar Laravel yang menghasilkan 'links', 'data', dll.
-        $users = $query->latest()->paginate(request('perPage', 10));
+        $users = $query->latest()->paginate($request->input('perPage', 10));
 
         return response()->json($users);
-        // ==========================================================
     }
 
     /**
-     * Menyimpan data pengguna baru dari API.
+     * API: Menyimpan data pengguna baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'role_id' => 'required|exists:roles,role_id',
@@ -109,24 +98,24 @@ class UserController extends Controller
         }
 
         $user = User::create([
-            'name' => request('name'),
-            'email' => request('email'),
-            'role_id' => request('role_id'),
-            'status' => request('status'),
-            'password' => Hash::make(request('password')),
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'role_id' => $request->input('role_id'),
+            'status' => $request->input('status'),
+            'password' => Hash::make($request->input('password')),
         ]);
 
         return response()->json($user->load('role'), 201);
     }
 
     /**
-     * Memperbarui data pengguna yang sudah ada dari API.
+     * API: Memperbarui data pengguna yang ada.
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $user = User::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role_id' => 'required|exists:roles,role_id',
@@ -138,10 +127,10 @@ class UserController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $data = request()->except('password', 'password_confirmation');
+        $data = $request->except('password', 'password_confirmation');
 
-        if (request()->filled('password')) {
-            $data['password'] = Hash::make(request('password'));
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->input('password'));
         }
 
         $user->update($data);
@@ -150,9 +139,9 @@ class UserController extends Controller
     }
 
     /**
-     * Menghapus data pengguna dari API.
+     * API: Menghapus data pengguna.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $user = User::findOrFail($id);
 
@@ -166,6 +155,6 @@ class UserController extends Controller
 
         $user->delete();
 
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Pengguna berhasil dihapus.'], 200);
     }
 }

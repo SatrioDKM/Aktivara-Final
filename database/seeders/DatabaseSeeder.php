@@ -9,7 +9,6 @@ use Database\Seeders\UserSeeder;
 use Database\Seeders\AssetSeeder;
 use Database\Seeders\TaskTypeSeeder;
 use Database\Seeders\ComplaintSeeder;
-use Database\Seeders\DailyReportSeeder;
 use Database\Seeders\PackingListSeeder;
 use Database\Seeders\BuildingFloorRoomSeeder;
 use Database\Seeders\AssetsInMaintenanceSeeder;
@@ -33,7 +32,6 @@ class DatabaseSeeder extends Seeder
             TaskSeeder::class,              // Wajib sebelum Laporan
             AssetsInMaintenanceSeeder::class, // Mengubah status aset yg sudah ada
             PackingListSeeder::class,         // Untuk pergerakan barang keluar
-            DailyReportSeeder::class,
             ComplaintSeeder::class,
         ]);
     }

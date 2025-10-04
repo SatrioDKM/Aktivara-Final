@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Validator;
 class RoomController extends Controller
 {
     /**
-     * Menampilkan halaman utama (index).
+     * Menampilkan halaman daftar ruangan (index).
      */
     public function viewPage(): View
     {
@@ -27,7 +27,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir tambah.
+     * Menampilkan halaman formulir tambah ruangan.
      */
     public function create(): View
     {
@@ -39,7 +39,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail (show).
+     * Menampilkan halaman detail ruangan.
      */
     public function showPage(string $id): View
     {
@@ -50,7 +50,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir edit.
+     * Menampilkan halaman formulir edit ruangan.
      */
     public function edit(string $id): View
     {
@@ -67,26 +67,28 @@ class RoomController extends Controller
     // ===================================================================
 
     /**
-     * Mengambil daftar ruangan, bisa difilter berdasarkan floor_id.
+     * API: Mengambil daftar ruangan dengan paginasi dan filter.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Room::query()->orderBy('name_room');
+        $query = Room::with(['floor.building']);
 
-        // Filter berdasarkan floor_id jika ada di request
-        if ($request->has('floor_id')) {
-            $query->where('floor_id', $request->input('floor_id'));
-        }
+        $query->when($request->input('search'), fn($q, $search) => $q->where('name_room', 'like', "%{$search}%"));
+        $query->when($request->input('floor'), fn($q, $floorId) => $q->where('floor_id', $floorId));
+        $query->when($request->input('building'), function ($q, $buildingId) {
+            $q->whereHas('floor', fn($floorQuery) => $floorQuery->where('building_id', $buildingId));
+        });
 
-        return response()->json($query->get(['id', 'name_room']));
+        $rooms = $query->latest()->paginate($request->input('perPage', 10));
+        return response()->json($rooms);
     }
 
     /**
      * API: Menyimpan data ruangan baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_room' => 'required|string|max:50',
             'floor_id' => 'required|exists:floors,id',
             'status' => 'required|in:active,inactive',
@@ -97,9 +99,9 @@ class RoomController extends Controller
         }
 
         $room = Room::create([
-            'name_room' => request('name_room'),
-            'floor_id' => request('floor_id'),
-            'status' => request('status'),
+            'name_room' => $request->input('name_room'),
+            'floor_id' => $request->input('floor_id'),
+            'status' => $request->input('status'),
             'created_by' => Auth::id(),
         ]);
 
@@ -109,7 +111,7 @@ class RoomController extends Controller
     /**
      * API: Menampilkan satu data ruangan spesifik.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $room = Room::with(['floor.building', 'creator:id,name'])->findOrFail($id);
         return response()->json($room);
@@ -118,11 +120,11 @@ class RoomController extends Controller
     /**
      * API: Memperbarui data ruangan yang sudah ada.
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $room = Room::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_room' => 'required|string|max:50',
             'floor_id' => 'required|exists:floors,id',
             'status' => 'required|in:active,inactive',
@@ -132,7 +134,7 @@ class RoomController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $room->update(request()->all());
+        $room->update($request->all());
 
         return response()->json($room->load(['floor.building', 'creator:id,name']));
     }
@@ -140,11 +142,10 @@ class RoomController extends Controller
     /**
      * API: Menghapus data ruangan.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $room = Room::findOrFail($id);
         $room->delete();
-
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Data ruangan berhasil dihapus.'], 200);
     }
 }

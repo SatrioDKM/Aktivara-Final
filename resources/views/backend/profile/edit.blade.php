@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            <i class="fas fa-user-circle mr-2"></i>
             {{ __('Profil Pengguna') }}
         </h2>
     </x-slot>
@@ -8,7 +9,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Bagian Informasi Profil --}}
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -29,34 +30,42 @@
                             @csrf
                             @method('patch')
 
+                            {{-- Upload Foto Profil dengan Preview --}}
                             <div x-data="{ photoName: null, photoPreview: null }">
-                                <x-input-label for="profile_picture" :value="__('Foto Profil')" />
+                                <label for="profile_picture"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto
+                                    Profil</label>
                                 <div class="mt-2 flex items-center gap-x-4">
-                                    <img x-show="!photoPreview" class="h-24 w-24 rounded-full object-cover"
+                                    <img x-show="!photoPreview"
+                                        class="h-24 w-24 rounded-full object-cover ring-2 ring-gray-300 dark:ring-gray-600"
                                         src="{{ $data['user']->profile_picture ? Storage::url($data['user']->profile_picture) : asset('assets/backend/img/avatars/user-default.png') }}"
                                         alt="Foto profil saat ini">
-                                    <div x-show="photoPreview" class="h-24 w-24 rounded-full bg-cover bg-center"
+                                    <div x-show="photoPreview" style="display: none;"
+                                        class="h-24 w-24 rounded-full bg-cover bg-center ring-2 ring-indigo-400"
                                         :style="'background-image: url(\'' + photoPreview + '\');'">
                                     </div>
                                     <div>
                                         <input id="profile_picture" name="profile_picture" type="file" class="hidden"
                                             x-ref="photo" x-on:change="
-                                                photoName = $refs.photo.files[0].name;
-                                                const reader = new FileReader();
-                                                reader.onload = (e) => {
-                                                    photoPreview = e.target.result;
-                                                };
-                                                reader.readAsDataURL($refs.photo.files[0]);
-                                            " />
+                                            photoName = $refs.photo.files[0].name;
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => {
+                                                photoPreview = e.target.result;
+                                            };
+                                            reader.readAsDataURL($refs.photo.files[0]);
+                                        " />
                                         <x-secondary-button type="button" x-on:click.prevent="$refs.photo.click()">
+                                            <i class="fas fa-upload mr-2"></i>
                                             {{ __('Pilih Foto Baru') }}
                                         </x-secondary-button>
-                                        <p x-show="photoName" class="text-sm text-gray-500 mt-2" x-text="photoName"></p>
+                                        <p x-show="photoName" style="display: none;" class="text-sm text-gray-500 mt-2"
+                                            x-text="photoName"></p>
                                     </div>
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('profile_picture')" />
                             </div>
 
+                            {{-- Input Nama --}}
                             <div>
                                 <x-input-label for="name" :value="__('Nama')" />
                                 <div class="relative mt-1">
@@ -70,6 +79,7 @@
                                 <x-input-error class="mt-2" :messages="$errors->get('name')" />
                             </div>
 
+                            {{-- Input Email --}}
                             <div>
                                 <x-input-label for="email" :value="__('Email')" />
                                 <div class="relative mt-1">
@@ -96,6 +106,7 @@
                                 @endif
                             </div>
 
+                            {{-- Input Telegram --}}
                             <div>
                                 <x-input-label for="telegram_chat_id" :value="__('ID Chat Telegram (Opsional)')" />
                                 <div class="relative mt-1">
@@ -110,6 +121,7 @@
                                 <x-input-error class="mt-2" :messages="$errors->get('telegram_chat_id')" />
                             </div>
 
+                            {{-- Info Role & Status (Read-only) --}}
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <x-input-label :value="__('Peran (Role)')" />
@@ -128,7 +140,10 @@
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Simpan Perubahan') }}</x-primary-button>
+                                <x-primary-button>
+                                    <i class="fas fa-save mr-2"></i>
+                                    {{ __('Simpan Perubahan') }}
+                                </x-primary-button>
                             </div>
                         </form>
                     </section>
@@ -136,7 +151,7 @@
             </div>
 
             {{-- Bagian Update Password --}}
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -158,8 +173,7 @@
                                     :value="__('Password Saat Ini')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-key text-gray-400"></i>
-                                    </div>
+                                        <i class="fas fa-key text-gray-400"></i></div>
                                     <x-text-input id="update_password_current_password" name="current_password"
                                         type="password" class="block w-full ps-10" autocomplete="current-password"
                                         placeholder="Password Anda saat ini" />
@@ -172,8 +186,7 @@
                                 <x-input-label for="update_password_password" :value="__('Password Baru')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    </div>
+                                        <i class="fas fa-lock text-gray-400"></i></div>
                                     <x-text-input id="update_password_password" name="password" type="password"
                                         class="block w-full ps-10" autocomplete="new-password"
                                         placeholder="Password baru yang kuat" />
@@ -186,8 +199,7 @@
                                     :value="__('Konfirmasi Password Baru')" />
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    </div>
+                                        <i class="fas fa-lock text-gray-400"></i></div>
                                     <x-text-input id="update_password_password_confirmation"
                                         name="password_confirmation" type="password" class="block w-full ps-10"
                                         autocomplete="new-password" placeholder="Ketik ulang password baru" />
@@ -197,7 +209,10 @@
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Simpan Password') }}</x-primary-button>
+                                <x-primary-button>
+                                    <i class="fas fa-save mr-2"></i>
+                                    {{ __('Simpan Password') }}
+                                </x-primary-button>
                             </div>
                         </form>
                     </section>
@@ -205,7 +220,7 @@
             </div>
 
             {{-- Bagian Hapus Akun --}}
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
                 <div class="max-w-xl">
                     <section class="space-y-6">
                         <header>
@@ -239,13 +254,12 @@
                                 </p>
 
                                 <div class="mt-6">
-                                    <x-input-label for="password" value="{{ __('Password') }}" class="sr-only" />
+                                    <x-input-label for="password_delete" value="{{ __('Password') }}" class="sr-only" />
                                     <div class="relative mt-1">
                                         <div
                                             class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                            <i class="fas fa-key text-gray-400"></i>
-                                        </div>
-                                        <x-text-input id="password" name="password" type="password"
+                                            <i class="fas fa-key text-gray-400"></i></div>
+                                        <x-text-input id="password_delete" name="password" type="password"
                                             class="block w-full ps-10" placeholder="{{ __('Password') }}" />
                                     </div>
                                     <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
@@ -267,32 +281,26 @@
         </div>
     </div>
 
-    @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    @endpush
-
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
-
     <script>
-        // Menampilkan notifikasi iziToast berdasarkan status sesi
+        // Menampilkan notifikasi iziToast berdasarkan status sesi dari controller
         document.addEventListener('DOMContentLoaded', function() {
             @if(session('status') === 'profile-updated')
-                iziToast.success({
+                window.iziToast.success({
                     title: 'Berhasil!',
                     message: 'Informasi profil Anda telah diperbarui.',
                     position: 'topRight'
                 });
             @endif
             @if(session('status') === 'password-updated')
-                iziToast.success({
+                window.iziToast.success({
                     title: 'Berhasil!',
                     message: 'Password Anda telah diperbarui.',
                     position: 'topRight'
                 });
             @endif
             @if(session('status') === 'verification-link-sent')
-                iziToast.info({
+                window.iziToast.info({
                     title: 'Info',
                     message: 'Link verifikasi baru telah dikirim ke email Anda.',
                     position: 'topRight'

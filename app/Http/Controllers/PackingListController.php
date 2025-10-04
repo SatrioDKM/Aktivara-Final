@@ -5,31 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\PackingList;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
-use Illuminate\Http\Response;
 
 class PackingListController extends Controller
 {
     /**
-     * Menampilkan halaman utama Barang Keluar.
+     * Menampilkan halaman utama Barang Keluar & Packing List.
      */
     public function viewPage(): View
     {
-        $data = []; // Data akan diambil oleh API
-        return view('backend.packing_lists.index', compact('data'));
+        return view('backend.packing_lists.index');
     }
 
     /**
-     * Mengekspor packing list ke PDF.
+     * Mengekspor packing list ke format PDF.
      */
     public function exportPdf(string $id): Response
     {
         $packingList = PackingList::with('creator', 'assets')->findOrFail($id);
-        $pdf = Pdf::loadView('pdf.packing_list', ['packingList' => $packingList]);
+        $pdf = Pdf::loadView('backend.packing_lists.pdf', ['packingList' => $packingList]);
         return $pdf->stream($packingList->document_number . '.pdf');
     }
 
@@ -38,28 +39,27 @@ class PackingListController extends Controller
     // ===================================================================
 
     /**
-     * API: Mengambil riwayat packing list dengan paginasi.
+     * API: Mengambil riwayat packing list dengan paginasi dan filter.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         $query = PackingList::with('creator:id,name')->withCount('assets');
 
-        if (request('search', '')) {
-            $search = request('search');
-            $query->where('document_number', 'like', "%{$search}%")
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where('document_number', 'like', "%{$search}%")
                 ->orWhere('recipient_name', 'like', "%{$search}%");
-        }
+        });
 
-        $packingLists = $query->latest()->paginate(request('perPage', 10));
+        $packingLists = $query->latest()->paginate($request->input('perPage', 10));
         return response()->json($packingLists);
     }
 
     /**
      * API: Menyimpan data packing list baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'recipient_name' => 'required|string|max:100',
             'notes' => 'nullable|string',
             'asset_ids' => 'required|array|min:1',
@@ -71,7 +71,7 @@ class PackingListController extends Controller
         }
 
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use ($request) {
                 $prefix = 'PL-' . date('Ymd') . '-';
                 $lastEntry = PackingList::where('document_number', 'like', "{$prefix}%")->orderBy('document_number', 'desc')->first();
                 $nextNumber = $lastEntry ? ((int) substr($lastEntry->document_number, -4)) + 1 : 1;
@@ -79,14 +79,14 @@ class PackingListController extends Controller
 
                 $packingList = PackingList::create([
                     'document_number' => $documentNumber,
-                    'recipient_name' => request('recipient_name'),
-                    'notes' => request('notes'),
+                    'recipient_name' => $request->input('recipient_name'),
+                    'notes' => $request->input('notes'),
                     'created_by' => Auth::id(),
                 ]);
 
-                $packingList->assets()->attach(request('asset_ids'));
+                $packingList->assets()->attach($request->input('asset_ids'));
 
-                $assets = Asset::find(request('asset_ids'));
+                $assets = Asset::find($request->input('asset_ids'));
                 foreach ($assets as $asset) {
                     if ($asset->asset_type == 'fixed_asset') {
                         $asset->update(['status' => 'in_use']);
@@ -105,9 +105,9 @@ class PackingListController extends Controller
     /**
      * API: Mengambil daftar aset yang tersedia untuk Select2.
      */
-    public function getAvailableAssets()
+    public function getAvailableAssets(Request $request): JsonResponse
     {
-        $search = request('q');
+        $search = $request->input('q');
 
         $assets = Asset::where('status', 'available')
             ->where(function ($query) use ($search) {

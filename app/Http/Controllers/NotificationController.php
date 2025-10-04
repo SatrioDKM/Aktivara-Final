@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Gunakan Request class
+use Illuminate\Http\JsonResponse; // Gunakan JsonResponse untuk return type
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     /**
-     * Mengambil notifikasi pengguna yang login.
+     * Mengambil notifikasi (read & unread) untuk pengguna yang sedang login.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $user = $request->user(); // Ambil user dari request
 
         return response()->json([
-            'read' => $user->readNotifications,
+            'read' => $user->readNotifications()->limit(10)->get(), // Batasi notifikasi yang sudah dibaca
             'unread' => $user->unreadNotifications,
         ]);
     }
@@ -24,10 +25,10 @@ class NotificationController extends Controller
     /**
      * Menandai semua notifikasi yang belum dibaca sebagai sudah dibaca.
      */
-    public function markAsRead()
+    public function markAsRead(Request $request): JsonResponse
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        $request->user()->unreadNotifications->markAsRead();
 
-        return response()->json(['message' => 'All notifications marked as read.']);
+        return response()->json(['message' => 'Semua notifikasi ditandai telah dibaca.']);
     }
 }

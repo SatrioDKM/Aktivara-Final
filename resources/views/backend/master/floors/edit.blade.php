@@ -1,52 +1,75 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            <i class="fas fa-edit mr-2"></i>
             {{ __('Edit Lantai: ') . $data['floor']->name_floor }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 md:p-8" x-data="floorForm()" x-init="initData(@js($data['floor']))">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="p-6 md:p-8" x-data="floorForm()" x-init="initData(@js($data['floor']))" x-cloak>
                     <form @submit.prevent="saveFloor()">
                         <div class="space-y-6">
-                            <div>
+
+                            {{-- Gedung --}}
+                            <div wire:ignore>
                                 <label for="building_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gedung</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gedung <span
+                                        class="text-red-500">*</span></label>
                                 <select id="building_id" class="mt-1 block w-full" required>
                                     @foreach ($data['buildings'] as $building)
                                     <option value="{{ $building->id }}">{{ $building->name_building }}</option>
                                     @endforeach
                                 </select>
+                                <template x-if="errors.building_id">
+                                    <p class="mt-1 text-xs text-red-500" x-text="errors.building_id[0]"></p>
+                                </template>
                             </div>
+
+                            {{-- Nama Lantai --}}
                             <div>
                                 <label for="name_floor"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama
-                                    Lantai</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lantai <span
+                                        class="text-red-500">*</span></label>
                                 <div class="relative mt-1">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                        <i class="fas fa-layer-group text-gray-400"></i></div>
+                                        <i class="fas fa-layer-group text-gray-400"></i>
+                                    </div>
                                     <input type="text" x-model="formData.name_floor" id="name_floor"
                                         class="block w-full ps-10 border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Contoh: Lantai 1" required>
+                                        placeholder="Contoh: Lantai 1 atau Basement 2" required>
                                 </div>
+                                <template x-if="errors.name_floor">
+                                    <p class="mt-1 text-xs text-red-500" x-text="errors.name_floor[0]"></p>
+                                </template>
                             </div>
-                            <div>
+
+                            {{-- Status --}}
+                            <div wire:ignore>
                                 <label for="status"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status <span
+                                        class="text-red-500">*</span></label>
                                 <select id="status" class="mt-1 block w-full" required>
                                     <option value="active">Aktif</option>
                                     <option value="inactive">Tidak Aktif</option>
                                 </select>
+                                <template x-if="errors.status">
+                                    <p class="mt-1 text-xs text-red-500" x-text="errors.status[0]"></p>
+                                </template>
                             </div>
                         </div>
-                        <div class="mt-8 flex justify-end space-x-3">
+
+                        {{-- Tombol Aksi --}}
+                        <div class="mt-8 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-6">
                             <a href="{{ route('master.floors.index') }}"
                                 class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">Batal</a>
                             <x-primary-button type="submit" ::disabled="isSubmitting">
-                                <span x-show="!isSubmitting">Simpan Perubahan</span>
-                                <span x-show="isSubmitting">Menyimpan...</span>
+                                <i class="fas fa-circle-notch fa-spin mr-2" x-show="isSubmitting"
+                                    style="display: none;"></i>
+                                <i class="fas fa-save mr-2" x-show="!isSubmitting"></i>
+                                <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
                             </x-primary-button>
                         </div>
                     </form>
@@ -55,57 +78,78 @@
         </div>
     </div>
 
-    @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    @endpush
-
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         function floorForm() {
-                return {
-                    isSubmitting: false,
-                    formData: { id: null, name_floor: '', building_id: '', status: '' },
-                    initData(floor) {
-                        this.formData = { id: floor.id, name_floor: floor.name_floor, building_id: floor.building_id, status: floor.status };
-                        this.$nextTick(() => {
-                            $('#building_id').val(this.formData.building_id).trigger('change');
-                            $('#status').val(this.formData.status).trigger('change');
-                            $('#building_id, #status').select2({ theme: "classic", width: '100%' });
-                        });
-                    },
-                    getCsrfToken() {
-                        const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-                        return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : '';
-                    },
-                    async saveFloor() {
-                        this.isSubmitting = true;
-                        this.formData.building_id = $('#building_id').val();
-                        this.formData.status = $('#status').val();
+            return {
+                isSubmitting: false,
+                formData: {
+                    id: null,
+                    name_floor: '',
+                    building_id: '',
+                    status: ''
+                },
+                errors: {},
 
-                        await fetch('/sanctum/csrf-cookie');
-                        fetch(`/api/floors/${this.formData.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
-                            body: JSON.stringify(this.formData)
-                        })
-                        .then(res => res.ok ? res.json() : Promise.reject(res.json()))
-                        .then(data => {
-                            sessionStorage.setItem('toastMessage', 'Data lantai berhasil diperbarui!');
-                            window.location.href = "{{ route('master.floors.index') }}";
-                        })
-                        .catch(err => {
-                            let msg = 'Gagal menyimpan. Periksa isian Anda.';
-                            if (err.errors) msg = Object.values(err.errors).flat().join('<br>');
-                            iziToast.error({ title: 'Gagal!', message: msg, position: 'topRight', timeout: 5000 });
-                            this.isSubmitting = false;
+                initData(floor) {
+                    // Isi formData dengan data dari controller
+                    this.formData = {
+                        id: floor.id,
+                        name_floor: floor.name_floor,
+                        building_id: floor.building_id,
+                        status: floor.status
+                    };
+
+                    // Gunakan $nextTick untuk memastikan elemen sudah ada di DOM
+                    this.$nextTick(() => {
+                        const self = this;
+
+                        // Inisialisasi Select2 dengan nilai yang sudah ada
+                        $('#building_id').val(this.formData.building_id).trigger('change');
+                        $('#status').val(this.formData.status).trigger('change');
+
+                        // Hubungkan perubahan Select2 ke data Alpine
+                        $('#building_id').on('change', function() { self.formData.building_id = $(this).val(); });
+                        $('#status').on('change', function() { self.formData.status = $(this).val(); });
+
+                        $('#building_id, #status').select2({
+                            theme: "classic",
+                            width: '100%'
                         });
-                    }
+                    });
+                },
+
+                saveFloor() {
+                    this.isSubmitting = true;
+                    this.errors = {};
+
+                    // Kirim data ke API menggunakan Axios
+                    axios.put(`/api/floors/${this.formData.id}`, this.formData)
+                    .then(response => {
+                        sessionStorage.setItem('toastMessage', 'Data lantai berhasil diperbarui!');
+                        window.location.href = "{{ route('master.floors.index') }}";
+                    })
+                    .catch(error => {
+                        let errorMessage = 'Gagal menyimpan. Silakan periksa kembali isian Anda.';
+                        if (error.response && error.response.status === 422) {
+                            this.errors = error.response.data.errors;
+                            errorMessage = 'Terdapat kesalahan pada input Anda.';
+                        } else if (error.response && error.response.data.message) {
+                            errorMessage = error.response.data.message;
+                        }
+
+                        window.iziToast.error({
+                            title: 'Gagal!',
+                            message: errorMessage,
+                            position: 'topRight'
+                        });
+                    })
+                    .finally(() => {
+                        this.isSubmitting = false;
+                    });
                 }
             }
+        }
     </script>
     @endpush
 </x-app-layout>

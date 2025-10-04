@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 class FloorController extends Controller
 {
     /**
-     * Menampilkan halaman utama (index).
+     * Menampilkan halaman daftar lantai (index).
      */
     public function viewPage(): View
     {
@@ -25,7 +25,7 @@ class FloorController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir tambah.
+     * Menampilkan halaman formulir tambah lantai.
      */
     public function create(): View
     {
@@ -36,7 +36,7 @@ class FloorController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail (show).
+     * Menampilkan halaman detail lantai.
      */
     public function showPage(string $id): View
     {
@@ -47,7 +47,7 @@ class FloorController extends Controller
     }
 
     /**
-     * Menampilkan halaman formulir edit.
+     * Menampilkan halaman formulir edit lantai.
      */
     public function edit(string $id): View
     {
@@ -63,26 +63,25 @@ class FloorController extends Controller
     // ===================================================================
 
     /**
-     * Mengambil daftar lantai, bisa difilter berdasarkan building_id.
+     * API: Mengambil daftar lantai dengan paginasi dan filter.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Floor::query()->orderBy('name_floor');
+        $query = Floor::with('building:id,name_building');
 
-        // Filter berdasarkan building_id jika ada di request
-        if ($request->has('building_id')) {
-            $query->where('building_id', $request->input('building_id'));
-        }
+        $query->when($request->input('search'), fn($q, $search) => $q->where('name_floor', 'like', "%{$search}%"));
+        $query->when($request->input('building'), fn($q, $buildingId) => $q->where('building_id', $buildingId));
 
-        return response()->json($query->get(['id', 'name_floor']));
+        $floors = $query->latest()->paginate($request->input('perPage', 10));
+        return response()->json($floors);
     }
 
     /**
      * API: Menyimpan data lantai baru.
      */
-    public function store()
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_floor' => 'required|string|max:50',
             'building_id' => 'required|exists:buildings,id',
             'status' => 'required|in:active,inactive',
@@ -93,9 +92,9 @@ class FloorController extends Controller
         }
 
         $floor = Floor::create([
-            'name_floor' => request('name_floor'),
-            'building_id' => request('building_id'),
-            'status' => request('status'),
+            'name_floor' => $request->input('name_floor'),
+            'building_id' => $request->input('building_id'),
+            'status' => $request->input('status'),
             'created_by' => Auth::id(),
         ]);
 
@@ -105,7 +104,7 @@ class FloorController extends Controller
     /**
      * API: Menampilkan satu data lantai spesifik.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $floor = Floor::with(['building:id,name_building', 'creator:id,name'])->findOrFail($id);
         return response()->json($floor);
@@ -114,11 +113,11 @@ class FloorController extends Controller
     /**
      * API: Memperbarui data lantai yang sudah ada.
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $floor = Floor::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        $validator = Validator::make($request->all(), [
             'name_floor' => 'required|string|max:50',
             'building_id' => 'required|exists:buildings,id',
             'status' => 'required|in:active,inactive',
@@ -128,7 +127,7 @@ class FloorController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $floor->update(request()->all());
+        $floor->update($request->all());
 
         return response()->json($floor->load(['building:id,name_building', 'creator:id,name']));
     }
@@ -136,11 +135,10 @@ class FloorController extends Controller
     /**
      * API: Menghapus data lantai.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $floor = Floor::findOrFail($id);
         $floor->delete();
-
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Data lantai berhasil dihapus.'], 200);
     }
 }

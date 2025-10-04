@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request; // <-- Import Request class
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -15,32 +17,27 @@ class StockManagementController extends Controller
      */
     public function viewPage(): View
     {
-        $data = [
-            'stocks' => Asset::where('asset_type', 'consumable')
-                ->orderBy('name_asset')
-                ->paginate(15),
-        ];
-        return view('backend.stock.index', compact('data'));
+        return view('backend.stock.index');
     }
 
     /**
-     * API: Mengambil daftar barang habis pakai dengan filter.
+     * API: Mengambil daftar barang habis pakai dengan filter dan paginasi.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         $query = Asset::where('asset_type', 'consumable');
 
         // Filter untuk hanya menampilkan stok menipis
-        $query->when(filter_var(request('low_stock_only'), FILTER_VALIDATE_BOOLEAN), function ($q) {
+        $query->when($request->boolean('low_stock_only'), function ($q) {
             return $q->whereRaw('current_stock <= minimum_stock')->where('minimum_stock', '>', 0);
         });
 
         // Filter pencarian
-        if (request('search', '')) {
-            $query->where('name_asset', 'like', '%' . request('search') . '%');
-        }
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where('name_asset', 'like', '%' . $search . '%');
+        });
 
-        $stocks = $query->orderBy('name_asset')->paginate(request('perPage', 15));
+        $stocks = $query->orderBy('name_asset')->paginate($request->input('perPage', 15));
 
         return response()->json($stocks);
     }
@@ -48,11 +45,14 @@ class StockManagementController extends Controller
     /**
      * API: Memperbarui stok minimum untuk satu aset.
      */
-    public function update(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $asset = Asset::findOrFail($id);
 
-        $validator = Validator::make(request()->all(), [
+        // dd($request->input('minimum_stock'));
+
+        // --- PERBAIKAN 1: Gunakan $request->all() ---
+        $validator = Validator::make($request->all(), [
             'minimum_stock' => 'required|integer|min:0',
         ]);
 
@@ -65,7 +65,8 @@ class StockManagementController extends Controller
         }
 
         $asset->update([
-            'minimum_stock' => request('minimum_stock'),
+            // --- PERBAIKAN 2: Gunakan $request->input() ---
+            'minimum_stock' => $request->input('minimum_stock'),
             'updated_by' => Auth::id(),
         ]);
 

@@ -9,7 +9,6 @@ use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\PackingListController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskWorkflowController;
@@ -99,7 +98,6 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
         Route::get('/{id}', [TaskWorkflowController::class, 'show'])->name('show_data')->where('id', '[0-9]+');
         Route::get('/history/completed', [TaskWorkflowController::class, 'getCompletedHistory'])->name('completed_history_data');
 
-        // Route::post('/{id}/report', [DailyReportController::class, 'storeApi'])->name('reports.store_api')->where('id', '[0-9]+');
         Route::post('/{id}/report', [TaskWorkflowController::class, 'submitReport'])->name('reports.store')->where('id', '[0-9]+');
     });
 });

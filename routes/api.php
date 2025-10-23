@@ -26,6 +26,10 @@ use App\Http\Controllers\AssetMaintenanceController;
 |
 */
 
+// --- RUTE PUBLIK ---
+// Rute ini tidak memerlukan login
+Route::post('/guest-complaints', [GuestComplaintController::class, 'store'])->name('api.guest.complaint.store');
+
 Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
     // === Endpoint Umum ===
@@ -121,7 +125,3 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
         Route::post('/{id}/report', [TaskWorkflowController::class, 'submitReport'])->name('reports.store')->where('id', '[0-9]+');
     });
 });
-
-// Rute Publik untuk Laporan Keluhan Tamu
-Route::post('/guest-complaints', [GuestComplaintController::class, 'store'])
-    ->name('api.guest.complaints.store');

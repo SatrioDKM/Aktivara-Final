@@ -6,11 +6,13 @@ use App\Models\Complaint;
 use App\Models\Task;
 use App\Models\TaskType;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request; // Menggunakan Request class
+use App\Notifications\NewTaskAvailable; // Import class notifikasi
+use Illuminate\Http\JsonResponse; // Ubah ke JsonResponse
+use Illuminate\Http\Request; // Import Request
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log; // Import Log
+use Illuminate\Support\Facades\Notification; // Import Notification
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
@@ -21,17 +23,16 @@ class GuestComplaintController extends Controller
      */
     public function create(): View
     {
-        // Query sudah dioptimalkan dan tidak menyebabkan N+1
         $data = [
-            'taskTypes' => TaskType::whereIn('departemen', ['HK', 'TK', 'SC', 'UMUM'])
-                ->orderBy('name_task')
-                ->get(),
+            'taskTypes' => TaskType::whereIn('departemen', ['HK', 'TK', 'SC', 'UMUM'])->orderBy('name_task')->get(),
         ];
+        // Pastikan path view sudah benar
         return view('backend.complaints.guest-form', compact('data'));
     }
 
     /**
-     * Menyimpan keluhan dari tamu via API dan secara otomatis membuat tugas.
+     * API: Menyimpan keluhan dari tamu dan secara otomatis membuat tugas.
+     * Mengembalikan JsonResponse, bukan RedirectResponse.
      */
     public function store(Request $request): JsonResponse
     {
@@ -44,28 +45,25 @@ class GuestComplaintController extends Controller
         ]);
 
         if ($validator->fails()) {
+            // Kembalikan error validasi sebagai JSON
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
-            // Menggunakan DB::transaction untuk memastikan integritas data
-            $complaint = DB::transaction(function () use ($request) {
-                // Mengambil user Superadmin sebagai pencatat default
+            DB::transaction(function () use ($request) {
                 $superadmin = User::where('role_id', 'SA00')->first();
-                $creatorId = $superadmin ? $superadmin->id : 1; // Fallback ke ID 1 jika tidak ada
+                $creatorId = $superadmin ? $superadmin->id : 1;
 
-                // 1. Buat tugas baru secara langsung
                 $newTask = Task::create([
                     'title' => $request->input('title'),
                     'description' => $request->input('description'),
                     'task_type_id' => $request->input('task_type_id'),
-                    'priority' => 'medium', // Default priority untuk laporan tamu
+                    'priority' => 'medium',
                     'status' => 'unassigned',
                     'created_by' => $creatorId,
                 ]);
 
-                // 2. Buat record di tabel keluhan untuk arsip
-                return Complaint::create([
+                Complaint::create([
                     'title' => $request->input('title'),
                     'description' => $request->input('description'),
                     'reporter_name' => $request->input('reporter_name'),
@@ -74,19 +72,34 @@ class GuestComplaintController extends Controller
                     'created_by' => $creatorId,
                     'task_id' => $newTask->id,
                 ]);
+
+                // Logika Notifikasi (diperbaiki)
+                try {
+                    $newTask->load('taskType');
+                    $departmentCode = $newTask->taskType->departemen;
+
+                    if ($departmentCode && $departmentCode !== 'UMUM') {
+                        $staffRole = $departmentCode . '02';
+                        $leaderRole = $departmentCode . '01';
+                        $recipients = User::whereIn('role_id', [$staffRole, $leaderRole])->get();
+
+                        $guestName = $request->input('reporter_name') . " (Tamu)";
+
+                        if ($recipients->isNotEmpty()) {
+                            Notification::send($recipients, new NewTaskAvailable($newTask, $guestName));
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Gagal mengirim notifikasi dari GuestComplaint: ' . $e->getMessage());
+                }
             });
 
-            return response()->json([
-                'message' => 'Terima kasih! Laporan Anda telah berhasil dikirim dan akan segera kami proses.'
-            ], 201); // 201 Created
-
+            // Kembalikan pesan sukses sebagai JSON
+            return response()->json(['message' => 'Terima kasih! Laporan Anda telah berhasil dikirim dan akan segera kami proses.'], 201);
         } catch (\Exception $e) {
-            // Logging error untuk debugging
-            Log::error('Gagal membuat laporan tamu: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Terjadi kesalahan pada server. Mohon coba lagi nanti.'
-            ], 500);
+            Log::error('Gagal menyimpan Laporan Tamu: ' . $e->getMessage());
+            // Kembalikan error server sebagai JSON
+            return response()->json(['message' => 'Terjadi kesalahan pada server. Mohon coba lagi.'], 500);
         }
     }
 }

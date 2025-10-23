@@ -8,7 +8,11 @@
     <title>Lapor Keluhan - ManproApp</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
+
+    {{-- Aset dimuat dari Vite (app.js & app.css) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Hapus semua link CDN karena sudah di-bundle di app.js/app.css --}}
 </head>
 
 <body class="antialiased bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
@@ -42,13 +46,14 @@
                             form di bawah ini.</p>
                     </div>
 
+                    {{-- Form sekarang memanggil fungsi Alpine.js --}}
                     <form @submit.prevent="submitForm" class="space-y-6">
                         @csrf
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <label for="reporter_name"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama
-                                    Anda</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Anda
+                                    <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
                                             class="fas fa-user text-gray-400"></i></div>
@@ -63,9 +68,9 @@
                             <div wire:ignore>
                                 <label for="task_type_id"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kategori
-                                    Laporan</label>
+                                    Laporan <span class="text-red-500">*</span></label>
                                 <select id="task_type_id" class="block w-full" required>
-                                    <option></option>
+                                    <option value=""></option>
                                     @foreach($data['taskTypes'] as $type)
                                     <option value="{{ $type->id }}">{{ $type->name_task }}</option>
                                     @endforeach
@@ -79,7 +84,7 @@
                         <div>
                             <label for="title"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Singkat
-                                Laporan</label>
+                                Laporan <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
                                         class="fas fa-heading text-gray-400"></i></div>
@@ -95,8 +100,8 @@
 
                         <div>
                             <label for="location_text"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Detail
-                                Lokasi</label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Detail Lokasi
+                                <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
                                         class="fas fa-map-marker-alt text-gray-400"></i></div>
@@ -113,7 +118,7 @@
                         <div>
                             <label for="description"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi
-                                Lengkap</label>
+                                Lengkap <span class="text-red-500">*</span></label>
                             <textarea x-model="formData.description" id="description" rows="4"
                                 class="block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
                                 required
@@ -141,6 +146,7 @@
         </footer>
     </div>
 
+    {{-- Logika JavaScript dipindahkan ke @push('scripts') agar rapi --}}
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('guestComplaintForm', () => ({
@@ -149,8 +155,7 @@
                     task_type_id: '',
                     title: '',
                     location_text: '',
-                    description: '',
-                    _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    description: ''
                 },
                 loading: false,
                 errors: {},
@@ -170,9 +175,12 @@
                     this.loading = true;
                     this.errors = {};
 
-                    axios.post('{{ route("api.guest.complaints.store") }}', this.formData)
+                    // Axios akan menangani CSRF token secara otomatis (via bootstrap.js)
+                    // Panggil rute API yang baru
+                    axios.post('{{ route("api.guest.complaint.store") }}', this.formData)
                         .then(response => {
-                            iziToast.success({
+                            // Tampilkan notifikasi sukses
+                            window.iziToast.success({
                                 title: 'Berhasil!',
                                 message: response.data.message,
                                 position: 'topRight'
@@ -187,12 +195,14 @@
                         .catch(error => {
                             let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
                             if (error.response && error.response.status === 422) {
+                                // Tampilkan error validasi
                                 this.errors = error.response.data.errors;
                                 errorMessage = 'Harap periksa kembali isian form Anda.';
                             } else if (error.response && error.response.data.message) {
                                 errorMessage = error.response.data.message;
                             }
-                            iziToast.error({
+                            // Tampilkan notifikasi error
+                            window.iziToast.error({
                                 title: 'Oops!',
                                 message: errorMessage,
                                 position: 'topRight'

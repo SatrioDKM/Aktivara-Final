@@ -1,51 +1,42 @@
 <x-app-layout>
-    {{-- Slot untuk Header Halaman --}}
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 <i class="fas fa-tasks mr-2"></i>
                 {{ __('Detail Tugas') }}
             </h2>
-
-            <div>
-                {{-- ======================================================== --}}
-                {{-- === PERUBAHAN DI SINI: Tombol Kembali Kondisional === --}}
-                {{-- ======================================================== --}}
+            <div class="mt-4 sm:mt-0 flex space-x-2">
                 @php
-                // Daftar role atasan (Leader, Manager, Admin)
                 $atasanRoles = ['SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01'];
-                // Daftar role staff
                 $staffRoles = ['HK02', 'TK02', 'SC02', 'PK02', 'WH02'];
                 @endphp
 
                 @if(in_array(Auth::user()->role_id, $atasanRoles))
                 <a href="{{ route('tasks.monitoring') }}"
-                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Kembali ke Monitoring
                 </a>
                 @elseif(in_array(Auth::user()->role_id, $staffRoles))
                 <a href="{{ route('tasks.my_tasks') }}"
-                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Kembali ke Tugas Aktif
                 </a>
                 @endif
-                {{-- ======================================================== --}}
             </div>
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{-- Inisialisasi komponen Alpine.js pada elemen pembungkus paling atas --}}
             <div x-data="taskDetail({
                 initialTaskData: {{ Js::from($data['task']) }},
                 assets: {{ Js::from($data['assets']) }},
                 currentUser: {{ Js::from(Auth::user()) }}
             })" x-cloak>
 
-                {{-- Komponen Notifikasi Global (Sekarang dalam scope x-data) --}}
+                {{-- Komponen Notifikasi Global --}}
                 <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-2"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
@@ -78,7 +69,6 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         <div class="lg:col-span-2 space-y-6">
-
                             {{-- Notifikasi Jika Tugas Ditolak --}}
                             <template x-if="task.status === 'rejected' && task.rejection_notes">
                                 <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded-md shadow-sm"
@@ -232,8 +222,8 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto
                                                     Sebelum <span class="text-red-500">*</span></label>
-                                                <input type="file" @change="previewImage($event, 'before')"
-                                                    accept="image/*"
+                                                <input x-ref="fileInputBefore" type="file"
+                                                    @change="previewImage($event, 'before')" accept="image/*"
                                                     class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                                     required>
                                                 <template x-if="imageBeforePreview"><img :src="imageBeforePreview"
@@ -243,8 +233,8 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto
                                                     Sesudah <span class="text-red-500">*</span></label>
-                                                <input type="file" @change="previewImage($event, 'after')"
-                                                    accept="image/*"
+                                                <input x-ref="fileInputAfter" type="file"
+                                                    @change="previewImage($event, 'after')" accept="image/*"
                                                     class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                                     required>
                                                 <template x-if="imageAfterPreview"><img :src="imageAfterPreview"
@@ -280,7 +270,6 @@
                                     </div>
                                 </div>
                             </template>
-
                         </div>
                     </div>
                 </template>
@@ -313,7 +302,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -337,15 +325,14 @@
 
                 init() {
                     console.log("[DEBUG] Alpine init started. Initial data from server:", this.initialTaskData);
-                    // Langsung gunakan data dari server, tidak perlu panggil API di awal
                     if (this.initialTaskData && this.initialTaskData.id) {
                         this.task = this.initialTaskData;
                         this.isLoading = false;
                         console.log("[DEBUG] Task data loaded from server.", this.task);
                     } else {
-                        // Fallback jika data awal tidak valid, panggil API
                         console.warn("[DEBUG] Initial data is invalid. Fetching from API as a fallback.");
-                        this.getTaskDetails(data.taskId); // Gunakan taskId dari parameter awal
+                        const taskId = window.location.pathname.split('/').pop();
+                        this.getTaskDetails(taskId);
                     }
                 },
 
@@ -353,7 +340,6 @@
                     this.isLoading = true;
                     const idToFetch = taskId || this.task.id;
                     console.log(`[DEBUG] Fetching data for task ID: ${idToFetch}...`);
-
                     axios.get(`/api/tasks/${idToFetch}`)
                         .then(response => {
                             console.log('[DEBUG] API Response Success:', response.data);
@@ -363,9 +349,7 @@
                             console.error('[DEBUG] API Response Error:', error.response || error);
                             this.showNotification('Gagal memuat detail tugas. Coba refresh halaman.', 'error');
                         })
-                        .finally(() => {
-                            this.isLoading = false;
-                        });
+                        .finally(() => { this.isLoading = false; });
                 },
 
                 previewImage(event, type) {
@@ -392,12 +376,11 @@
                         .then(response => {
                             this.showNotification(response.data.message, 'success');
                             this.getTaskDetails();
-
                             this.formData = { report_text: '', image_before: null, image_after: null };
                             this.imageBeforePreview = null;
                             this.imageAfterPreview = null;
 
-                            // === PERBAIKAN 3: Gunakan x-ref untuk mereset file input ===
+                            // === PERBAIKAN DI SINI: Gunakan x-ref ===
                             if (this.$refs.fileInputBefore) {
                                 this.$refs.fileInputBefore.value = null;
                             }
@@ -406,9 +389,11 @@
                             }
                         })
                         .catch(error => {
-                            let msg = error.response?.data?.message || 'Terjadi kesalahan saat mengirim laporan.';
+                            let msg = 'Terjadi kesalahan saat mengirim laporan.'; // Pesan error default
                             if (error.response?.status === 422) {
-                                msg = Object.values(error.response.data.errors).flat().join('\n');
+                                msg = Object.values(error.response.data.errors).flat().join('<br>');
+                            } else if (error.response?.data?.message) {
+                                msg = error.response.data.message;
                             }
                             this.showNotification(msg, 'error');
                         })
@@ -443,24 +428,31 @@
                         this.showNotification(response.data.message, 'success');
                         this.getTaskDetails();
                     })
-                    .catch(error => this.showNotification('Gagal mengirim review.', 'error'))
+                    .catch(error => {
+                        let msg = 'Gagal mengirim review.';
+                        if (error.response?.data?.message) {
+                            msg = error.response.data.message;
+                        }
+                        this.showNotification(msg, 'error');
+                    })
                     .finally(() => this.isSubmitting = false);
                 },
 
                 showNotification(message, type) {
-                    this.notification.message = message;
-                    this.notification.type = type;
-                    this.notification.show = true;
-                    setTimeout(() => this.notification.show = false, 3000);
+                    window.iziToast[type.toLowerCase()]({
+                        title: type === 'success' ? 'Berhasil' : 'Error',
+                        message: message,
+                        position: 'topRight'
+                    });
                 },
 
                 statusColor(status) {
                     const colors = {
                         'unassigned': 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
-                        'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-                        'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-                        'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                        'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                        'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                        'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
                     };
                     return colors[status] || 'bg-gray-100';
                 },

@@ -1,0 +1,18 @@
+NOTES PERBAIKAN SISTEM
+
+BUG / ERROR
+* Saat leader ke atas buat tugas baru → pilihan lantai & ruangan tidak muncul.
+* Guest buat laporan → notifikasi tidak muncul di aplikasi. (Leader ke atas normal)
+* Notifikasi tugas baru / staff ambil tugas muncul tapi tidak bisa di-klik.
+* Saat staff ambil tugas dari guest → notifikasi hanya masuk ke superadmin, harusnya hanya ke akun leader.
+
+---
+
+PERUBAHAN FITUR / AKSES
+* Akun Warehouse (leader/staff): hilangkan menu "Manajemen Tugas".
+* Packing List → tambahkan field "nama + tanda tangan" akun yang login saat simpan.
+* PDF Packing List → hilangkan “Disetujui oleh” → ganti otomatis tanda tangan & nama akun warehouse.
+* Akses Warehouse ke menu aset: Create, Read, Edit (No Delete).
+* Tambah menu "Riwayat Aset" (keluar/masuk) untuk Warehouse, Manager, dan Superadmin. (Packing list = barang keluar).
+* Saat "buat tugas", tampilkan "hanya divisi user yang login".
+    ↳ Kecuali untuk "Manager & Superadmin" → bisa melihat semua divisi saat buat tugas.

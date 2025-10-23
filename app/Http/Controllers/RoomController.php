@@ -84,6 +84,23 @@ class RoomController extends Controller
     }
 
     /**
+     * === FUNGSI BARU YANG DITAMBAHKAN ===
+     * API: Mengambil SEMUA daftar ruangan (flat list) untuk dropdown.
+     */
+    public function listAll(Request $request): JsonResponse
+    {
+        $query = Room::query()->where('status', 'active')->orderBy('name_room');
+
+        // Filter berdasarkan floor_id jika ada
+        $query->when($request->input('floor_id'), function ($q, $floorId) {
+            $q->where('floor_id', $floorId);
+        });
+
+        // PENTING: Halaman dropdown menggunakan ->get()
+        return response()->json($query->get(['id', 'name_room']));
+    }
+
+    /**
      * API: Menyimpan data ruangan baru.
      */
     public function store(Request $request): JsonResponse

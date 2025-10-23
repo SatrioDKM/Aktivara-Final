@@ -77,6 +77,23 @@ class FloorController extends Controller
     }
 
     /**
+     * === FUNGSI BARU YANG DITAMBAHKAN ===
+     * API: Mengambil SEMUA daftar lantai (flat list) untuk dropdown.
+     */
+    public function listAll(Request $request): JsonResponse
+    {
+        $query = Floor::query()->where('status', 'active')->orderBy('name_floor');
+
+        // Filter berdasarkan building_id jika ada
+        $query->when($request->input('building_id'), function ($q, $buildingId) {
+            $q->where('building_id', $buildingId);
+        });
+
+        // PENTING: Halaman dropdown menggunakan ->get()
+        return response()->json($query->get(['id', 'name_floor']));
+    }
+
+    /**
      * API: Menyimpan data lantai baru.
      */
     public function store(Request $request): JsonResponse

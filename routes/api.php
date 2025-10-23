@@ -36,8 +36,28 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
     // === Resourceful Routes untuk Data Master ===
     // Menggantikan puluhan baris kode dengan beberapa baris saja.
     Route::apiResource('buildings', BuildingController::class);
-    Route::apiResource('floors', FloorController::class);
-    Route::apiResource('rooms', RoomController::class);
+
+    // --- Rute manual untuk Floors ---
+    Route::prefix('floors')->name('floors.')->group(function () {
+        Route::get('/', [FloorController::class, 'index'])->name('index'); // Untuk tabel index
+        Route::get('/list', [FloorController::class, 'listAll'])->name('list'); // <-- RUTE BARU UNTUK DROPDOWN
+        Route::post('/', [FloorController::class, 'store'])->name('store');
+        Route::get('/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+    });
+
+
+    // --- Rute manual untuk Rooms ---
+    Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('index'); // Untuk tabel index
+        Route::get('/list', [RoomController::class, 'listAll'])->name('list'); // <-- RUTE BARU UNTUK DROPDOWN
+        Route::post('/', [RoomController::class, 'store'])->name('store');
+        Route::get('/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+    });
+
     Route::apiResource('assets', AssetController::class);
     Route::apiResource('maintenances', AssetMaintenanceController::class)->parameters(['maintenances' => 'id']);
     Route::apiResource('task-types', TaskTypeController::class);

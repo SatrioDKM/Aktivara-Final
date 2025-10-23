@@ -65,7 +65,8 @@
                                     <div class="mt-1 relative rounded-md shadow-sm">
                                         <div
                                             class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fas fa-exclamation-triangle text-gray-400"></i></div>
+                                            <i class="fas fa-exclamation-triangle text-gray-400"></i>
+                                        </div>
                                         <select id="priority" x-model="formData.priority"
                                             class="block w-full pl-10 border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
                                             required>
@@ -216,7 +217,7 @@
                             theme: "classic", width: '100%', placeholder: '-- Loading... --', data: []
                         });
                         if(buildingId) {
-                            axios.get(`/api/floors?building_id=${buildingId}`).then(res => {
+                            axios.get(`/api/floors/list?building_id=${buildingId}`).then(res => {
                                 // --- PERBAIKAN DI SINI ---
                                 // Mengakses `res.data` karena controller mengembalikan array langsung
                                 const dataArray = Array.isArray(res.data) ? res.data : [];
@@ -234,7 +235,7 @@
                             theme: "classic", width: '100%', placeholder: '-- Loading... --', data: []
                         });
                         if(floorId) {
-                             axios.get(`/api/rooms?floor_id=${floorId}`).then(res => {
+                             axios.get(`/api/rooms/list?floor_id=${floorId}`).then(res => {
                                 // --- PERBAIKAN DI SINI ---
                                 const dataArray = Array.isArray(res.data) ? res.data : [];
                                 const rooms = dataArray.map(r => ({ id: r.id, text: r.name_room }));

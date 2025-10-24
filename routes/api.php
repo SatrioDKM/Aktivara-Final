@@ -21,8 +21,9 @@ use App\Http\Controllers\AssetMaintenanceController;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Direvisi menggunakan Route::apiResource untuk menyederhanakan
-| definisi endpoint CRUD dan membuatnya lebih mudah dikelola.
+| Direvisi untuk mematuhi standar rute manual,
+| menghapus 'apiResource' dan mendefinisikan setiap endpoint
+| secara eksplisit dengan 'where' constraint.
 |
 */
 
@@ -37,43 +38,79 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
-    // === Resourceful Routes untuk Data Master ===
-    // Menggantikan puluhan baris kode dengan beberapa baris saja.
-    Route::apiResource('buildings', BuildingController::class);
+    // === Resourceful Routes untuk Data Master (Manual) ===
+
+    // --- Rute manual untuk Buildings ---
+    Route::prefix('buildings')->name('buildings.')->group(function () {
+        Route::get('/', [BuildingController::class, 'index'])->name('index');
+        Route::post('/', [BuildingController::class, 'store'])->name('store');
+        Route::get('/{id}', [BuildingController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [BuildingController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [BuildingController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+    });
 
     // --- Rute manual untuk Floors ---
     Route::prefix('floors')->name('floors.')->group(function () {
         Route::get('/', [FloorController::class, 'index'])->name('index'); // Untuk tabel index
-        Route::get('/list', [FloorController::class, 'listAll'])->name('list'); // <-- RUTE BARU UNTUK DROPDOWN
+        Route::get('/list', [FloorController::class, 'listAll'])->name('list'); // <-- RUTE UNTUK DROPDOWN
         Route::post('/', [FloorController::class, 'store'])->name('store');
         Route::get('/{id}', [FloorController::class, 'show'])->where('id', '[0-9]+')->name('show');
         Route::put('/{id}', [FloorController::class, 'update'])->where('id', '[0-9]+')->name('update');
         Route::delete('/{id}', [FloorController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
-
     // --- Rute manual untuk Rooms ---
     Route::prefix('rooms')->name('rooms.')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('index'); // Untuk tabel index
-        Route::get('/list', [RoomController::class, 'listAll'])->name('list'); // <-- RUTE BARU UNTUK DROPDOWN
+        Route::get('/list', [RoomController::class, 'listAll'])->name('list'); // <-- RUTE UNTUK DROPDOWN
         Route::post('/', [RoomController::class, 'store'])->name('store');
         Route::get('/{id}', [RoomController::class, 'show'])->where('id', '[0-9]+')->name('show');
         Route::put('/{id}', [RoomController::class, 'update'])->where('id', '[0-9]+')->name('update');
         Route::delete('/{id}', [RoomController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
     });
 
-    Route::apiResource('assets', AssetController::class);
-    Route::apiResource('maintenances', AssetMaintenanceController::class)->parameters(['maintenances' => 'id']);
-    Route::apiResource('task-types', TaskTypeController::class);
+    // --- Rute manual untuk Assets ---
+    Route::prefix('assets')->name('assets.')->group(function () {
+        Route::get('/', [AssetController::class, 'index'])->name('index');
+        Route::post('/', [AssetController::class, 'store'])->name('store');
+        Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        // NOTE: Menggunakan POST untuk update karena form mungkin berisi file (gambar)
+        Route::post('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+        Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('stock_out')->where('id', '[0-9]+');
+    });
 
-    // Rute API tambahan diletakkan di sini
-    Route::get('/task-types/by-department/{department_code}', [TaskTypeController::class, 'getByDepartment'])->name('task-types.by-department');
-    Route::post('/assets/{id}/stock-out', [AssetController::class, 'stockOut'])->name('assets.stock_out')->where('id', '[0-9]+');
+    // --- Rute manual untuk Asset Maintenances ---
+    Route::prefix('maintenances')->name('maintenances.')->group(function () {
+        Route::get('/', [AssetMaintenanceController::class, 'index'])->name('index');
+        Route::post('/', [AssetMaintenanceController::class, 'store'])->name('store');
+        Route::get('/{id}', [AssetMaintenanceController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [AssetMaintenanceController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [AssetMaintenanceController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+    });
+
+    // --- Rute manual untuk Task Types ---
+    Route::prefix('task-types')->name('task_types.')->group(function () {
+        Route::get('/', [TaskTypeController::class, 'index'])->name('index');
+        Route::post('/', [TaskTypeController::class, 'store'])->name('store');
+        Route::get('/{id}', [TaskTypeController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        Route::put('/{id}', [TaskTypeController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [TaskTypeController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+        Route::get('/by-department/{department_code}', [TaskTypeController::class, 'getByDepartment'])->name('by-department');
+    });
+
 
     // === Endpoint dengan Hak Akses Spesifik ===
 
-    // Users (Hanya Superadmin)
-    Route::apiResource('users', UserController::class)->middleware('role:SA00');
+    // --- Rute manual untuk Users (Hanya Superadmin) ---
+    Route::prefix('users')->name('users.')->middleware('role:SA00')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{id}', [UserController::class, 'show'])->where('id', '[0-9]+')->name('show');
+        // NOTE: Menggunakan POST untuk update karena form mungkin berisi file (gambar)
+        Route::post('/{id}', [UserController::class, 'update'])->where('id', '[0-9]+')->name('update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
+    });
 
     // Stock Management (Warehouse, Admin, Manager)
     Route::prefix('stock-management')->name('stock.')->middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {

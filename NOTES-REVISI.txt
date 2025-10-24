@@ -1,8 +1,6 @@
 NOTES PERBAIKAN SISTEM
 
 BUG / ERROR
-* Saat leader ke atas buat tugas baru → pilihan lantai & ruangan tidak muncul.
-* Guest buat laporan → notifikasi tidak muncul di aplikasi. (Leader ke atas normal)
 * Notifikasi tugas baru / staff ambil tugas muncul tapi tidak bisa di-klik.
 * Saat staff ambil tugas dari guest → notifikasi hanya masuk ke superadmin, harusnya hanya ke akun leader.
 

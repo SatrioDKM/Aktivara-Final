@@ -36,13 +36,12 @@
         </div>
     </form>
 
-    @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    @endpush
+    {{-- HAPUS @push('styles') KARENA CSS IZI-TOAST SUDAH ADA DI app.js --}}
 
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
+    {{-- HAPUS LINK SCRIPT CDN IZI-TOAST --}}
     <script>
+        // Script ini akan tetap berfungsi karena window.iziToast sudah diset di app.js
         document.addEventListener('DOMContentLoaded', function() {
             @if (session('status'))
                 iziToast.success({

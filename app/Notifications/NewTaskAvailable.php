@@ -24,6 +24,13 @@ class NewTaskAvailable extends Notification
     {
         $this->task = $task;
         $this->originatorName = $originatorName;
+
+        // --- PERBAIKAN: MENCEGAH N+1 QUERY ---
+        // Memastikan relasi 'creator' sudah di-load sebelum diakses.
+        // Ini akan mencegah query tambahan saat notifikasi dikirim ke banyak user.
+        if (!$this->task->relationLoaded('creator')) {
+            $this->task->load('creator');
+        }
     }
 
     public function via(object $notifiable): array
@@ -33,9 +40,7 @@ class NewTaskAvailable extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        // --- PERBAIKAN LOGIKA DI SINI ---
-        // Jika ada nama pelapor (dari tamu), gunakan itu.
-        // Jika tidak, baru gunakan nama pembuat tugas (leader).
+        // Logika ini sekarang aman dari N+1
         $creatorName = $this->originatorName ?? $this->task->creator->name;
 
         return [
@@ -51,7 +56,7 @@ class NewTaskAvailable extends Notification
     {
         $url = route('tasks.available');
 
-        // --- PERBAIKAN LOGIKA DI SINI ---
+        // Logika ini sekarang aman dari N+1
         $creatorName = $this->originatorName ?? $this->task->creator->name;
 
         return TelegramMessage::create()

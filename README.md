@@ -89,7 +89,7 @@ Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan lokal A
     DB_CONNECTION=mysql
     DB_HOST=127.0.0.1
     DB_PORT=3306
-    DB_DATABASE=manpro_db  # Pastikan Anda sudah membuat database ini
+    DB_DATABASE=db_mapro  # Pastikan Anda sudah membuat database ini
     DB_USERNAME=root       # Sesuaikan dengan username Anda
     DB_PASSWORD=           # Sesuaikan dengan password Anda
 

@@ -7,23 +7,30 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 md:p-8" x-data="assetForm()" x-init="initData(@js($data['asset']))">
+                <div class="p-6 md:p-8" x-data="assetForm()" x-init="initData(@js($data['asset']))" x-cloak>
                     <form @submit.prevent="save()">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {{-- Kolom Kiri --}}
                             <div class="space-y-6">
                                 <div>
-                                    <label for="name_asset" class="block text-sm font-medium">Nama Aset</label>
-                                    <input type="text" x-model="formData.name_asset" class="mt-1 w-full rounded-md"
+                                    <label for="name_asset"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama
+                                        Aset</label>
+                                    <input type="text" x-model="formData.name_asset"
+                                        class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                                         placeholder="Nama aset atau barang" required>
                                 </div>
                                 <div>
-                                    <label for="category" class="block text-sm font-medium">Kategori</label>
-                                    <input type="text" x-model="formData.category" class="mt-1 w-full rounded-md"
+                                    <label for="category"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
+                                    <input type="text" x-model="formData.category"
+                                        class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                                         placeholder="e.g. Elektronik" required>
                                 </div>
                                 <div>
-                                    <label for="room_id" class="block text-sm font-medium">Lokasi</label>
+                                    <label for="room_id"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lokasi</label>
+                                    {{-- Select2 akan di-render di sini oleh Alpine --}}
                                     <select id="room_id" class="mt-1 block w-full">
                                         <option value="">-- Gudang --</option>
                                         @foreach($data['rooms'] as $room)
@@ -33,22 +40,26 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="purchase_date" class="block text-sm font-medium">Tanggal
+                                    <label for="purchase_date"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal
                                         Pembelian</label>
-                                    <input type="date" x-model="formData.purchase_date" class="mt-1 w-full rounded-md">
+                                    <input type="date" x-model="formData.purchase_date"
+                                        class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                             </div>
 
                             {{-- Kolom Kanan --}}
                             <div class="space-y-6">
                                 <div x-show="formData.asset_type === 'fixed_asset'">
-                                    <label class="block text-sm font-medium">Nomor Seri</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nomor
+                                        Seri</label>
                                     <input type="text" x-model="formData.serial_number"
-                                        class="mt-1 w-full rounded-md bg-gray-100" placeholder="Dibuat otomatis"
-                                        disabled>
+                                        class="mt-1 w-full rounded-md bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-700 dark:text-gray-400"
+                                        placeholder="Dibuat otomatis" disabled>
                                 </div>
                                 <div x-show="formData.asset_type === 'fixed_asset'">
-                                    <label for="condition" class="block text-sm font-medium">Kondisi</label>
+                                    <label for="condition"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kondisi</label>
                                     <select id="condition" x-model="formData.condition" class="mt-1 block w-full">
                                         <option value="Baik">Baik</option>
                                         <option value="Rusak Ringan">Rusak Ringan</option>
@@ -57,19 +68,23 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-medium">Stok</label>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stok</label>
                                         <input type="number" x-model.number="formData.current_stock" min="0"
-                                            class="mt-1 w-full rounded-md" required
-                                            :disabled="formData.asset_type === 'fixed_asset'">
+                                            class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                            required :disabled="formData.asset_type === 'fixed_asset'"
+                                            :class="{'bg-gray-100 dark:bg-gray-700': formData.asset_type === 'fixed_asset'}">
                                     </div>
-                                    <div x-show="formData.asset_type === 'consumable'">
-                                        <label class="block text-sm font-medium">Stok Min.</label>
+                                    <div x-show="formData.asset_type === 'consumable'" style="display: none;">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stok
+                                            Min.</label>
                                         <input type="number" x-model.number="formData.minimum_stock" min="0"
-                                            class="mt-1 w-full rounded-md">
+                                            class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium">Status</label>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                                     <select id="status" x-model="formData.status" class="mt-1 block w-full">
                                         <option value="available">Tersedia</option>
                                         <option value="in_use">Digunakan</option>
@@ -79,15 +94,19 @@
                                 </div>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="description" class="block text-sm font-medium">Deskripsi</label>
+                                <label for="description"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi</label>
                                 <textarea x-model="formData.description" rows="3"
-                                    class="mt-1 w-full rounded-md"></textarea>
+                                    class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                             </div>
                         </div>
-                        <div class="mt-8 flex justify-end space-x-3">
+                        <div class="mt-8 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-6">
                             <a href="{{ route('master.assets.index') }}"
-                                class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase">Batal</a>
-                            <x-primary-button type="submit" ::disabled="isSubmitting">Simpan Perubahan
+                                class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">Batal</a>
+                            <x-primary-button type="submit" ::disabled="isSubmitting">
+                                <i class="fas fa-circle-notch fa-spin mr-2" x-show="isSubmitting"
+                                    style="display: none;"></i>
+                                <span x-show="!isSubmitting">Simpan Perubahan</span>
                             </x-primary-button>
                         </div>
                     </form>
@@ -95,14 +114,12 @@
             </div>
         </div>
     </div>
-    @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    @endpush
+
+    {{-- PERBAIKAN: Hapus semua @push CDN (styles dan scripts) --}}
+    {{-- Semua library (iziToast, Select2, jQuery) sudah di-load dari app.js --}}
+
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- Script ini aman karena bergantung pada library global (window.$/jQuery, window.iziToast) dari app.js --}}
     <script>
         function assetForm() {
                 return {
@@ -110,38 +127,50 @@
                     formData: {},
                     initData(asset) {
                         this.formData = { ...asset, room_id: asset.room_id || '' };
+
                         this.$nextTick(() => {
+                            // Inisialisasi Select2 menggunakan jQuery ($) dari app.js
                             $('#room_id').val(this.formData.room_id).trigger('change');
                             $('#condition').val(this.formData.condition).trigger('change');
                             $('#status').val(this.formData.status).trigger('change');
-                            $('#room_id, #condition, #status').select2({ theme: "classic", width: '100%' });
+
+                            // Terapkan Select2
+                            $('#room_id, #condition, #status').select2({
+                                theme: "classic",
+                                width: '100%'
+                            });
+
+                            // Tambahkan listener untuk update model Alpine saat Select2 berubah
+                            $('#room_id').on('change', (e) => this.formData.room_id = e.target.value);
+                            $('#condition').on('change', (e) => this.formData.condition = e.target.value);
+                            $('#status').on('change', (e) => this.formData.status = e.target.value);
                         });
                     },
-                    getCsrfToken() {
-                        const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-                        return csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : '';
-                    },
+
                     async save() {
                         this.isSubmitting = true;
-                        this.formData.room_id = $('#room_id').val();
-                        this.formData.condition = $('#condition').val();
-                        this.formData.status = $('#status').val();
 
-                        await fetch('/sanctum/csrf-cookie');
-                        fetch(`/api/assets/${this.formData.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': this.getCsrfToken() },
-                            body: JSON.stringify(this.formData)
-                        })
-                        .then(res => res.ok ? res.json() : Promise.reject(res.json()))
-                        .then(data => {
+                        // PERBAIKAN: Gunakan axios.post (bukan PUT)
+                        // Ini untuk mencocokkan route `api.php` Anda: Route::post('/{id}', ...)
+                        // Axios (dari app.js) akan menangani header CSRF secara otomatis
+                        axios.post(`/api/assets/${this.formData.id}`, this.formData)
+                        .then(response => {
+                            // Gunakan sessionStorage untuk pesan sukses setelah redirect
                             sessionStorage.setItem('toastMessage', 'Data aset berhasil diperbarui!');
                             window.location.href = "{{ route('master.assets.index') }}";
                         })
-                        .catch(err => {
+                        .catch(error => {
                             let msg = 'Gagal menyimpan. Periksa isian Anda.';
-                            if (err.errors) msg = Object.values(err.errors).flat().join('<br>');
-                            iziToast.error({ title: 'Gagal!', message: msg, position: 'topRight', timeout: 5000 });
+                            if (error.response && error.response.status === 422 && error.response.data.errors) {
+                                // Tangani error validasi
+                                msg = Object.values(error.response.data.errors).flat().join('<br>');
+                            } else if (error.response && error.response.data.message) {
+                                // Tangani error server lainnya
+                                msg = error.response.data.message;
+                            }
+
+                            // Gunakan iziToast dari app.js
+                            window.iziToast.error({ title: 'Gagal!', message: msg, position: 'topRight', timeout: 5000 });
                             this.isSubmitting = false;
                         });
                     }

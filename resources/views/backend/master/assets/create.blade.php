@@ -9,7 +9,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
-                <div class="p-6 md:p-8" x-data="assetForm()" x-cloak>
+                <div class="p-6 md:p-8" x-data="assetForm(@js($data['rooms']))" x-cloak>
                     <form @submit.prevent="saveAssets()">
                         {{-- Kontainer untuk baris-baris form yang dinamis --}}
                         <div class="space-y-4 max-h-[60vh] overflow-y-auto p-2 border dark:border-gray-700 rounded-lg">
@@ -23,7 +23,8 @@
                                         <div class="relative mt-1">
                                             <div
                                                 class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                <i class="fas fa-tag text-gray-400"></i></div>
+                                                <i class="fas fa-tag text-gray-400"></i>
+                                            </div>
                                             <input type="text" x-model="asset.name_asset"
                                                 class="block w-full ps-10 rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="Nama Aset/Barang" required>
@@ -47,14 +48,15 @@
                                         <div class="relative mt-1">
                                             <div
                                                 class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                <i class="fas fa-sitemap text-gray-400"></i></div>
+                                                <i class="fas fa-sitemap text-gray-400"></i>
+                                            </div>
                                             <input type="text" x-model="asset.category"
                                                 class="block w-full ps-10 rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="e.g. Elektronik" required>
                                         </div>
                                     </div>
                                     {{-- Stok --}}
-                                    <div class="col-span-6 md:col-span-1">
+                                    <div class="col-span-4 md:col-span-1">
                                         <label
                                             class="block text-xs font-medium text-gray-600 dark:text-gray-300">Stok</label>
                                         <input type="number" x-model.number="asset.current_stock" min="1"
@@ -62,8 +64,42 @@
                                             class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                                             placeholder="Jml" required>
                                     </div>
+
+                                    {{-- PERBAIKAN: Input Tanggal Beli --}}
+                                    <div class="col-span-8 md:col-span-2">
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Tgl.
+                                            Beli</label>
+                                        <input type="date" x-model="asset.purchase_date"
+                                            class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+
+                                    {{-- Tombol Hapus Baris --}}
+                                    <div class="col-span-12 md:col-span-2 flex items-center md:pt-5">
+                                        <button type="button" @click="removeAssetRow(index)"
+                                            x-show="formData.assets.length > 1"
+                                            class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-gray-600 transition"
+                                            title="Hapus Baris">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    {{-- PERBAIKAN: Input Lokasi (Select2) --}}
+                                    <div class="col-span-12 md:col-span-4">
+                                        <label
+                                            class="block text-xs font-medium text-gray-600 dark:text-gray-300">Lokasi</label>
+                                        <select :id="'room_id_' + index" x-init="initSelect2($el, index)"
+                                            class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="">-- Gudang --</option>
+                                            <template x-for="room in rooms" :key="room.id">
+                                                <option :value="room.id"
+                                                    x-text="`${room.floor.building.name_building} / ${room.floor.name_floor} / ${room.name_room}`">
+                                                </option>
+                                            </template>
+                                        </select>
+                                    </div>
+
                                     {{-- Kondisi (Hanya untuk Aset Tetap) --}}
-                                    <div class="col-span-6 md:col-span-2" x-show="asset.asset_type === 'fixed_asset'">
+                                    <div class="col-span-6 md:col-span-3" x-show="asset.asset_type === 'fixed_asset'">
                                         <label
                                             class="block text-xs font-medium text-gray-600 dark:text-gray-300">Kondisi</label>
                                         <select x-model="asset.condition"
@@ -74,22 +110,13 @@
                                         </select>
                                     </div>
                                     {{-- Stok Minimum (Hanya untuk Habis Pakai) --}}
-                                    <div class="col-span-6 md:col-span-2" x-show="asset.asset_type === 'consumable'"
+                                    <div class="col-span-6 md:col-span-3" x-show="asset.asset_type === 'consumable'"
                                         style="display: none;">
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Stok
                                             Min.</label>
                                         <input type="number" x-model.number="asset.minimum_stock" min="0"
                                             class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                                             placeholder="e.g. 5">
-                                    </div>
-                                    {{-- Tombol Hapus Baris --}}
-                                    <div class="col-span-12 md:col-span-2 flex items-center md:pt-5">
-                                        <button type="button" @click="removeAssetRow(index)"
-                                            x-show="formData.assets.length > 1"
-                                            class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-gray-600 transition"
-                                            title="Hapus Baris">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
                                     </div>
                                 </div>
                             </template>
@@ -120,16 +147,27 @@
 
     @push('scripts')
     <script>
-        function assetForm() {
+        function assetForm(roomsData) { // PERBAIKAN: Menerima data rooms
             return {
                 isSubmitting: false,
+                rooms: roomsData || [], // PERBAIKAN: Menyimpan data rooms
                 formData: {
                     assets: []
                 },
 
                 init() {
-                    // Mulai dengan satu baris kosong
                     this.addAssetRow();
+                },
+
+                initSelect2(el, index) {
+                    // Inisialisasi Select2
+                    $(el).select2({
+                        theme: "classic",
+                        width: '100%'
+                    }).on('change', (e) => {
+                        // Update model Alpine saat Select2 berubah
+                        this.formData.assets[index].room_id = e.target.value;
+                    });
                 },
 
                 addAssetRow() {
@@ -139,34 +177,32 @@
                         category: '',
                         condition: 'Baik',
                         current_stock: 1,
-                        minimum_stock: 0
+                        minimum_stock: 0,
+                        room_id: '', // PERBAIKAN: Tambah field
+                        purchase_date: '' // PERBAIKAN: Tambah field
                     });
                 },
 
                 removeAssetRow(index) {
+                    // Hapus elemen Select2 sebelum menghapus baris
+                    $(`#room_id_${index}`).select2('destroy');
                     this.formData.assets.splice(index, 1);
                 },
 
                 saveAssets() {
                     this.isSubmitting = true;
 
-                    // Kirim data ke API menggunakan Axios
-                    axios.post('/api/assets', this.formData)
+                    axios.post('{{ route("api.assets.store") }}', this.formData)
                     .then(response => {
-                        // Simpan pesan sukses di session storage untuk ditampilkan setelah redirect
                         sessionStorage.setItem('toastMessage', response.data.message || 'Aset berhasil ditambahkan!');
-                        // Arahkan ke halaman index
                         window.location.href = "{{ route('master.assets.index') }}";
                     })
                     .catch(error => {
                         let msg = 'Gagal menyimpan. Periksa kembali semua isian Anda.';
-                        // Menangani error validasi dari Laravel
                         if (error.response && error.response.status === 422 && error.response.data.errors) {
-                            // Ambil semua pesan error dari validasi array
                             const errorMessages = Object.values(error.response.data.errors).flat();
                             msg = errorMessages.join('<br>');
                         } else if (error.response && error.response.data.message) {
-                            // Tangani error server lainnya
                             msg = error.response.data.message;
                         }
 

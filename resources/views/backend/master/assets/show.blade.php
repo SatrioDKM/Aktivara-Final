@@ -93,7 +93,8 @@
                                 @forelse ($data['asset']->tasks as $task)
                                 <li class="border dark:border-gray-700 p-3 rounded-md text-sm">
                                     <p><strong>@tanggal($task->created_at):</strong> {{ $task->title }}</p>
-                                    <p class="text-xs text-gray-500">Staff: {{ $task->staff->name ?? 'N/A' }}</p>
+                                    {{-- PERBAIKAN DI SINI --}}
+                                    <p class="text-xs text-gray-500">Staff: {{ $task->assignee->name ?? 'N/A' }}</p>
                                 </li>
                                 @empty
                                 <li class="text-gray-500 text-sm">Aset ini belum pernah terkait tugas.</li>

@@ -215,7 +215,8 @@
                                     <div class="mb-4 relative">
                                         <div
                                             class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                            <i class="fas fa-search text-gray-400"></i></div>
+                                            <i class="fas fa-search text-gray-400"></i>
+                                        </div>
                                         <input type="text" x-model.debounce.500ms="search" @input="getDashboardData(1)"
                                             placeholder="Cari berdasarkan judul tugas..."
                                             class="block w-full rounded-md border-gray-300 ps-10 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
@@ -280,7 +281,7 @@
 
     @push('scripts')
     {{-- PERBAIKAN: Load jQuery dari CDN SEBELUM DataTables --}}
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {{-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> --}}
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.tailwindcss.js"></script>
 

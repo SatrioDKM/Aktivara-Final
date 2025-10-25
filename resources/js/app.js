@@ -63,23 +63,31 @@ function notifications() {
                 });
         },
 
-        // --- FUNGSI BARU DITAMBAHKAN DI SINI ---
         async markAsRead(notificationId) {
             try {
-                // Kirim POST request ke endpoint baru (kita akan definisikan di api.php)
-                // Mengirim ID notifikasi dalam data payload
+                // Cari notifikasi SEBELUM request API
+                const notification = [...this.unread, ...this.read].find(
+                    (n) => n.id === notificationId
+                );
+                const targetUrl = notification?.data?.url; // Simpan URL target
+
+                // Kirim POST request ke endpoint baru
                 await axios.post("/api/notifications/mark-one-read", {
                     id: notificationId,
                 });
 
-                // Setelah berhasil, panggil fetchNotifications lagi untuk memperbarui UI
-                this.fetchNotifications();
+                // Refresh daftar notifikasi (opsional, tergantung UX)
+                // this.fetchNotifications(); // Anda bisa comment ini jika tidak ingin refresh langsung
 
-                // Cari URL dari data notifikasi yang diklik (opsional, jika ingin navigasi)
-                // const notification = [...this.unread, ...this.read].find(n => n.id === notificationId);
-                // if (notification && notification.data.url) {
-                //    window.location.href = notification.data.url; // Arahkan ke URL notifikasi
-                // }
+                // --- PERBAIKAN DI SINI ---
+                // Navigasi ke URL notifikasi JIKA URL ada, SETELAH request berhasil
+                if (targetUrl) {
+                    window.location.href = targetUrl; // Arahkan ke URL notifikasi
+                } else {
+                    // Jika tidak ada URL, cukup refresh notifikasi
+                    this.fetchNotifications();
+                }
+                // --- AKHIR PERBAIKAN ---
             } catch (error) {
                 console.error(
                     `Gagal menandai notifikasi ${notificationId} sebagai terbaca:`,
@@ -92,7 +100,6 @@ function notifications() {
                 });
             }
         },
-        // --- AKHIR FUNGSI BARU ---
 
         async markAllAsRead() {
             try {

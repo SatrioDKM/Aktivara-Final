@@ -74,7 +74,9 @@ class TaskWorkflowController extends Controller
      */
     public function availablePage(): View
     {
-        return view('backend.tasks.available');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        return view('backend.tasks.available', compact('data'));
     }
 
     /**
@@ -82,7 +84,9 @@ class TaskWorkflowController extends Controller
      */
     public function myTasksPage(): View
     {
-        return view('backend.tasks.my_tasks');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        return view('backend.tasks.my_tasks', compact('data'));
     }
 
     /**
@@ -90,7 +94,9 @@ class TaskWorkflowController extends Controller
      */
     public function reviewPage(): View
     {
-        return view('backend.tasks.review_list');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        return view('backend.tasks.review_list', compact('data'));
     }
 
     /**
@@ -98,7 +104,9 @@ class TaskWorkflowController extends Controller
      */
     public function monitoringPage(): View
     {
-        return view('backend.tasks.monitoring');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        return view('backend.tasks.monitoring', compact('data'));
     }
 
     /**
@@ -106,17 +114,20 @@ class TaskWorkflowController extends Controller
      */
     public function showMyHistoryPage(): View
     {
-        return view('backend.tasks.my_history');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        return view('backend.tasks.my_history', compact('data'));
     }
 
     /**
      * Menampilkan halaman riwayat tugas yang telah selesai.
-     * --- PERBAIKAN PATH VIEW DI SINI ---
      */
     public function completedHistoryPage(): View
     {
-        // Path diubah dari 'tasks.completed_history' menjadi 'backend.tasks.completed_history'
-        return view('backend.tasks.completed_history');
+        // --- PERBAIKAN: Tambah $data = [] ---
+        $data = [];
+        // Path view sudah benar
+        return view('backend.tasks.completed_history', compact('data'));
     }
 
     /**

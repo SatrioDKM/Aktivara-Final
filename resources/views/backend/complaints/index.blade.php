@@ -119,9 +119,11 @@
             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
             <div class="flex items-center justify-center min-h-screen">
-                <div @click="showConversionModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
+                {{-- PERBAIKAN: Tambah ID untuk dropdownParent Select2 --}}
+                <div @click="showConversionModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"
+                    id="modal-backdrop"></div>
                 <div
-                    class="bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+                    class="bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full z-10">
                     <form @submit.prevent="convertItem()">
                         <div class="p-6">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Konversi Laporan
@@ -132,12 +134,11 @@
                                 </p>
                             </div>
                             <div class="space-y-4">
-                                <div>
+                                {{-- PERBAIKAN: Tambahkan div wire:ignore dan id --}}
+                                <div wire:ignore>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis
                                         Tugas <span class="text-red-500">*</span></label>
-                                    <select x-model="conversionData.task_type_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                        required>
+                                    <select id="modal_task_type_id" class="mt-1 block w-full" required>
                                         <option value="">-- Pilih Jenis Tugas --</option>
                                         <template x-for="tt in taskTypes" :key="tt.id">
                                             <option :value="tt.id" x-text="`${tt.name_task} (${tt.departemen})`">
@@ -229,9 +230,25 @@
                 openConversionModal(item) {
                     this.conversionData = { id: item.id, title: item.title, task_type_id: '', priority: 'medium' };
                     this.showConversionModal = true;
+
+                    // --- PERBAIKAN: Inisialisasi Select2 di dalam modal ---
+                    this.$nextTick(() => {
+                        $('#modal_task_type_id').val('').trigger('change'); // Reset
+                        $('#modal_task_type_id').select2({
+                            theme: "classic",
+                            width: '100%',
+                            // Pastikan dropdown muncul di atas modal backdrop
+                            dropdownParent: $('#modal-backdrop').parent()
+                        }).on('change', (e) => {
+                            // Sinkronkan nilai Select2 ke model Alpine
+                            this.conversionData.task_type_id = e.target.value;
+                        });
+                    });
+                    // --- Akhir Perbaikan ---
                 },
                 convertItem() {
                     this.isSubmitting = true;
+                    // Nilai task_type_id sudah di-update oleh listener Select2
                     const payload = {
                         task_type_id: this.conversionData.task_type_id,
                         priority: this.conversionData.priority

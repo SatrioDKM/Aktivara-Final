@@ -17,7 +17,9 @@ class BuildingController extends Controller
      */
     public function viewPage(): View
     {
-        return view('backend.master.buildings.index');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.master.buildings.index', compact('data'));
     }
 
     /**
@@ -25,7 +27,9 @@ class BuildingController extends Controller
      */
     public function create(): View
     {
-        return view('backend.master.buildings.create');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.master.buildings.create', compact('data'));
     }
 
     /**
@@ -33,6 +37,7 @@ class BuildingController extends Controller
      */
     public function showPage(string $id): View
     {
+        // Method ini sudah benar (Anti N+1 dan menggunakan $data)
         $data = [
             'building' => Building::with(['creator:id,name', 'floors.rooms'])->findOrFail($id)
         ];
@@ -44,6 +49,7 @@ class BuildingController extends Controller
      */
     public function edit(string $id): View
     {
+        // Method ini sudah benar (menggunakan $data)
         $data = [
             'building' => Building::findOrFail($id)
         ];
@@ -59,6 +65,7 @@ class BuildingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Method ini sudah benar (Anti N+1)
         $query = Building::with('creator:id,name');
 
         $query->when($request->input('search'), function ($q, $search) {
@@ -99,6 +106,7 @@ class BuildingController extends Controller
      */
     public function show(string $id): JsonResponse
     {
+        // Method ini sudah benar (Anti N+1)
         $building = Building::with('creator:id,name')->findOrFail($id);
         return response()->json($building);
     }

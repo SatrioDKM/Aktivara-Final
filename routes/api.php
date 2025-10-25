@@ -36,7 +36,8 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
     // === Endpoint Umum ===
     Route::get('/dashboard-stats', [DashboardController::class, 'getStats'])->name('dashboard.stats');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read.all');
+    Route::post('/notifications/mark-one-read', [NotificationController::class, 'markOneAsRead'])->name('notifications.read.one');
 
     // === Resourceful Routes untuk Data Master (Manual) ===
 

@@ -17,7 +17,9 @@ class StockManagementController extends Controller
      */
     public function viewPage(): View
     {
-        return view('backend.stock.index');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.stock.index', compact('data'));
     }
 
     /**
@@ -25,6 +27,7 @@ class StockManagementController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Method ini sudah benar (query efisien, Anti N+1)
         $query = Asset::where('asset_type', 'consumable');
 
         // Filter untuk hanya menampilkan stok menipis
@@ -47,11 +50,9 @@ class StockManagementController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
+        // Method ini sudah benar (validasi manual, update langsung)
         $asset = Asset::findOrFail($id);
 
-        // dd($request->input('minimum_stock'));
-
-        // --- PERBAIKAN 1: Gunakan $request->all() ---
         $validator = Validator::make($request->all(), [
             'minimum_stock' => 'required|integer|min:0',
         ]);
@@ -65,7 +66,6 @@ class StockManagementController extends Controller
         }
 
         $asset->update([
-            // --- PERBAIKAN 2: Gunakan $request->input() ---
             'minimum_stock' => $request->input('minimum_stock'),
             'updated_by' => Auth::id(),
         ]);

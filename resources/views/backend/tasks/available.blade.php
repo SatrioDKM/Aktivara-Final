@@ -12,7 +12,7 @@
             <div x-data="availableTasks()" x-cloak>
 
                 {{-- Komponen Notifikasi Global --}}
-                <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
+                {{-- <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-2"
                     x-transition:enter-end="opacity-100 transform translate-y-0"
                     x-transition:leave="transition ease-in duration-300"
@@ -28,7 +28,7 @@
                             <p class="text-sm" x-text="notification.message"></p>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
                 <div class="space-y-4">
                     {{-- State: Loading --}}
@@ -105,7 +105,7 @@
                 tasks: [],
                 isLoading: true,
                 isSubmitting: [], // Array untuk melacak ID tugas yang sedang diproses
-                notification: { show: false, message: '', type: 'success' },
+                // notification: { show: false, message: '', type: 'success' },
 
                 init() {
                     this.getTasks();
@@ -118,7 +118,12 @@
                             this.tasks = response.data;
                         })
                         .catch(error => {
-                            this.showNotification('Gagal memuat data tugas. Silakan refresh halaman.', 'error');
+                            // this.showNotification('Gagal memuat data tugas. Silakan refresh halaman.', 'error');
+                            window.iziToast.error({
+                            title: 'Gagal!',
+                            message: 'Gagal memuat data tugas. Silakan refresh halaman.',
+                            position: 'topRight'
+                        });
                             console.error(error);
                         })
                         .finally(() => {
@@ -127,12 +132,11 @@
                 },
 
                 claimTask(taskId) {
-                    // Tambahkan taskId ke array isSubmitting untuk menonaktifkan tombol yang benar
                     this.isSubmitting.push(taskId);
 
                     axios.post(`/api/tasks/${taskId}/claim`)
                         .then(response => {
-                            // Alihkan ke halaman "Tugas Saya" setelah berhasil
+                            sessionStorage.setItem('toastMessage', 'Tugas berhasil diambil!');
                             window.location.href = '{{ route("tasks.my_tasks") }}';
                         })
                         .catch(error => {
@@ -140,8 +144,13 @@
                             if (error.response && error.response.data && error.response.data.message) {
                                 message = error.response.data.message;
                             }
-                            this.showNotification(message, 'error');
-                            // Hapus taskId dari array isSubmitting jika gagal
+                            // this.showNotification(message, 'error');
+                            window.iziToast.error({
+                                title: 'Gagal!',
+                                message: message,
+                                position: 'topRight'
+                            });
+
                             this.isSubmitting = this.isSubmitting.filter(id => id !== taskId);
                         });
                 },
@@ -156,12 +165,12 @@
                     return colors[priority] || 'border-gray-300';
                 },
 
-                showNotification(message, type) {
-                    this.notification.message = message;
-                    this.notification.type = type;
-                    this.notification.show = true;
-                    setTimeout(() => this.notification.show = false, 3000);
-                }
+                // showNotification(message, type) {
+                //     this.notification.message = message;
+                //     this.notification.type = type;
+                //     this.notification.show = true;
+                //     setTimeout(() => this.notification.show = false, 3000);
+                // }
             }));
         });
     </script>

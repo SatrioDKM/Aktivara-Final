@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\HttpControllers;
 
 use Illuminate\View\View;
 use Illuminate\Http\Request;
@@ -19,7 +19,9 @@ class ExportController extends Controller
     public function viewPage(): View
     {
         // Path view diperbarui ke 'backend.export.index'
-        return view('backend.export.index');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.export.index', compact('data'));
     }
 
     /**
@@ -27,10 +29,9 @@ class ExportController extends Controller
      */
     public function exportAssets()
     {
-        // Membuat nama file yang dinamis dengan tanggal saat ini
+        // Method ini sudah benar.
+        // Class AssetsExport (dari file sebelumnya) sudah dicek dan aman dari N+1.
         $fileName = 'daftar-aset-' . now()->format('Y-m-d') . '.xlsx';
-
-        // Menggunakan library untuk mendownload file
         return Excel::download(new AssetsExport, $fileName);
     }
 
@@ -40,7 +41,8 @@ class ExportController extends Controller
      */
     public function exportTaskHistory()
     {
-        // Menggunakan class export yang baru dan benar
+        // Method ini sudah benar.
+        // Class TaskHistoryExport (dari file sebelumnya) sudah dicek dan aman dari N+1.
         $fileName = 'riwayat-tugas-' . now()->format('Y-m-d') . '.xlsx';
         return Excel::download(new TaskHistoryExport, $fileName);
     }

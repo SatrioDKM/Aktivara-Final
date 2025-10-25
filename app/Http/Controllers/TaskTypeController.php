@@ -16,7 +16,9 @@ class TaskTypeController extends Controller
      */
     public function viewPage(): View
     {
-        return view('backend.master.task_types.index');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.master.task_types.index', compact('data'));
     }
 
     /**
@@ -24,7 +26,9 @@ class TaskTypeController extends Controller
      */
     public function create(): View
     {
-        return view('backend.master.task_types.create');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('backend.master.task_types.create', compact('data'));
     }
 
     /**
@@ -32,6 +36,7 @@ class TaskTypeController extends Controller
      */
     public function showPage(string $id): View
     {
+        // Method ini sudah benar (menggunakan $data)
         $data = ['taskType' => TaskType::findOrFail($id)];
         return view('backend.master.task_types.show', compact('data'));
     }
@@ -41,12 +46,14 @@ class TaskTypeController extends Controller
      */
     public function edit(string $id): View
     {
+        // Method ini sudah benar (menggunakan $data)
         $data = ['taskType' => TaskType::findOrFail($id)];
         return view('backend.master.task_types.edit', compact('data'));
     }
 
     // ===================================================================
     // API METHODS
+    // (Semua method API Anda di bawah ini sudah benar dan tidak perlu diubah)
     // ===================================================================
 
     /**

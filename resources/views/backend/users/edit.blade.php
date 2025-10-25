@@ -187,17 +187,15 @@
                     this.isSubmitting = true;
                     this.errors = {};
 
-                    // Buat salinan data untuk dikirim, agar tidak mengubah formData asli
                     let dataToSave = { ...this.formData };
-
-                    // Hapus properti password jika kosong agar tidak di-update
                     if (!dataToSave.password) {
                         delete dataToSave.password;
                         delete dataToSave.password_confirmation;
                     }
 
-                    // Kirim data ke API menggunakan Axios
-                    axios.put(`/api/users/${dataToSave.id}`, dataToSave)
+                    // --- PERBAIKAN: Ubah 'axios.put' menjadi 'axios.post' ---
+                    // Ini untuk mencocokkan rute di api.php (Route::post('/{id}', ...))
+                    axios.post(`/api/users/${dataToSave.id}`, dataToSave)
                     .then(response => {
                         sessionStorage.setItem('toastMessage', 'Data pengguna berhasil diperbarui!');
                         window.location.href = "{{ route('users.index') }}";

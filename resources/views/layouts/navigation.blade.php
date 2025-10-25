@@ -144,6 +144,7 @@
                                         notifikasi.</p>
                                 </template>
                                 <template x-for="notification in unread" :key="notification.id">
+                                    {{-- Klik sekarang memanggil markAsRead() dan mencegah navigasi default --}}
                                     <a :href="notification.data.url" @click.prevent="markAsRead(notification.id)"
                                         class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 bg-indigo-50 dark:bg-gray-800 border-l-4 border-indigo-400">
                                         <p class="font-bold" x-text="notification.data.message"></p>

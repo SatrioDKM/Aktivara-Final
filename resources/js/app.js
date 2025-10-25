@@ -21,6 +21,11 @@ import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 window.iziToast = iziToast;
 
+// === TAMBAHKAN IMPOR DATATABLES DI SINI ===
+import DataTable from "datatables.net-dt";
+import "datatables.net-dt/css/dataTables.dataTables.css"; // Sesuaikan path jika berbeda
+window.DataTable = DataTable; // Jadikan global agar bisa diakses script Blade
+
 import Alpine from "alpinejs";
 
 /**
@@ -34,7 +39,6 @@ function notifications() {
         read: [],
         unreadCount: 0,
 
-        // Buka/tutup dropdown notifikasi
         toggle() {
             this.isOpen = !this.isOpen;
             if (this.isOpen) {
@@ -42,9 +46,8 @@ function notifications() {
             }
         },
 
-        // Ambil data notifikasi dari API menggunakan Axios
         fetchNotifications() {
-            // Axios sudah dikonfigurasi di bootstrap.js
+            // Pastikan URL bersih dan benar
             axios
                 .get("/api/notifications")
                 .then((response) => {
@@ -53,27 +56,62 @@ function notifications() {
                     this.unreadCount = response.data.unread.length;
                 })
                 .catch((error) => {
+                    // Beri pesan error yang lebih jelas jika fetch gagal
                     console.error("Gagal mengambil notifikasi:", error);
+                    // Anda bisa tambahkan iziToast error di sini jika diperlukan
+                    // window.iziToast.error({ title: 'Error Notifikasi', message: 'Gagal memuat notifikasi dari server.', position: 'topRight' });
                 });
         },
 
-        // Tandai semua notifikasi sebagai sudah dibaca menggunakan Axios
-        async markAllAsRead() {
-            // Axios akan secara otomatis menangani header X-XSRF-TOKEN.
-            // Tidak perlu lagi mengambil token secara manual dari cookie.
+        // --- FUNGSI BARU DITAMBAHKAN DI SINI ---
+        async markAsRead(notificationId) {
             try {
-                await axios.post("/api/notifications/mark-as-read");
+                // Kirim POST request ke endpoint baru (kita akan definisikan di api.php)
+                // Mengirim ID notifikasi dalam data payload
+                await axios.post("/api/notifications/mark-one-read", {
+                    id: notificationId,
+                });
+
                 // Setelah berhasil, panggil fetchNotifications lagi untuk memperbarui UI
                 this.fetchNotifications();
+
+                // Cari URL dari data notifikasi yang diklik (opsional, jika ingin navigasi)
+                // const notification = [...this.unread, ...this.read].find(n => n.id === notificationId);
+                // if (notification && notification.data.url) {
+                //    window.location.href = notification.data.url; // Arahkan ke URL notifikasi
+                // }
             } catch (error) {
-                console.error("Gagal menandai notifikasi:", error);
+                console.error(
+                    `Gagal menandai notifikasi ${notificationId} sebagai terbaca:`,
+                    error
+                );
+                window.iziToast.error({
+                    title: "Error",
+                    message: "Gagal menandai notifikasi.",
+                    position: "topRight",
+                });
+            }
+        },
+        // --- AKHIR FUNGSI BARU ---
+
+        async markAllAsRead() {
+            try {
+                // Gunakan endpoint yang sudah ada untuk mark all
+                await axios.post("/api/notifications/mark-as-read");
+                this.fetchNotifications();
+            } catch (error) {
+                console.error("Gagal menandai semua notifikasi:", error);
+                window.iziToast.error({
+                    title: "Error",
+                    message: "Gagal menandai semua notifikasi.",
+                    position: "topRight",
+                });
             }
         },
 
-        // Inisialisasi: ambil notifikasi saat halaman dimuat dan refresh setiap 1 menit
         init() {
             this.fetchNotifications();
-            setInterval(() => this.fetchNotifications(), 60000); // 60 detik
+            setInterval(() => this.fetchNotifications(), 60000);
         },
     };
 }

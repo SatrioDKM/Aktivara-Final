@@ -123,7 +123,11 @@
                         })
                         .catch(error => {
                             console.error('Gagal memuat riwayat tugas selesai:', error);
-                            alert('Gagal memuat riwayat. Silakan coba lagi.');
+                            window.iziToast.error({
+                                title: 'Gagal!',
+                                message: 'Gagal memuat riwayat. Silakan coba lagi.',
+                                position: 'topRight'
+                            });
                         })
                         .finally(() => {
                             this.isLoading = false;

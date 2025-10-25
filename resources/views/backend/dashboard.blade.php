@@ -276,14 +276,15 @@
 
     @push('styles')
     {{-- Styling untuk DataTables + Tailwind --}}
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.tailwindcss.css">
+    {{--
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.tailwindcss.css"> --}}
     @endpush
 
     @push('scripts')
     {{-- PERBAIKAN: Load jQuery dari CDN SEBELUM DataTables --}}
     {{-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> --}}
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.tailwindcss.js"></script>
+    {{-- <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.tailwindcss.js"></script> --}}
 
     <script>
         // PERBAIKAN: Semua logika disatukan ke dalam satu komponen Alpine

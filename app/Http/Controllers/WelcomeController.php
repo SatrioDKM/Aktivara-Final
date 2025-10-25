@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller;
+use Illuminate\View\View; // Import the View facade
 
 class WelcomeController extends Controller
 {
-    public function index()
+    /**
+     * Display the welcome page.
+     */
+    public function index(): View // Add View return type hint
     {
-        return view('welcome');
+        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
+        $data = [];
+        return view('welcome', compact('data'));
     }
 }

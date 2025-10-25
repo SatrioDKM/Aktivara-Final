@@ -178,12 +178,12 @@
             <strong>{{ $packingList->creator->name ?? 'Sistem' }}</strong>
             <p>(Staff Gudang)</p>
         </div>
-        <div class="signature-box">
+        {{-- <div class="signature-box">
             <p>Disetujui Oleh,</p>
             <div class="signature-line"></div>
             <strong>(...............................)</strong>
             <p>(Manager)</p>
-        </div>
+        </div> --}}
         <div class="signature-box">
             <p>Diterima Oleh,</p>
             <div class="signature-line"></div>

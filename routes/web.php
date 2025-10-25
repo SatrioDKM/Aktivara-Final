@@ -78,7 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- Rute Data Master (Hanya Admin & Manager) ---
-    Route::middleware(['role:SA00,MG00'])->prefix('master')->name('master.')->group(function () {
+    Route::middleware(['role:SA00,MG00,WH01'])->prefix('master')->name('master.')->group(function () {
 
         // --- Rute untuk Buildings ---
         Route::prefix('buildings')->name('buildings.')->group(function () {

@@ -16,13 +16,15 @@
                     @auth
                     {{-- Menu Staff --}}
                     @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
-                    <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
-                        __('Papan Tugas') }}</x-nav-link>
+                    <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
+                        {{ __('Papan Tugas') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
                         {{ __('Tugas Aktif Saya') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
-                        __('Riwayat Tugas') }}</x-nav-link>
+                    <x-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">
+                        {{ __('Riwayat Tugas') }}
+                    </x-nav-link>
                     @endrole
 
                     {{-- Menu Leader & Atasan --}}
@@ -39,11 +41,14 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('tasks.create')">{{ __('Buat Tugas Baru') }}
+                                <x-dropdown-link :href="route('tasks.create')">
+                                    {{ __('Buat Tugas Baru') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('tasks.monitoring')">{{ __('Monitoring Tugas') }}
+                                <x-dropdown-link :href="route('tasks.monitoring')">
+                                    {{ __('Monitoring Tugas') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('tasks.review_list')">{{ __('Review Laporan') }}
+                                <x-dropdown-link :href="route('tasks.review_list')">
+                                    {{ __('Review Laporan') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
@@ -64,23 +69,30 @@
                             </x-slot>
                             <x-slot name="content">
                                 @role('SA00', 'MG00')
-                                <div class="px-4 py-2 text-xs text-gray-400">Master Lokasi & Aset</div>
-                                <x-dropdown-link :href="route('master.buildings.index')" class="ps-6">{{ __('Gedung') }}
+                                <div class="px-4 py-2 text-xs text-gray-400">Master Lokasi & Umum</div>
+                                <x-dropdown-link :href="route('master.buildings.index')" class="ps-6">
+                                    {{ __('Gedung') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.floors.index')" class="ps-6">{{ __('Lantai') }}
+                                <x-dropdown-link :href="route('master.floors.index')" class="ps-6">
+                                    {{ __('Lantai') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.rooms.index')" class="ps-6">{{ __('Ruangan') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.assets.index')" class="ps-6">{{ __('Aset') }}
+                                <x-dropdown-link :href="route('master.rooms.index')" class="ps-6">
+                                    {{ __('Ruangan') }}
                                 </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                                <x-dropdown-link :href="route('master.task_types.index')">{{ __('Jenis Tugas') }}
+                                <x-dropdown-link :href="route('master.task_types.index')">
+                                    {{ __('Jenis Tugas') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.maintenances.index')">{{ __('Jadwal Maintenance')
-                                    }}</x-dropdown-link>
+                                <x-dropdown-link :href="route('master.maintenances.index')">
+                                    {{ __('Jadwal Maintenance') }}
+                                </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 @endrole
-                                <div class="px-4 py-2 text-xs text-gray-400">Gudang</div>
+
+                                <div class="px-4 py-2 text-xs text-gray-400">Aset & Gudang</div>
+                                <x-dropdown-link :href="route('master.assets.index')" class="ps-6">
+                                    {{ __('Manajemen Aset') }}
+                                </x-dropdown-link>
                                 <x-dropdown-link :href="route('stock.index')" class="ps-6">
                                     {{ __('Manajemen Stok') }}
                                 </x-dropdown-link>
@@ -107,13 +119,16 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('history.tasks')">{{ __('Riwayat Tugas') }}
+                                <x-dropdown-link :href="route('history.tasks')">
+                                    {{ __('Riwayat Tugas') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="route('tasks.completed_history')">
                                     {{ __('Riwayat Tugas Selesai') }}
                                 </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                                <x-dropdown-link :href="route('export.index')">{{ __('Ekspor Data') }}</x-dropdown-link>
+                                <x-dropdown-link :href="route('export.index')">
+                                    {{ __('Ekspor Data') }}
+                                </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -121,8 +136,9 @@
 
                     {{-- Menu Superadmin --}}
                     @role('SA00')
-                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Manajemen
-                        Pengguna') }}</x-nav-link>
+                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        {{ __('Manajemen Pengguna') }}
+                    </x-nav-link>
                     @endrole
                     @endauth
                 </div>
@@ -150,7 +166,6 @@
                                         notifikasi.</p>
                                 </template>
                                 <template x-for="notification in unread" :key="notification.id">
-                                    {{-- Klik sekarang memanggil markAsRead() dan mencegah navigasi default --}}
                                     <a :href="notification.data.url" @click.prevent="markAsRead(notification.id)"
                                         class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 bg-indigo-50 dark:bg-gray-800 border-l-4 border-indigo-400">
                                         <p class="font-bold" x-text="notification.data.message"></p>
@@ -170,8 +185,9 @@
                             <div class="px-4 py-2 border-t dark:border-gray-600" x-show="unreadCount > 0"
                                 style="display: none;">
                                 <button @click="markAllAsRead"
-                                    class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-full text-center">Tandai
-                                    semua sudah dibaca</button>
+                                    class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-full text-center">
+                                    Tandai semua sudah dibaca
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -185,7 +201,9 @@
                         </button>
                     </x-slot>
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">{{ __('Profile') }}</x-dropdown-link>
+                        <x-dropdown-link :href="route('profile.edit')">
+                            {{ __('Profile') }}
+                        </x-dropdown-link>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
@@ -217,12 +235,14 @@
             {{-- Responsive Menu Staff --}}
             @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
             <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
-                __('Papan Tugas') }}</x-responsive-nav-link>
+                __('Papan Tugas') }}
+            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
                 {{ __('Tugas Aktif Saya') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
-                __('Riwayat Tugas') }}</x-responsive-nav-link>
+                __('Riwayat Tugas') }}
+            </x-responsive-nav-link>
             @endrole
 
             {{-- Responsive Menu Leader & Atasan --}}
@@ -233,11 +253,14 @@
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">Manajemen Tugas</div>
                 </div>
                 <div class="mt-1 space-y-1">
-                    <x-responsive-nav-link :href="route('tasks.create')">{{ __('Buat Tugas Baru') }}
+                    <x-responsive-nav-link :href="route('tasks.create')">
+                        {{ __('Buat Tugas Baru') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.monitoring')">{{ __('Monitoring Tugas') }}
+                    <x-responsive-nav-link :href="route('tasks.monitoring')">
+                        {{ __('Monitoring Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.review_list')">{{ __('Review Laporan') }}
+                    <x-responsive-nav-link :href="route('tasks.review_list')">
+                        {{ __('Review Laporan') }}
                     </x-responsive-nav-link>
                 </div>
             </div>
@@ -252,19 +275,29 @@
                 </div>
                 <div class="mt-3 space-y-1">
                     @role('SA00', 'MG00')
-                    <x-responsive-nav-link :href="route('master.buildings.index')">{{ __('Gedung') }}
+                    <x-responsive-nav-link :href="route('master.buildings.index')">
+                        {{ __('Gedung') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.floors.index')">{{ __('Lantai') }}
+                    <x-responsive-nav-link :href="route('master.floors.index')">
+                        {{ __('Lantai') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.rooms.index')">{{ __('Ruangan') }}
+                    <x-responsive-nav-link :href="route('master.rooms.index')">
+                        {{ __('Ruangan') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.task_types.index')">{{ __('Jenis Tugas') }}
+                    <x-responsive-nav-link :href="route('master.task_types.index')">
+                        {{ __('Jenis Tugas') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.assets.index')">{{ __('Manajemen Aset') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.maintenances.index')">{{ __('Jadwal Maintenance') }}
+                    <x-responsive-nav-link :href="route('master.maintenances.index')">
+                        {{ __('Jadwal Maintenance') }}
                     </x-responsive-nav-link>
                     @endrole
+
+                    {{-- PERBAIKAN: Tambahkan Manajemen Aset di sini --}}
+                    <x-responsive-nav-link :href="route('master.assets.index')">
+                        {{ __('Manajemen Aset') }}
+                    </x-responsive-nav-link>
+                    {{-- Akhir Perbaikan --}}
+
                     <x-responsive-nav-link :href="route('stock.index')">
                         {{ __('Manajemen Stok') }}
                     </x-responsive-nav-link>
@@ -300,19 +333,26 @@
 
             {{-- Responsive Menu Superadmin --}}
             @role('SA00')
-            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Manajemen
-                Pengguna') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                {{ __('Manajemen Pengguna') }}
+            </x-responsive-nav-link>
             @endrole
             @endauth
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">
+                    {{ Auth::user()->name }}
+                </div>
+                <div class="font-medium text-sm text-gray-500">
+                    {{ Auth::user()->email }}
+                </div>
             </div>
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profile') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('profile.edit')">
+                    {{ __('Profile') }}
+                </x-responsive-nav-link>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')"

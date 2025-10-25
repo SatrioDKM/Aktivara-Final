@@ -81,10 +81,15 @@
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 @endrole
                                 <div class="px-4 py-2 text-xs text-gray-400">Gudang</div>
-                                <x-dropdown-link :href="route('stock.index')" class="ps-6">{{ __('Manajemen Stok') }}
+                                <x-dropdown-link :href="route('stock.index')" class="ps-6">
+                                    {{ __('Manajemen Stok') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('packing_lists.index')" class="ps-6">{{ __('Barang
-                                    Keluar') }}</x-dropdown-link>
+                                <x-dropdown-link :href="route('packing_lists.index')" class="ps-6">
+                                    {{ __('Barang Keluar') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('asset_history.index')" class="ps-6">
+                                    {{ __('Riwayat Aset') }}
+                                </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -260,9 +265,14 @@
                     <x-responsive-nav-link :href="route('master.maintenances.index')">{{ __('Jadwal Maintenance') }}
                     </x-responsive-nav-link>
                     @endrole
-                    <x-responsive-nav-link :href="route('stock.index')">{{ __('Manajemen Stok') }}
+                    <x-responsive-nav-link :href="route('stock.index')">
+                        {{ __('Manajemen Stok') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('packing_lists.index')">{{ __('Barang Keluar') }}
+                    <x-responsive-nav-link :href="route('packing_lists.index')">
+                        {{ __('Barang Keluar') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('asset_history.index')">
+                        {{ __('Riwayat Aset') }}
                     </x-responsive-nav-link>
                 </div>
             </div>

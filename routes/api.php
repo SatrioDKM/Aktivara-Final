@@ -10,6 +10,7 @@ use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PackingListController;
+use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\GuestComplaintController;
@@ -72,13 +73,18 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
     // --- Rute manual untuk Assets ---
     Route::prefix('assets')->name('assets.')->group(function () {
-        Route::get('/', [AssetController::class, 'index'])->name('index');
-        Route::post('/', [AssetController::class, 'store'])->name('store');
-        Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+')->name('show');
-        // NOTE: Menggunakan POST untuk update karena form mungkin berisi file (gambar)
-        Route::post('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+')->name('update');
-        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy');
-        Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('stock_out')->where('id', '[0-9]+');
+        // Rute yang boleh diakses Warehouse, Manager, Admin
+        Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
+            Route::get('/', [AssetController::class, 'index'])->name('index'); // Read List
+            Route::post('/', [AssetController::class, 'store'])->name('store'); // Create
+            Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+')->name('show'); // Read Detail
+            // NOTE: Menggunakan POST untuk update karena form mungkin berisi file (gambar)
+            Route::post('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+')->name('update'); // Update
+            Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('stock_out')->where('id', '[0-9]+'); // Stock Out (jika Warehouse boleh)
+        });
+
+        // Rute Delete (HANYA Manager & Admin)
+        Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy')->middleware(['role:SA00,MG00']);
     });
 
     // --- Rute manual untuk Asset Maintenances ---
@@ -162,4 +168,6 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
         Route::post('/{id}/report', [TaskWorkflowController::class, 'submitReport'])->name('reports.store')->where('id', '[0-9]+');
     });
+
+    Route::get('/asset-history', [AssetHistoryController::class, 'index'])->name('asset_history.index')->middleware(['role:SA00,MG00,WH01,WH02']);
 });

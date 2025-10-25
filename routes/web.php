@@ -1,22 +1,23 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
-use App\Http\Controllers\AssetMaintenanceController;
+use App\Http\Controllers\FloorController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\TaskTypeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ExportController;
-use App\Http\Controllers\FloorController;
-use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\PackingListController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\StockManagementController;
-use App\Http\Controllers\TaskTypeController;
+use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\TaskWorkflowController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\WelcomeController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GuestComplaintController;
+use App\Http\Controllers\StockManagementController;
+use App\Http\Controllers\AssetMaintenanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
         Route::get('packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
         Route::get('stock-management', [StockManagementController::class, 'viewPage'])->name('stock.index');
+        Route::get('asset-history', [AssetHistoryController::class, 'viewPage'])->name('asset_history.index');
     });
 
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {

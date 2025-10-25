@@ -106,16 +106,25 @@
                                                 :class="assetStatusClass(asset.status)"
                                                 x-text="asset.status.replace('_', ' ')"></span></td>
                                         <td class="px-6 py-4 text-center">
-                                            <div class="flex items-center justify-center space-x-2"><a
-                                                    :href="`/master/assets/${asset.id}`"
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <a :href="`/master/assets/${asset.id}`"
                                                     class="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                                                    title="Lihat"><i class="fas fa-eye"></i></a><a
-                                                    :href="`/master/assets/${asset.id}/edit`"
+                                                    title="Lihat">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a :href="`/master/assets/${asset.id}/edit`"
                                                     class="p-2 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600"
-                                                    title="Edit"><i class="fas fa-edit"></i></a><button
-                                                    @click="confirmDelete(asset.id)"
+                                                    title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                @role('SA00', 'MG00')
+                                                <button @click="confirmDelete(asset.id)"
                                                     class="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-gray-600"
-                                                    title="Hapus"><i class="fas fa-trash"></i></button></div>
+                                                    title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                @endrole
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>
@@ -164,18 +173,27 @@
                                         <td class="px-6 py-4" x-text="pagination.from + index"></td>
                                         <td class="px-6 py-4 font-medium" x-text="asset.name_asset"></td>
                                         <td class="px-6 py-4" x-text="asset.category"></td>
-                                        <td class="px-6 py-4 text-center"><span
+                                        <td class="px-6 py-4 text-center">
+                                            <span
                                                 :class="{'text-red-500 font-bold': asset.current_stock <= asset.minimum_stock && asset.minimum_stock > 0}"
-                                                x-text="asset.current_stock"></span></td>
+                                                x-text="asset.current_stock"></span>
+                                        </td>
                                         <td class="px-6 py-4 text-center" x-text="asset.minimum_stock"></td>
                                         <td class="px-6 py-4 text-center">
-                                            <div class="flex items-center justify-center space-x-2"><a
-                                                    :href="`/master/assets/${asset.id}/edit`"
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <a :href="`/master/assets/${asset.id}/edit`"
                                                     class="p-2 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600"
-                                                    title="Edit"><i class="fas fa-edit"></i></a><button
-                                                    @click="confirmDelete(asset.id)"
+                                                    title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                @role('SA00', 'MG00')
+                                                <button @click="confirmDelete(asset.id)"
                                                     class="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-gray-600"
-                                                    title="Hapus"><i class="fas fa-trash"></i></button></div>
+                                                    title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                @endrole
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>

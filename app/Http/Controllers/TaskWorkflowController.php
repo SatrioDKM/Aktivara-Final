@@ -36,8 +36,27 @@ class TaskWorkflowController extends Controller
      */
     public function createPage(): View
     {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        // --- PERBAIKAN FILTER JENIS TUGAS DI SINI ---
+        $taskTypeQuery = TaskType::query();
+
+        // Jika bukan Manager atau Superadmin, filter berdasarkan departemen user
+        if (!in_array($roleId, ['SA00', 'MG00'])) {
+            $userDepartment = substr($roleId, 0, 2); // Ambil kode departemen user
+            $taskTypeQuery->where(function ($query) use ($userDepartment) {
+                $query->where('departemen', $userDepartment)
+                    ->orWhere('departemen', 'UMUM'); // Selalu sertakan UMUM
+            });
+        }
+        // Manager & Superadmin bisa melihat semua (tidak perlu filter where)
+
+        $taskTypes = $taskTypeQuery->orderBy('name_task')->get();
+        // --- AKHIR PERBAIKAN FILTER ---
+
         $data = [
-            'taskTypes' => TaskType::orderBy('name_task')->get(),
+            'taskTypes' => $taskTypes, // Gunakan hasil query yang sudah difilter
             'buildings' => Building::where('status', 'active')->orderBy('name_building')->get(['id', 'name_building']),
             'assets' => Asset::orderBy('name_asset')->get(['id', 'name_asset', 'serial_number']),
         ];

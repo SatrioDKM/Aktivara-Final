@@ -75,18 +75,37 @@ class GuestComplaintController extends Controller
 
                 // Logika Notifikasi (diperbaiki)
                 try {
-                    $newTask->load('taskType');
-                    $departmentCode = $newTask->taskType->departemen;
+                    // $newTask sudah dibuat sebelumnya
+                    $newTask->load('taskType'); // Pastikan relasi taskType di-load
+                    $departmentCode = $newTask->taskType->departemen; // Ambil kode departemen
 
+                    // Hanya kirim notifikasi jika ada kode departemen spesifik (bukan UMUM)
                     if ($departmentCode && $departmentCode !== 'UMUM') {
-                        $staffRole = $departmentCode . '02';
-                        $leaderRole = $departmentCode . '01';
-                        $recipients = User::whereIn('role_id', [$staffRole, $leaderRole])->get();
+                        $leaderRole = $departmentCode . '01'; // Targetkan hanya Leader
+                        $recipients = User::where('role_id', $leaderRole)->get(); // Cari Leader
 
                         $guestName = $request->input('reporter_name') . " (Tamu)";
 
                         if ($recipients->isNotEmpty()) {
+                            // Kirim notifikasi HANYA ke Leader
                             Notification::send($recipients, new NewTaskAvailable($newTask, $guestName));
+                        } else {
+                            Log::warning("Tidak ditemukan Leader ({$leaderRole}) untuk notifikasi tugas tamu #{$newTask->id}");
+                            // Opsional: Kirim ke Superadmin sebagai fallback jika Leader tidak ada
+                            $superadmin = User::where('role_id', 'SA00')->get();
+                            if ($superadmin->isNotEmpty()) {
+                                Notification::send($superadmin, new NewTaskAvailable($newTask, $guestName));
+                                Log::info("Notifikasi tugas tamu #{$newTask->id} dikirim ke Superadmin sebagai fallback.");
+                            }
+                        }
+                    } else {
+                        // Jika departemen UMUM atau tidak ada, mungkin tidak perlu notifikasi,
+                        // atau kirim ke peran tertentu (misal: Manager/Admin)
+                        Log::info("Tugas tamu #{$newTask->id} tidak memiliki departemen spesifik, notifikasi tidak dikirim ke leader departemen.");
+                        // Opsional: Kirim ke Manager/Admin jika tugas UMUM
+                        $managerAdmin = User::whereIn('role_id', ['MG00', 'SA00'])->get();
+                        if ($managerAdmin->isNotEmpty()) {
+                            Notification::send($managerAdmin, new NewTaskAvailable($newTask, $request->input('reporter_name') . " (Tamu)"));
                         }
                     }
                 } catch (\Exception $e) {

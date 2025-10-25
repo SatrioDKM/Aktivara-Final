@@ -26,9 +26,9 @@
                     @endrole
 
                     {{-- Menu Leader & Atasan --}}
-                    @role('HK01', 'TK01', 'SC01', 'PK01', 'WH01', 'MG00', 'SA00')
-                    <x-nav-link :href="route('complaints.index')" :active="request()->routeIs('complaints.*')">{{
-                        __('Laporan Masuk') }}</x-nav-link>
+                    {{-- PERBAIKAN: Tambahkan pengecualian !str_starts_with(Auth::user()->role_id, 'WH') --}}
+                    @role('HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00')
+                    @if(!str_starts_with(Auth::user()->role_id, 'WH'))
                     <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
@@ -48,6 +48,7 @@
                             </x-slot>
                         </x-dropdown>
                     </div>
+                    @endif
                     @endrole
 
                     {{-- Menu Manajemen Data --}}
@@ -220,9 +221,8 @@
             @endrole
 
             {{-- Responsive Menu Leader & Atasan --}}
-            @role('HK01', 'TK01', 'SC01', 'PK01', 'WH01', 'MG00', 'SA00')
-            <x-responsive-nav-link :href="route('complaints.index')" :active="request()->routeIs('complaints.*')">{{
-                __('Laporan Masuk') }}</x-responsive-nav-link>
+            @role('HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00')
+            @if(!str_starts_with(Auth::user()->role_id, 'WH')) {{-- Tambahkan juga di sini --}}
             <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
                 <div class="px-4">
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">Manajemen Tugas</div>
@@ -236,6 +236,7 @@
                     </x-responsive-nav-link>
                 </div>
             </div>
+            @endif
             @endrole
 
             {{-- Responsive Menu Manajemen Data --}}

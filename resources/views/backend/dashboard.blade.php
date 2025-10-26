@@ -19,52 +19,54 @@
                     <template x-if="stats.role_type === 'admin'">
                         <div class="space-y-6">
                             {{-- Card Statistik Tugas --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div
-                                    class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
-                                    <div class="bg-gray-100 rounded-full p-3 me-4"><i
-                                            class="fas fa-inbox fa-lg text-gray-500"></i></div>
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Tugas
-                                            Baru</h3>
-                                        <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
-                                            x-text="stats.tasks.unassigned"></p>
+                            @if (!str_starts_with(auth()->user()->role_id, 'WH'))
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div
+                                        class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
+                                        <div class="bg-gray-100 rounded-full p-3 me-4"><i
+                                                class="fas fa-inbox fa-lg text-gray-500"></i></div>
+                                        <div>
+                                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Tugas
+                                                Baru</h3>
+                                            <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
+                                                x-text="stats.tasks.unassigned"></p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
+                                        <div class="bg-blue-100 rounded-full p-3 me-4"><i
+                                                class="fas fa-cogs fa-lg text-blue-500"></i></div>
+                                        <div>
+                                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Tugas
+                                                Dikerjakan</h3>
+                                            <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
+                                                x-text="stats.tasks.in_progress"></p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
+                                        <div class="bg-yellow-100 rounded-full p-3 me-4"><i
+                                                class="fas fa-user-check fa-lg text-yellow-500"></i></div>
+                                        <div>
+                                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                                Menunggu Review</h3>
+                                            <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
+                                                x-text="stats.tasks.pending_review"></p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
+                                        <div class="bg-purple-100 rounded-full p-3 me-4"><i
+                                                class="fas fa-users fa-lg text-purple-500"></i></div>
+                                        <div>
+                                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total
+                                                Pengguna</h3>
+                                            <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
+                                                x-text="stats.total_users"></p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div
-                                    class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
-                                    <div class="bg-blue-100 rounded-full p-3 me-4"><i
-                                            class="fas fa-cogs fa-lg text-blue-500"></i></div>
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Tugas
-                                            Dikerjakan</h3>
-                                        <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
-                                            x-text="stats.tasks.in_progress"></p>
-                                    </div>
-                                </div>
-                                <div
-                                    class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
-                                    <div class="bg-yellow-100 rounded-full p-3 me-4"><i
-                                            class="fas fa-user-check fa-lg text-yellow-500"></i></div>
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                            Menunggu Review</h3>
-                                        <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
-                                            x-text="stats.tasks.pending_review"></p>
-                                    </div>
-                                </div>
-                                <div
-                                    class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6 flex items-center">
-                                    <div class="bg-purple-100 rounded-full p-3 me-4"><i
-                                            class="fas fa-users fa-lg text-purple-500"></i></div>
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total
-                                            Pengguna</h3>
-                                        <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100"
-                                            x-text="stats.total_users"></p>
-                                    </div>
-                                </div>
-                            </div>
+                            @endif
                             {{-- Card Statistik Aset --}}
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6">
@@ -122,10 +124,12 @@
                                         </h4>
                                         <div class="h-64"><canvas id="assetMovementChart"></canvas></div>
                                     </div>
-                                    <div class="lg:col-span-1 p-4 border rounded-lg dark:border-gray-700">
-                                        <h4 class="font-semibold text-center mb-2 dark:text-gray-300">Status Tugas</h4>
-                                        <div class="h-64"><canvas id="taskStatusChart"></canvas></div>
-                                    </div>
+                                    @if (!str_starts_with(auth()->user()->role_id, 'WH'))
+                                        <div class="lg:col-span-1 p-4 border rounded-lg dark:border-gray-700">
+                                            <h4 class="font-semibold text-center mb-2 dark:text-gray-300">Status Tugas</h4>
+                                            <div class="h-64"><canvas id="taskStatusChart"></canvas></div>
+                                        </div>
+                                    @endif
                                     <div class="lg:col-span-1 p-4 border rounded-lg dark:border-gray-700">
                                         <h4 class="font-semibold text-center mb-2 dark:text-gray-300">Komposisi Aset
                                         </h4>
@@ -139,12 +143,66 @@
                     {{-- ======================== TAMPILAN LEADER ======================== --}}
                     <template x-if="stats.role_type === 'leader'">
                         <div class="space-y-6">
-                            <div class="flex justify-end">
-                                <a href="{{ route('tasks.create') }}"
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                    <i class="fas fa-plus me-2"></i> Buat Tugas Baru
-                                </a>
+                            @if (auth()->user()->role_id !== 'WH01')
+                                <div class="flex justify-end">
+                                    <a href="{{ route('tasks.create') }}"
+                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                        <i class="fas fa-plus me-2"></i> Buat Tugas Baru
+                                    </a>
+                                </div>
+                            @endif
+                            {{-- ======================== WIDGET STATISTIK LEADER (BARU) ======================== --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {{-- Total Tugas --}}
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700">
+                                <div class="flex items-center">
+                                    <div class="bg-gray-100 dark:bg-gray-700 rounded-full p-3 me-4">
+                                        <i class="fas fa-list-check fa-lg text-gray-500 dark:text-gray-400"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">Total Tugas (Dept)</h4>
+                                        <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-gray-100" x-text="stats.stats.totalTasks ?? 0"></p>
+                                    </div>
+                                </div>
                             </div>
+                            {{-- Tugas Selesai --}}
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700">
+                                <div class="flex items-center">
+                                     <div class="bg-green-100 dark:bg-green-900/50 rounded-full p-3 me-4">
+                                        <i class="fas fa-check-circle fa-lg text-green-500 dark:text-green-400"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-green-700 dark:text-green-300 truncate">Tugas Selesai</h4>
+                                        <p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400" x-text="stats.stats.completedTasks ?? 0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            {{-- Tugas Belum Selesai --}}
+                             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700">
+                                <div class="flex items-center">
+                                     <div class="bg-yellow-100 dark:bg-yellow-900/50 rounded-full p-3 me-4">
+                                        <i class="fas fa-hourglass-half fa-lg text-yellow-500 dark:text-yellow-400"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-yellow-700 dark:text-yellow-300 truncate">Belum Selesai</h4>
+                                        <p class="mt-1 text-3xl font-bold text-yellow-600 dark:text-yellow-400" x-text="stats.stats.pendingTasks ?? 0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            {{-- Tugas Ditolak --}}
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700">
+                                <div class="flex items-center">
+                                     <div class="bg-red-100 dark:bg-red-900/50 rounded-full p-3 me-4">
+                                        <i class="fas fa-times-circle fa-lg text-red-500 dark:text-red-400"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-red-700 dark:text-red-300 truncate">Tugas Ditolak</h4>
+                                        <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400" x-text="stats.stats.rejectedTasks ?? 0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- ======================== AKHIR WIDGET BARU ======================== --}}
                             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                                     <div><label class="block text-sm dark:text-gray-300">Status</label><select
@@ -182,7 +240,8 @@
                     </template>
 
                     {{-- ======================== TAMPILAN STAFF ======================== --}}
-                    <template x-if="stats.role_type === 'staff'">
+                    @if (!str_starts_with(auth()->user()->role_id, 'WH'))
+                        <template x-if="stats.role_type === 'staff'">
                         <div class="space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <a href="{{ route('tasks.my_tasks') }}"
@@ -268,7 +327,9 @@
                                 </div>
                             </div>
                         </div>
-                    </template>
+                        </template>
+                    @endif
+                    
                 </div>
             </div>
         </div>

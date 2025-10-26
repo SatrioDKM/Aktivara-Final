@@ -15,7 +15,7 @@
 
                     @auth
                     {{-- Menu Staff --}}
-                    @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
+                    @role('HK02', 'TK02', 'SC02', 'PK02')
                     <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
                         {{ __('Papan Tugas') }}
                     </x-nav-link>
@@ -90,9 +90,11 @@
                                 @endrole
 
                                 <div class="px-4 py-2 text-xs text-gray-400">Aset & Gudang</div>
-                                <x-dropdown-link :href="route('master.assets.index')" class="ps-6">
-                                    {{ __('Manajemen Aset') }}
-                                </x-dropdown-link>
+                                @if (auth()->user()->role_id !== 'WH02')
+                                    <x-dropdown-link :href="route('master.assets.index')" class="ps-6">
+                                        {{ __('Manajemen Aset') }}
+                                    </x-dropdown-link>
+                                @endif
                                 <x-dropdown-link :href="route('stock.index')" class="ps-6">
                                     {{ __('Manajemen Stok') }}
                                 </x-dropdown-link>
@@ -233,7 +235,7 @@
 
             @auth
             {{-- Responsive Menu Staff --}}
-            @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
+            @role('HK02', 'TK02', 'SC02', 'PK02')
             <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
                 __('Papan Tugas') }}
             </x-responsive-nav-link>
@@ -293,9 +295,11 @@
                     @endrole
 
                     {{-- PERBAIKAN: Tambahkan Manajemen Aset di sini --}}
-                    <x-responsive-nav-link :href="route('master.assets.index')">
-                        {{ __('Manajemen Aset') }}
-                    </x-responsive-nav-link>
+                    @if (auth()->user()->role_id !== 'WH02')
+                        <x-responsive-nav-link :href="route('master.assets.index')">
+                            {{ __('Manajemen Aset') }}
+                        </x-responsive-nav-link>
+                    @endif
                     {{-- Akhir Perbaikan --}}
 
                     <x-responsive-nav-link :href="route('stock.index')">

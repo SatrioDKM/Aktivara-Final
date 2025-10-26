@@ -221,14 +221,22 @@ class TaskWorkflowController extends Controller
         $task->load('taskType');
 
         // --- KIRIM NOTIFIKASI TUGAS BARU (LOGIKA BARU) ---
-        $departmentCode = $task->taskType->departemen; // Ambil departemen dari relasi
-        if ($departmentCode && $departmentCode !== 'UMUM') {
-            $staffRole = $departmentCode . '02';
-            $staffUsers = User::where('role_id', $staffRole)->get();
-            if ($staffUsers->isNotEmpty()) {
-                Notification::send($staffUsers, new NewTaskAvailable($task));
+        try {
+            $departmentCode = $task->taskType->departemen; // Ambil departemen dari relasi
+            if ($departmentCode && $departmentCode !== 'UMUM') {
+                $staffRole = $departmentCode . '02';
+                $staffUsers = User::where('role_id', $staffRole)
+                    ->whereNotNull('telegram_chat_id') // <-- Filter hanya yg punya ID
+                    ->get();
+
+                if ($staffUsers->isNotEmpty()) {
+                    Notification::send($staffUsers, new NewTaskAvailable($task));
+                }
             }
+        } catch (\Exception $e) {
+            Log::error('Gagal mengirim notifikasi (NewTaskAvailable) di store: ' . $e->getMessage());
         }
+        // ------------------------------------
         // ------------------------------------
 
         // UBAH DI SINI: Tambahkan 'redirect_url' ke dalam respons JSON
@@ -389,11 +397,15 @@ class TaskWorkflowController extends Controller
 
                 $dataToUpdate['status'] = 'pending_review';
                 $task->update($dataToUpdate);
+            });
 
-                if ($task->creator) {
+            try {
+                if ($task->creator && $task->creator->telegram_chat_id) {
                     Notification::send($task->creator, new ReportSubmitted($task, Auth::user()));
                 }
-            });
+            } catch (\Exception $e) {
+                Log::error('Gagal mengirim notifikasi (ReportSubmitted) di submitReport: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Laporan berhasil dikirim dan menunggu review.']);
         } catch (\Exception $e) {

@@ -19,6 +19,7 @@ use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes

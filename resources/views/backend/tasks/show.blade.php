@@ -215,7 +215,7 @@
                                                     Laporan <span class="text-red-500">*</span></label>
                                                 <textarea x-model="formData.report_text" id="report_text" rows="4"
                                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
-                                                    placeholder="Jelaskan pekerjaan yang telah dilakukan..."
+                                                    placeholder="Jelaskan pekerjaan yang telah dilakukan, MINIMAL 10 KARAKTER.."
                                                     required></textarea>
                                             </div>
                                             <div>

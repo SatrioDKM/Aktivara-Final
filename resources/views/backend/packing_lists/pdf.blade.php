@@ -174,9 +174,24 @@
     <div class="signatures-container">
         <div class="signature-box">
             <p>Disiapkan Oleh,</p>
-            <div class="signature-line"></div>
-            <strong>{{ $packingList->creator->name ?? 'Sistem' }}</strong>
-            <p>(Staff Gudang)</p>
+            
+            {{-- Ganti signature-line dengan gambar TTD --}}
+            <div style="height: 70px; margin-bottom: 5px;"> {{-- Beri ruang vertikal --}}
+                @if($packingList->signature_pad)
+                    {{-- Tampilkan gambar jika ada --}}
+                    <img src="{{ public_path('storage/' . $packingList->signature_pad) }}" alt="Signature" style="max-height: 60px; width: auto; display: block; margin: 5px auto;">
+                @else
+                    {{-- Kosongkan jika tidak ada TTD --}}
+                    &nbsp; 
+                @endif
+            </div>
+            
+            {{-- Nama User Pembuat --}}
+            <strong style="display: block; border-top: 1px solid #333; padding-top: 5px;">
+                {{ $packingList->creator->name ?? 'Sistem' }}
+            </strong>
+            <p style="font-size: 9px; color: #555;">(Staff Gudang)</p>
+            <p style="font-size: 8px; color: #777;">{{ $packingList->created_at->format('d M Y H:i') }}</p> {{-- Tambah Waktu --}}
         </div>
         {{-- <div class="signature-box">
             <p>Disetujui Oleh,</p>
@@ -186,14 +201,21 @@
         </div> --}}
         <div class="signature-box">
             <p>Diterima Oleh,</p>
-            <div class="signature-line"></div>
-            <strong>{{ $packingList->recipient_name }}</strong>
-            <p>(Penerima)</p>
+            {{-- Beri ruang vertikal yang sama seperti blok 'Disiapkan Oleh' --}}
+            <div style="height: 70px; margin-bottom: 5px;"> 
+                &nbsp; {{-- Biarkan kosong --}}
+            </div>
+            
+            {{-- Tambahkan style border-top ke strong --}}
+            <strong style="display: block; border-top: 1px solid #333; padding-top: 5px;">
+                {{ $packingList->recipient_name }}
+            </strong>
+            <p style="font-size: 9px; color: #555;">(Penerima)</p>
         </div>
     </div>
 
     <div class="footer">
-        <p>Dokumen ini dicetak secara otomatis oleh sistem ManproApp pada {{ now()->translatedFormat('d F Y, H:i') }}
+        <p>Dokumen ini dicetak secara otomatis oleh sistem Aktivara pada {{ now()->translatedFormat('d F Y, H:i') }}
         </p>
     </div>
 </body>

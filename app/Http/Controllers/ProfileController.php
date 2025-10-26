@@ -21,12 +21,15 @@ class ProfileController extends Controller
      */
     public function edit(): View
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->load('role');
+
         $data = [
-            'user' => Auth::user(),
-            'mustVerifyEmail' => Auth::user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail,
+            'user' => $user,
+            'mustVerifyEmail' => $user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail,
             'status' => session('status'),
         ];
-        $data['user']->load('role');
 
         return view('backend.profile.edit', compact('data'));
     }
@@ -38,7 +41,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // Validasi dipindahkan ke sini dari Form Request
+        // Validasi input
         $validatedData = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -46,16 +49,19 @@ class ProfileController extends Controller
             'profile_picture' => ['nullable', 'image', File::types(['jpg', 'jpeg', 'png'])->max(1024)],
         ]);
 
+        // Upload foto profil baru
         if ($request->hasFile('profile_picture')) {
             if ($user->profile_picture) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
+
             $path = $request->file('profile_picture')->store('profile-pictures', 'public');
             $validatedData['profile_picture'] = $path;
         }
 
         $user->fill($validatedData);
 
+        // Reset verifikasi email jika email diubah
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
@@ -77,6 +83,7 @@ class ProfileController extends Controller
         $user = $request->user();
         Auth::logout();
 
+        // Hapus foto profil jika ada
         if ($user->profile_picture) {
             Storage::disk('public')->delete($user->profile_picture);
         }

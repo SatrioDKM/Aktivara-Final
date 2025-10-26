@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PackingListController extends Controller
 {
@@ -21,7 +23,6 @@ class PackingListController extends Controller
      */
     public function viewPage(): View
     {
-        // --- PERBAIKAN: Mengirim $data kosong agar sesuai ketentuan ---
         $data = [];
         return view('backend.packing_lists.index', compact('data'));
     }
@@ -31,7 +32,8 @@ class PackingListController extends Controller
      */
     public function exportPdf(string $id): Response
     {
-        // Method ini sudah benar (Anti N+1)
+        // PERBAIKAN: Gunakan relasi 'creator' BUKAN 'user' jika relasinya creator()
+        // Sesuaikan 'creator' jika nama relasi di Model PackingList berbeda
         $packingList = PackingList::with('creator', 'assets')->findOrFail($id);
         $pdf = Pdf::loadView('backend.packing_lists.pdf', ['packingList' => $packingList]);
         return $pdf->stream($packingList->document_number . '.pdf');
@@ -39,7 +41,6 @@ class PackingListController extends Controller
 
     // ===================================================================
     // API METHODS
-    // (Semua method API Anda di bawah ini sudah benar dan tidak perlu diubah)
     // ===================================================================
 
     /**
@@ -47,7 +48,7 @@ class PackingListController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Method ini sudah benar (Anti N+1)
+        // ... (Method index tidak berubah) ...
         $query = PackingList::with('creator:id,name')->withCount('assets');
 
         $query->when($request->input('search'), function ($q, $search) {
@@ -64,7 +65,6 @@ class PackingListController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Method ini sudah benar (menggunakan DB::transaction)
         $validator = Validator::make($request->all(), [
             'recipient_name' => 'required|string|max:100',
             'notes' => 'nullable|string',
@@ -84,12 +84,19 @@ class PackingListController extends Controller
                 $nextNumber = $lastEntry ? ((int) substr($lastEntry->document_number, -4)) + 1 : 1;
                 $documentNumber = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
+                // --- >>> PERUBAHAN DI SINI <<< ---
+                $user = Auth::user(); // Ambil user yang sedang login
+                Log::info('User Signature Path: ' . $user->signature_image);
+
                 $packingList = PackingList::create([
                     'document_number' => $documentNumber,
                     'recipient_name' => $request->input('recipient_name'),
                     'notes' => $request->input('notes'),
-                    'created_by' => Auth::id(),
+                    'created_by' => $user->id, // Gunakan ID user yang login
+                    // Langsung salin path TTD user ke signature_pad saat create
+                    'signature_pad' => $user->signature_image ?? null
                 ]);
+                // --- >>> AKHIR PERUBAHAN <<< ---
 
                 // Menghubungkan aset dan update status/stok
                 $packingList->assets()->attach($request->input('asset_ids'));
@@ -98,9 +105,12 @@ class PackingListController extends Controller
                     if ($asset->asset_type == 'fixed_asset') {
                         $asset->update(['status' => 'in_use']);
                     } else {
-                        // Pastikan stok tidak negatif (meskipun divalidasi di frontend/API lain)
                         if ($asset->current_stock > 0) {
                             $asset->decrement('current_stock');
+                            // Opsional: Cek stok minimum setelah decrement
+                            // if ($asset->current_stock <= $asset->minimum_stock) {
+                            //     // Kirim notifikasi stok menipis
+                            // }
                         }
                     }
                 }
@@ -108,7 +118,9 @@ class PackingListController extends Controller
 
             return response()->json(['message' => 'Packing list berhasil dibuat!'], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            // Log error untuk debugging
+            Log::error('Error creating packing list: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan saat membuat packing list.'], 500);
         }
     }
 
@@ -117,19 +129,26 @@ class PackingListController extends Controller
      */
     public function getAvailableAssets(Request $request): JsonResponse
     {
-        // Method ini sudah benar (query efisien dan format Select2)
+        // ... (Method getAvailableAssets tidak berubah) ...
         $search = $request->input('q');
 
         $assets = Asset::where('status', 'available')
             ->where(function ($query) use ($search) {
-                // Hanya cari jika ada input search
                 if ($search) {
                     $query->where('name_asset', 'like', "%{$search}%")
                         ->orWhere('serial_number', 'like', "%{$search}%");
                 }
             })
+            // Tambahkan filter untuk barang konsumsi (stok > 0)
+            ->where(function ($query) {
+                $query->where('asset_type', 'fixed_asset') // Aset tetap selalu bisa
+                    ->orWhere(function ($q) {
+                        $q->where('asset_type', 'consumable')
+                            ->where('current_stock', '>', 0); // Barang konsumsi harus ada stok
+                    });
+            })
             ->orderBy('name_asset')
-            ->limit(20) // Batasi hasil untuk performa
+            ->limit(20)
             ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']);
 
         $formattedAssets = $assets->map(function ($asset) {
@@ -142,7 +161,6 @@ class PackingListController extends Controller
             return ['id' => $asset->id, 'text' => $text];
         });
 
-        // Format yang diharapkan Select2 AJAX
         return response()->json(['results' => $formattedAssets]);
     }
 }

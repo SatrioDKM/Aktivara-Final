@@ -150,6 +150,76 @@
                 </div>
             </div>
 
+            {{-- =================================== FORM UPLOAD TTD (KHUSUS WAREHOUSE) =================================== --}}
+            {{-- Tampilkan bagian ini hanya jika role user diawali dengan 'WH' --}}
+            @if (str_starts_with(auth()->user()->role_id, 'WH'))
+                <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
+                    <div class="max-w-xl">
+                        <section>
+                            <header>
+                                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    <i class="fas fa-signature mr-2"></i> {{ __('Tanda Tangan Digital') }}
+                                </h2>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    {{ __('Upload gambar tanda tangan Anda. Ini akan digunakan pada dokumen Packing List.') }}
+                                </p>
+                            </header>
+
+                            {{-- Form untuk upload TTD --}}
+                            {{-- Kita pakai route 'profile.update' tapi tambahkan field _method PATCH --}}
+                            <form method="post" action="{{ route('profile.signature.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
+                                @csrf
+                                @method('patch')
+
+                                {{-- Input File TTD --}}
+                                <div>
+                                    <x-input-label for="signature_image" :value="__('Upload Gambar TTD')" />
+                                    <input id="signature_image" name="signature_image" type="file" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
+                                        file:me-4 file:py-2 file:px-4
+                                        file:rounded-md file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-300
+                                        hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900 cursor-pointer"
+                                        accept="image/png, image/jpeg, image/jpg" />
+                                    <x-input-error class="mt-2" :messages="$errors->updateSignature->get('signature_image')" />
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Format: PNG, JPG, JPEG. Maks: 1MB.</p>
+                                </div>
+
+                                {{-- Tampilkan TTD Saat Ini (jika ada) --}}
+                                {{-- Gunakan auth()->user() agar konsisten dengan @if di atas --}}
+                                @if (auth()->user()->signature_image)
+                                    <div class="mt-4">
+                                        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanda Tangan Saat Ini:</p>
+                                        <img src="{{ Storage::url(auth()->user()->signature_image) }}" alt="Tanda Tangan" class="h-20 max-w-xs object-contain border rounded dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-1">
+
+                                        {{-- Opsi Hapus TTD --}}
+                                        <div class="mt-3 flex items-center">
+                                            <input type="checkbox" name="delete_signature" id="delete_signature" class="h-4 w-4 rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
+                                            <label for="delete_signature" class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Hapus Tanda Tangan Saat Ini (centang lalu simpan)') }}</label>
+                                        </div>
+                                    </div>
+                                @else
+                                     <div class="mt-4">
+                                        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanda Tangan Saat Ini:</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 italic">Belum ada tanda tangan diupload.</p>
+                                    </div>
+                                @endif
+
+                                {{-- Tombol Simpan --}}
+                                <div class="flex items-center gap-4 pt-2">
+                                    <x-primary-button>
+                                        <i class="fas fa-save mr-2"></i>{{ __('Simpan TTD') }}
+                                    </x-primary-button>
+
+                                    {{-- Pesan Sukses (jika ada dari session) --}}
+                                    {{-- Kita gunakan script JS di @push bawah untuk menampilkan notif --}}
+                                </div>
+                            </form>
+                        </section>
+                    </div>
+                </div>
+            @endif
+
             {{-- Bagian Update Password --}}
             <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
                 <div class="max-w-xl">

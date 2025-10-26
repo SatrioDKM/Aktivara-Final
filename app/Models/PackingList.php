@@ -16,6 +16,7 @@ class PackingList extends Model
         'recipient_name',
         'created_by',
         'notes',
+        'signature_pad',
     ];
 
     /**

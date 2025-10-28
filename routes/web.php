@@ -66,7 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('complaints/{id}', [ComplaintController::class, 'showPage'])->name('complaints.show')->where('id', '[0-9]+');
     });
 
-    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01'])->group(function () {
+    Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {
         Route::get('/tasks/monitoring', [TaskWorkflowController::class, 'monitoringPage'])->name('tasks.monitoring');
         Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
 

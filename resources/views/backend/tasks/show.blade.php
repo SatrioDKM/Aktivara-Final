@@ -140,8 +140,8 @@
                                                     <a :href="task.image_after ? `/storage/${task.image_after}` : '#'"
                                                         target="_blank" :class="{'cursor-pointer': task.image_after}">
                                                         <img :src="task.image_after ? `/storage/${task.image_after}` : `{{ asset('assets/backend/img/image-default.png') }}`"
-                                                            alt="Foto Sesudah"
-                                                            class="mt-2 rounded-lg w-full h-48 object-cover hover:opacity-80 transition shadow-md">
+                                                        alt="Foto Sesudah"
+                                                        class="mt-2 rounded-lg w-full h-48 object-cover hover:opacity-80 transition shadow-md">
                                                     </a>
                                                 </div>
                                             </div>
@@ -222,6 +222,7 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto
                                                     Sebelum <span class="text-red-500">*</span></label>
+                                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Format: PNG, JPG, JPEG. Maks: 2MB.</p>
                                                 <input x-ref="fileInputBefore" type="file"
                                                     @change="previewImage($event, 'before')" accept="image/*"
                                                     class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
@@ -233,6 +234,7 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto
                                                     Sesudah <span class="text-red-500">*</span></label>
+                                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Format: PNG, JPG, JPEG. Maks: 2MB.</p>
                                                 <input x-ref="fileInputAfter" type="file"
                                                     @change="previewImage($event, 'after')" accept="image/*"
                                                     class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"

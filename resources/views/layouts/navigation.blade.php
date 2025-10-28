@@ -98,9 +98,11 @@
                                 <x-dropdown-link :href="route('stock.index')" class="ps-6">
                                     {{ __('Manajemen Stok') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('packing_lists.index')" class="ps-6">
-                                    {{ __('Barang Keluar') }}
-                                </x-dropdown-link>
+                                @if (auth()->user()->role_id !== 'MG00')
+                                    <x-dropdown-link :href="route('packing_lists.index')" class="ps-6">
+                                        {{ __('Barang Keluar') }}
+                                    </x-dropdown-link>
+                                @endif
                                 <x-dropdown-link :href="route('asset_history.index')" class="ps-6">
                                     {{ __('Riwayat Aset') }}
                                 </x-dropdown-link>

@@ -152,7 +152,8 @@
 
             {{-- =================================== FORM UPLOAD TTD (KHUSUS WAREHOUSE) =================================== --}}
             {{-- Tampilkan bagian ini hanya jika role user diawali dengan 'WH' --}}
-            @if (str_starts_with(auth()->user()->role_id, 'WH'))
+            {{-- @if (str_starts_with(auth()->user()->role_id, 'WH') || str_starts_with(auth()->user()->role_id, 'SA')) --}}
+            @if (Str::startsWith(auth()->user()->role_id, ['WH', 'SA']))
                 <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg">
                     <div class="max-w-xl">
                         <section>

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskTypeController;
@@ -86,6 +87,17 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
         // Rute Delete (HANYA Manager & Admin)
         Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy')->middleware(['role:SA00,MG00']);
     });
+
+    Route::prefix('asset-categories')
+        ->name('asset_categories.')
+        ->middleware('auth:sanctum')
+        ->group(function () {
+            Route::get('/', [AssetCategoryController::class, 'apiIndex'])->name('api.asset-categories.index');
+            Route::post('/', [AssetCategoryController::class, 'apiStore'])->name('api.asset-categories.store');
+            Route::put('/{assetCategory}', [AssetCategoryController::class, 'apiUpdate'])->name('api.asset-categories.update');
+            Route::delete('/{assetCategory}', [AssetCategoryController::class, 'apiDestroy'])->name('api.asset-categories.destroy');
+        });
+
 
     // --- Rute manual untuk Asset Maintenances ---
     Route::prefix('maintenances')->name('maintenances.')->group(function () {

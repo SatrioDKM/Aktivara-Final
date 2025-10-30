@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
+use App\Models\AssetCategory;
 use App\Models\Room;
 use App\Models\User;
 use App\Notifications\LowStockAlert;
@@ -30,12 +31,11 @@ class AssetController extends Controller
     /**
      * Menampilkan halaman formulir untuk menambah aset baru.
      */
-    public function create(): View
+    public function create()
     {
-        $data = [
-            'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
-        ];
-        return view('backend.master.assets.create', compact('data'));
+        $rooms = Room::all();
+        $categories = AssetCategory::orderBy('name')->get(); // Ambil kategori
+        return view('backend.master.assets.create', compact('rooms', 'categories')); // Tambahkan 'categories'
     }
 
     /**
@@ -64,6 +64,7 @@ class AssetController extends Controller
         $data = [
             'asset' => Asset::findOrFail($id),
             'rooms' => Room::with('floor.building')->where('status', 'active')->get(),
+            'categories' => AssetCategory::orderBy('name')->get(), // <-- TAMBAHKAN INI
         ];
         return view('backend.master.assets.edit', compact('data'));
     }
@@ -80,7 +81,11 @@ class AssetController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Asset::with(['room.floor.building', 'creator:id,name']);
+        $query = Asset::with([
+            'room.floor.building',
+            'creator:id,name',
+            'assetCategory' // <-- Tambahkan ini
+        ]);
 
         $query->when($request->input('asset_type'), function ($q, $type) {
             $q->where('asset_type', $type);
@@ -90,7 +95,9 @@ class AssetController extends Controller
             $q->where(function ($subq) use ($search) {
                 $subq->where('name_asset', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhereHas('assetCategory', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         });
 
@@ -111,7 +118,7 @@ class AssetController extends Controller
             'assets' => 'required|array|min:1',
             'assets.*.name_asset' => 'required|string|max:100',
             'assets.*.asset_type' => 'required|in:fixed_asset,consumable',
-            'assets.*.category' => 'required|string|max:100',
+            'assets.*.asset_category_id' => 'required|exists:asset_categories,id',
             'assets.*.room_id' => 'nullable|exists:rooms,id',
             'assets.*.purchase_date' => 'nullable|date',
             'assets.*.current_stock' => 'required|integer|min:1',
@@ -142,7 +149,9 @@ class AssetController extends Controller
                         $singleAssetData = $data;
                         $singleAssetData['current_stock'] = 1;
                         $singleAssetData['minimum_stock'] = 0;
-                        $singleAssetData['serial_number'] = $this->generateSerialNumber($data['category']);
+                        // Ambil nama kategori dari ID
+                        $categoryName = AssetCategory::find($data['asset_category_id'])->name;
+                        $singleAssetData['serial_number'] = $this->generateSerialNumber($categoryName);
                         $createdAssets[] = Asset::create($singleAssetData);
                     }
                 } else {
@@ -184,7 +193,7 @@ class AssetController extends Controller
         $validator = Validator::make($request->all(), [
             'name_asset' => 'required|string|max:100',
             'room_id' => 'nullable|exists:rooms,id',
-            'category' => 'required|string|max:100',
+            'asset_category_id' => 'required|exists:asset_categories,id',
             'serial_number' => 'nullable|string|max:100|unique:assets,serial_number,' . $asset->id,
             'purchase_date' => 'nullable|date',
             'condition' => 'required_if:asset_type,fixed_asset|nullable|in:Baik,Rusak Ringan,Rusak Berat',

@@ -9,7 +9,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
-                <div class="p-6 md:p-8" x-data="assetForm(@js($data['rooms']))" x-cloak>
+                <div class="p-6 md:p-8" x-data="assetForm(@js($rooms))" x-cloak>
                     <form @submit.prevent="saveAssets()">
                         {{-- Kontainer untuk baris-baris form yang dinamis --}}
                         <div class="space-y-4 max-h-[60vh] overflow-y-auto p-2 border dark:border-gray-700 rounded-lg">
@@ -45,15 +45,14 @@
                                     <div class="col-span-6 md:col-span-2">
                                         <label
                                             class="block text-xs font-medium text-gray-600 dark:text-gray-300">Kategori</label>
-                                        <div class="relative mt-1">
-                                            <div
-                                                class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                <i class="fas fa-sitemap text-gray-400"></i>
-                                            </div>
-                                            <input type="text" x-model="asset.category"
-                                                class="block w-full ps-10 rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="e.g. Elektronik" required>
-                                        </div>
+                                        <select x-model="asset.asset_category_id"
+                                            class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
+                                            required>
+                                            <option value="">-- Pilih Kategori --</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                     {{-- Stok --}}
                                     <div class="col-span-4 md:col-span-1">
@@ -174,12 +173,12 @@
                     this.formData.assets.push({
                         name_asset: '',
                         asset_type: 'fixed_asset',
-                        category: '',
+                        asset_category_id: '', // <-- UBAH INI
                         condition: 'Baik',
                         current_stock: 1,
                         minimum_stock: 0,
-                        room_id: '', // PERBAIKAN: Tambah field
-                        purchase_date: '' // PERBAIKAN: Tambah field
+                        room_id: '',
+                        purchase_date: ''
                     });
                 },
 

@@ -21,11 +21,14 @@
                                         placeholder="Nama aset atau barang" required>
                                 </div>
                                 <div>
-                                    <label for="category"
+                                    <label for="asset_category_id"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
-                                    <input type="text" x-model="formData.category"
-                                        class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="e.g. Elektronik" required>
+                                    <select id="asset_category_id" class="mt-1 block w-full">
+                                        <option value="">-- Pilih Kategori --</option>
+                                        @foreach($data['categories'] as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div>
                                     <label for="room_id"
@@ -126,16 +129,22 @@
                     isSubmitting: false,
                     formData: {},
                     initData(asset) {
+                        // Ganti 'category' menjadi 'asset_category_id' saat menyimpan
                         this.formData = { ...asset, room_id: asset.room_id || '' };
+                        // Pastikan 'category' yang lama tidak terkirim
+                        delete this.formData.category; 
+                        // Pastikan asset_category_id ada di formData
+                        this.formData.asset_category_id = asset.asset_category_id || '';
 
                         this.$nextTick(() => {
                             // Inisialisasi Select2 menggunakan jQuery ($) dari app.js
                             $('#room_id').val(this.formData.room_id).trigger('change');
                             $('#condition').val(this.formData.condition).trigger('change');
                             $('#status').val(this.formData.status).trigger('change');
+                            $('#asset_category_id').val(this.formData.asset_category_id).trigger('change'); // <-- TAMBAH INI
 
                             // Terapkan Select2
-                            $('#room_id, #condition, #status').select2({
+                            $('#room_id, #condition, #status, #asset_category_id').select2({ // <-- TAMBAH INI
                                 theme: "classic",
                                 width: '100%'
                             });
@@ -144,6 +153,7 @@
                             $('#room_id').on('change', (e) => this.formData.room_id = e.target.value);
                             $('#condition').on('change', (e) => this.formData.condition = e.target.value);
                             $('#status').on('change', (e) => this.formData.status = e.target.value);
+                            $('#asset_category_id').on('change', (e) => this.formData.asset_category_id = e.target.value); // <-- TAMBAH INI
                         });
                     },
 

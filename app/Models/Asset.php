@@ -16,7 +16,7 @@ class Asset extends Model
         'name_asset',
         'description',
         'asset_type',
-        'category',
+        'asset_category_id', // SUDAH DIGANTI DARI 'category'
         'serial_number',
         'purchase_date',
         'condition',
@@ -83,5 +83,13 @@ class Asset extends Model
     public function packingLists(): BelongsToMany
     {
         return $this->belongsToMany(PackingList::class, 'asset_packing_list');
+    }
+
+    /**
+     * [FUNGSI BARU] Relasi ke Kategori Aset.
+     */
+    public function assetCategory(): BelongsTo
+    {
+        return $this->belongsTo(AssetCategory::class, 'asset_category_id');
     }
 }

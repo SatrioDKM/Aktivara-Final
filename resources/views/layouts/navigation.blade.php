@@ -94,6 +94,9 @@
                                     <x-dropdown-link :href="route('master.assets.index')" class="ps-6">
                                         {{ __('Manajemen Aset') }}
                                     </x-dropdown-link>
+                                    <x-dropdown-link :href="route('master.asset_categories.index')" class="ps-6">
+                                        {{ __('Kategori Aset') }}
+                                    </x-dropdown-link>
                                 @endif
                                 <x-dropdown-link :href="route('stock.index')" class="ps-6">
                                     {{ __('Manajemen Stok') }}
@@ -300,6 +303,9 @@
                     @if (auth()->user()->role_id !== 'WH02')
                         <x-responsive-nav-link :href="route('master.assets.index')">
                             {{ __('Manajemen Aset') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('master.asset_categories.index')" :active="request()->routeIs('master.asset-categories.*')">
+                            {{ __('Kategori Aset') }}
                         </x-responsive-nav-link>
                     @endif
                     {{-- Akhir Perbaikan --}}

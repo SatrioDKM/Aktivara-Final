@@ -98,7 +98,7 @@
                                             <div class="text-xs text-gray-500"
                                                 x-text="asset.serial_number || 'Non-Serial'"></div>
                                         </td>
-                                        <td class="px-6 py-4" x-text="asset.category"></td>
+                                        <td class="px-6 py-4" x-text="asset.asset_category ? asset.asset_category.name : '-'"></td>
                                         <td class="px-6 py-4" x-text="asset.room ? asset.room.name_room : 'Gudang'">
                                         </td>
                                         <td class="px-6 py-4 text-center"><span
@@ -172,7 +172,7 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td class="px-6 py-4" x-text="pagination.from + index"></td>
                                         <td class="px-6 py-4 font-medium" x-text="asset.name_asset"></td>
-                                        <td class="px-6 py-4" x-text="asset.category"></td>
+                                        <td class="px-6 py-4" x-text="asset.asset_category ? asset.asset_category.name : '-'"></td>
                                         <td class="px-6 py-4 text-center">
                                             <span
                                                 :class="{'text-red-500 font-bold': asset.current_stock <= asset.minimum_stock && asset.minimum_stock > 0}"

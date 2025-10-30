@@ -98,6 +98,9 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
             Route::delete('/{assetCategory}', [AssetCategoryController::class, 'apiDestroy'])->name('api.asset-categories.destroy');
         });
 
+    Route::get('assets/by-category/{category}', [AssetController::class, 'apiShowByCategory'])
+        ->middleware('auth:sanctum')
+        ->name('api.assets.by_category');
 
     // --- Rute manual untuk Asset Maintenances ---
     Route::prefix('maintenances')->name('maintenances.')->group(function () {

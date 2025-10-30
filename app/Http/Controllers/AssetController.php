@@ -18,13 +18,8 @@ use Illuminate\View\View;
 
 class AssetController extends Controller
 {
-    /**
-     * Menampilkan halaman daftar aset (index).
-     */
     public function viewPage(): View
     {
-        // Data tidak dikirim dari sini karena halaman ini sepenuhnya
-        // dikendalikan oleh API dan Alpine.js
         return view('backend.master.assets.index');
     }
 
@@ -50,7 +45,8 @@ class AssetController extends Controller
                 'updater:id,name',
                 'creator:id,name',
                 'maintenances.technician:id,name',
-                'tasks.assignee:id,name'
+                'tasks.assignee:id,name',
+                'AssetCategory'
             ])->findOrFail($id)
         ];
         return view('backend.master.assets.show', compact('data'));
@@ -79,31 +75,68 @@ class AssetController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+
     public function index(Request $request): JsonResponse
     {
-        $query = Asset::with([
-            'room.floor.building',
-            'creator:id,name',
-            'assetCategory' // <-- Tambahkan ini
+        $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'perPage' => 'nullable|integer|min:1|max:100',
+            'search' => 'nullable|string|max:255',
+            'asset_type' => 'required|in:fixed_asset,consumable',
         ]);
 
-        $query->when($request->input('asset_type'), function ($q, $type) {
-            $q->where('asset_type', $type);
-        });
+        $search = $request->input('search');
+        $assetType = $request->input('asset_type');
+        $perPage = $request->input('perPage', 10);
 
-        $query->when($request->input('search'), function ($q, $search) {
-            $q->where(function ($subq) use ($search) {
-                $subq->where('name_asset', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%")
-                    ->orWhereHas('assetCategory', function ($categoryQuery) use ($search) {
-                        $categoryQuery->where('name', 'like', "%{$search}%");
-                    });
+        if ($assetType == 'consumable') {
+
+            // --- Alur 1: Barang Habis Pakai (Tidak Berubah) ---
+            $query = Asset::query()
+                ->with(['room', 'assetCategory'])
+                ->where('asset_type', 'consumable')
+                ->when($search, function ($q, $search) {
+                    $q->where('name_asset', 'like', '%' . $search . '%')
+                        ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                })
+                ->latest();
+
+            return response()->json($query->paginate($perPage));
+        } else {
+
+            // --- Alur 2: Aset Tetap (FIXED: Menggunakan groupBy) ---
+
+            $query = Asset::query()
+                ->with('assetCategory') // Wajib Eager Load
+                ->where('asset_type', 'fixed_asset')
+                ->when($search, function ($q, $search) {
+                    $q->where('name_asset', 'like', '%' . $search . '%')
+                        ->orWhere('serial_number', 'like', '%' . $search . '%')
+                        ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                });
+
+            $allAssets = $query->get();
+
+            // Kelompokkan berdasarkan nama kategori. 
+            // Aset dengan category_id=NULL akan masuk ke grup 'Tanpa Kategori'.
+            $grouped = $allAssets->groupBy(function ($asset) {
+                return $asset->assetCategory->name ?? 'Tanpa Kategori';
             });
-        });
 
-        $assets = $query->latest()->paginate($request->input('perPage', 10));
+            // Ubah formatnya agar sesuai dengan yg diharapkan frontend
+            $categorySummary = $grouped->map(function ($assets, $categoryName) {
+                // Tentukan ID. Jika 'Tanpa Kategori', kita beri ID '0'.
+                $id = ($categoryName == 'Tanpa Kategori') ? 0 : $assets->first()->asset_category_id;
 
-        return response()->json($assets);
+                return [
+                    'id' => $id, // ID Kategori (atau 0 jika null)
+                    'name' => $categoryName,
+                    'assets_count' => $assets->count()
+                ];
+            })->sortBy('name')->values(); // Urutkan A-Z dan reset keys
+
+            return response()->json($categorySummary);
+        }
     }
 
     /**
@@ -229,6 +262,54 @@ class AssetController extends Controller
         $asset = Asset::findOrFail($id);
         $asset->delete();
         return response()->json(['message' => 'Aset berhasil dihapus.'], 200);
+    }
+
+    public function showByCategory($categoryId) // Request gak perlu kalau gak dipakai
+    {
+        // Tangani ID 0 (Tanpa Kategori)
+        if ($categoryId == 0) {
+            $category = (object)[
+                'id' => 0,
+                'name' => 'Tanpa Kategori'
+            ];
+        } else {
+            // Gunakan findOrFail biar otomatis 404 kalau nggak ketemu
+            $category = AssetCategory::findOrFail($categoryId);
+        }
+
+        // Kirim data kategori ke view
+        return view('backend.master.assets.category_detail', compact('category'));
+    }
+
+    public function apiShowByCategory(Request $request, $categoryId): JsonResponse // <-- METHOD BARU
+    {
+        $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'perPage' => 'nullable|integer|min:1|max:100',
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = $request->input('search');
+        $perPage = $request->input('perPage', 10);
+
+        $query = Asset::query()
+            ->with(['room'])
+            ->where('asset_type', 'fixed_asset')
+            ->when($search, function ($q, $search) {
+                $q->where('name_asset', 'like', '%' . $search . '%')
+                    ->orWhere('serial_number', 'like', '%' . $search . '%');
+            });
+
+        // Logika untuk handle ID 0 (Tanpa Kategori)
+        if ($categoryId == 0) {
+            $query->whereNull('asset_category_id');
+        } else {
+            $query->where('asset_category_id', $categoryId);
+        }
+
+        $assets = $query->latest()->paginate($perPage);
+
+        return response()->json($assets);
     }
 
     /**

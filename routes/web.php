@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/create', [AssetController::class, 'create'])->name('create');
             Route::get('/{id}', [AssetController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
             Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
+            Route::get('category/{categoryId}', [AssetController::class, 'showByCategory'])->name('master.assets.assets.by_category');
         });
 
         // --- Rute Halaman Web Asset Categories ---

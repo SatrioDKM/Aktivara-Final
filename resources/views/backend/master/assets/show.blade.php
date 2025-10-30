@@ -11,9 +11,10 @@
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{
                                 $data['asset']->name_asset }}</h3>
                             <p class="mt-1 text-md text-gray-500 dark:text-gray-400">
-                                S/N: {{ $data['asset']->serial_number ?? 'N/A' }} | Kategori: {{
-                                $data['asset']->category }}
+                                S/N: {{ $data['asset']->serial_number ?? 'N/A' }} | 
+                                Kategori: {{ $data['asset']->AssetCategory->name ?? '-' }}
                             </p>
+
                         </div>
                         <span
                             class="mt-2 md:mt-0 px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full capitalize"

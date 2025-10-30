@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProfileController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
+
 
 
 /*
@@ -122,6 +124,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}', [AssetController::class, 'showPage'])->name('show')->where('id', '[0-9]+');
             Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit')->where('id', '[0-9]+');
         });
+
+        // --- Rute Halaman Web Asset Categories ---
+        Route::resource('asset_categories', AssetCategoryController::class);
 
         // --- Rute untuk Maintenances ---
         Route::prefix('maintenances')->name('maintenances.')->group(function () {

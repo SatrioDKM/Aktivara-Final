@@ -10,103 +10,160 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        <i class="fas fa-tachometer-alt w-4 text-center me-2"></i>
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
                     @auth
-                    {{-- Menu Staff --}}
-                    @role('HK02', 'TK02', 'SC02', 'PK02')
-                    <x-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
-                        {{ __('Papan Tugas') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
-                        {{ __('Tugas Aktif Saya') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">
-                        {{ __('Riwayat Tugas') }}
-                    </x-nav-link>
-                    @endrole
-
-                    {{-- Menu Leader & Atasan --}}
-                    {{-- PERBAIKAN: Tambahkan pengecualian !str_starts_with(Auth::user()->role_id, 'WH') --}}
-                    @role('HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00')
-                    @if(!str_starts_with(Auth::user()->role_id, 'WH'))
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="48">
+                    {{-- Dropdown Keluhan (Leader+) --}}
+                    @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                    <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs('tasks.create', 'tasks.monitoring', 'tasks.review_list') ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }}">
-                                    <div>Manajemen Tugas</div>
-                                    <div class="ms-1"><i class="fas fa-chevron-down h-4 w-4"></i></div>
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                            {{ request()->routeIs('complaints.*')
+                                                ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
+                                    <i class="fas fa-exclamation-triangle w-4 text-center me-2"></i>
+                                    <div>Keluhan</div>
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
                                 </button>
                             </x-slot>
+
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('tasks.create')">
-                                    {{ __('Buat Tugas Baru') }}
+                                <x-dropdown-link :href="route('complaints.create')"
+                                    :active="request()->routeIs('complaints.create')">
+                                    <i class="fas fa-plus-circle w-4 text-center me-2"></i>
+                                    {{ __('Lapor Keluhan Baru') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('tasks.monitoring')">
-                                    {{ __('Monitoring Tugas') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('tasks.review_list')">
-                                    {{ __('Review Laporan') }}
+                                <x-dropdown-link :href="route('complaints.index')"
+                                    :active="request()->routeIs('complaints.index', 'complaints.show')">
+                                    <i class="fas fa-list-alt w-4 text-center me-2"></i>
+                                    {{ __('Daftar Keluhan') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
-                    @endif
                     @endrole
 
-                    {{-- Menu Manajemen Data --}}
-                    @role('SA00', 'MG00', 'WH01', 'WH02')
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="48">
+                    {{-- Dropdown Alur Kerja Tugas (Semua user internal) --}}
+                    <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs('master.*', 'stock.*', 'packing_lists.*') ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }}">
-                                    <div>Manajemen Data</div>
-                                    <div class="ms-1"><i class="fas fa-chevron-down h-4 w-4"></i></div>
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                        {{ request()->routeIs('tasks.*', 'history.tasks')
+                                            ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
+                                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
+                                    <i class="fas fa-tasks w-4 text-center me-2"></i>
+                                    <div>Alur Kerja Tugas</div>
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
                                 </button>
                             </x-slot>
+
                             <x-slot name="content">
-                                @role('SA00', 'MG00')
-                                <div class="px-4 py-2 text-xs text-gray-400">Master Lokasi & Umum</div>
-                                <x-dropdown-link :href="route('master.buildings.index')" class="ps-6">
-                                    {{ __('Gedung') }}
+                                {{-- Menu Leader --}}
+                                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                                <x-dropdown-link :href="route('tasks.create')"
+                                    :active="request()->routeIs('tasks.create')">
+                                    <i class="fas fa-plus-circle w-4 text-center me-2"></i>
+                                    {{ __('Buat Tugas Baru') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.floors.index')" class="ps-6">
-                                    {{ __('Lantai') }}
+                                <x-dropdown-link :href="route('tasks.review_list')"
+                                    :active="request()->routeIs('tasks.review_list')">
+                                    <i class="fas fa-check-double w-4 text-center me-2"></i>
+                                    {{ __('Review Laporan') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.rooms.index')" class="ps-6">
-                                    {{ __('Ruangan') }}
+                                <x-dropdown-link :href="route('tasks.monitoring')"
+                                    :active="request()->routeIs('tasks.monitoring')">
+                                    <i class="fas fa-tv w-4 text-center me-2"></i>
+                                    {{ __('Monitoring Tugas') }}
                                 </x-dropdown-link>
-                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                                <x-dropdown-link :href="route('master.task_types.index')">
-                                    {{ __('Jenis Tugas') }}
+                                <x-dropdown-link :href="route('history.tasks')"
+                                    :active="request()->routeIs('history.tasks')">
+                                    <i class="fas fa-archive w-4 text-center me-2"></i>
+                                    {{ __('Riwayat Semua Tugas') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('master.maintenances.index')">
-                                    {{ __('Jadwal Maintenance') }}
-                                </x-dropdown-link>
-                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 @endrole
 
-                                <div class="px-4 py-2 text-xs text-gray-400">Aset & Gudang</div>
-                                @if (auth()->user()->role_id !== 'WH02')
-                                    <x-dropdown-link :href="route('master.assets.index')" class="ps-6">
-                                        {{ __('Manajemen Aset') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('master.asset_categories.index')" class="ps-6">
-                                        {{ __('Kategori Aset') }}
-                                    </x-dropdown-link>
-                                @endif
-                                <x-dropdown-link :href="route('stock.index')" class="ps-6">
-                                    {{ __('Manajemen Stok') }}
+                                {{-- Menu Staff --}}
+                                @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
+                                {{-- Separator jika user adalah staff DAN leader (cth: SA00) --}}
+                                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                @endrole
+                                <x-dropdown-link :href="route('tasks.available')"
+                                    :active="request()->routeIs('tasks.available')">
+                                    <i class="fas fa-clipboard-list w-4 text-center me-2"></i>
+                                    {{ __('Papan Tugas') }}
                                 </x-dropdown-link>
-                                @if (auth()->user()->role_id !== 'MG00')
-                                    <x-dropdown-link :href="route('packing_lists.index')" class="ps-6">
-                                        {{ __('Barang Keluar') }}
-                                    </x-dropdown-link>
-                                @endif
-                                <x-dropdown-link :href="route('asset_history.index')" class="ps-6">
+                                <x-dropdown-link :href="route('tasks.my_tasks')"
+                                    :active="request()->routeIs('tasks.my_tasks')">
+                                    <i class="fas fa-bolt w-4 text-center me-2"></i>
+                                    {{ __('Tugas Aktif Saya') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('tasks.my_history')"
+                                    :active="request()->routeIs('tasks.my_history')">
+                                    <i class="fas fa-history w-4 text-center me-2"></i>
+                                    {{ __('Riwayat Tugas Saya') }}
+                                </x-dropdown-link>
+                                @endrole
+                            </x-slot>
+                        </x-dropdown>
+                    </div>
+
+                    {{-- Dropdown Gudang (Gudang+) --}}
+                    @role('SA00', 'MG00', 'WH01', 'WH02')
+                    <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <x-dropdown align="right" width="48">
+                            <x-slot name="trigger">
+                                <button
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                            {{ request()->routeIs('stock.*', 'packing_lists.*', 'asset_history.*')
+                                                ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
+                                    <i class="fas fa-boxes w-4 text-center me-2"></i>
+                                    <div>Gudang & Aset</div>
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('stock.index')"
+                                    :active="request()->routeIs('stock.index')">
+                                    <i class="fas fa-box-open w-4 text-center me-2"></i>
+                                    {{ __('Stok Gudang') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('packing_lists.index')"
+                                    :active="request()->routeIs('packing_lists.index')">
+                                    <i class="fas fa-dolly w-4 text-center me-2"></i>
+                                    {{ __('Packing List') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('asset_history.index')"
+                                    :active="request()->routeIs('asset_history.index')">
+                                    <i class="fas fa-history w-4 text-center me-2"></i>
                                     {{ __('Riwayat Aset') }}
                                 </x-dropdown-link>
                             </x-slot>
@@ -114,26 +171,74 @@
                     </div>
                     @endrole
 
-                    {{-- Menu Laporan --}}
-                    @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01')
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="48">
+                    {{-- Dropdown Administrasi (Admin/SA00) --}}
+                    @role('SA00', 'MG00', 'WH01')
+                    <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <x-dropdown align="right" width="56"> {{-- Lebar w-56 --}}
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs('history.tasks', 'export.index') ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }}">
-                                    <div>Laporan</div>
-                                    <div class="ms-1"><i class="fas fa-chevron-down h-4 w-4"></i></div>
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                            {{ request()->routeIs('master.*', 'users.*', 'export.*')
+                                                ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
+                                    <i class="fas fa-cogs w-4 text-center me-2"></i>
+                                    <div>Administrasi</div>
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
                                 </button>
                             </x-slot>
+
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('history.tasks')">
-                                    {{ __('Riwayat Tugas') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('tasks.completed_history')">
-                                    {{ __('Riwayat Tugas Selesai') }}
+                                @role('SA00')
+                                <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                                    <i class="fas fa-users-cog w-4 text-center me-2"></i>
+                                    {{ __('Manajemen Pengguna') }}
                                 </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                                <x-dropdown-link :href="route('export.index')">
+                                @endrole
+
+                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                    {{ __('Master Data') }}
+                                </div>
+                                <x-dropdown-link :href="route('master.assets.index')"
+                                    :active="request()->routeIs('master.assets.*')">
+                                    {{ __('Master Aset') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.asset_categories.index')"
+                                    :active="request()->routeIs('master.asset_categories.*')">
+                                    {{ __('Master Kategori Aset') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.maintenances.index')"
+                                    :active="request()->routeIs('master.maintenances.*')">
+                                    {{ __('Master Maintenance') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.buildings.index')"
+                                    :active="request()->routeIs('master.buildings.*')">
+                                    {{ __('Master Gedung') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.floors.index')"
+                                    :active="request()->routeIs('master.floors.*')">
+                                    {{ __('Master Lantai') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.rooms.index')"
+                                    :active="request()->routeIs('master.rooms.*')">
+                                    {{ __('Master Ruangan') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('master.task_types.index')"
+                                    :active="request()->routeIs('master.task_types.*')">
+                                    {{ __('Master Jenis Tugas') }}
+                                </x-dropdown-link>
+
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                <x-dropdown-link :href="route('export.index')"
+                                    :active="request()->routeIs('export.index')">
+                                    <i class="fas fa-file-export w-4 text-center me-2"></i>
                                     {{ __('Ekspor Data') }}
                                 </x-dropdown-link>
                             </x-slot>
@@ -141,80 +246,38 @@
                     </div>
                     @endrole
 
-                    {{-- Menu Superadmin --}}
-                    @role('SA00')
-                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                        {{ __('Manajemen Pengguna') }}
-                    </x-nav-link>
-                    @endrole
                     @endauth
                 </div>
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
-
-                <div x-data="notifications()" class="relative me-3">
-                    <button @click="toggle" class="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <i class="fas fa-bell h-6 w-6"></i>
-                        <span x-show="unreadCount > 0"
-                            class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
-                            x-text="unreadCount" style="display: none;"></span>
-                    </button>
-                    <div x-show="isOpen" @click.away="isOpen = false" x-transition
-                        class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                        style="display: none;">
-                        <div class="py-1">
-                            <div
-                                class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 font-semibold border-b dark:border-gray-600">
-                                Notifikasi</div>
-                            <div class="max-h-80 overflow-y-auto">
-                                <template x-if="!unread.length && !read.length">
-                                    <p class="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">Tidak ada
-                                        notifikasi.</p>
-                                </template>
-                                <template x-for="notification in unread" :key="notification.id">
-                                    <a :href="notification.data.url" @click.prevent="markAsRead(notification.id)"
-                                        class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 bg-indigo-50 dark:bg-gray-800 border-l-4 border-indigo-400">
-                                        <p class="font-bold" x-text="notification.data.message"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400"
-                                            x-text="new Date(notification.created_at).toLocaleString('id-ID')"></p>
-                                    </a>
-                                </template>
-                                <template x-for="notification in read" :key="notification.id">
-                                    <a :href="notification.data.url"
-                                        class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">
-                                        <p x-text="notification.data.message"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400"
-                                            x-text="new Date(notification.created_at).toLocaleString('id-ID')"></p>
-                                    </a>
-                                </template>
-                            </div>
-                            <div class="px-4 py-2 border-t dark:border-gray-600" x-show="unreadCount > 0"
-                                style="display: none;">
-                                <button @click="markAllAsRead"
-                                    class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-full text-center">
-                                    Tandai semua sudah dibaca
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
                             class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
-                            <div class="ms-1"><i class="fas fa-chevron-down h-4 w-4"></i></div>
+                            <div class="ms-1">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
                         </button>
                     </x-slot>
+
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
+                            <i class="fas fa-user-circle w-4 text-center me-2"></i>
                             {{ __('Profile') }}
                         </x-dropdown-link>
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
+                                <i class="fas fa-sign-out-alt w-4 text-center me-2"></i>
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -224,151 +287,196 @@
 
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open"
-                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <i class="fas fa-bars h-6 w-6" :class="{'hidden': open, 'inline-flex': ! open }"></i>
-                    <i class="fas fa-times h-6 w-6" :class="{'hidden': ! open, 'inline-flex': open }"></i>
+                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out">
+                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                        <path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round"
+                            stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+    <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                <i class="fas fa-tachometer-alt w-4 text-center me-2"></i>
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-
-            @auth
-            {{-- Responsive Menu Staff --}}
-            @role('HK02', 'TK02', 'SC02', 'PK02')
-            <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">{{
-                __('Papan Tugas') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
-                {{ __('Tugas Aktif Saya') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('tasks.my_history')" :active="request()->routeIs('tasks.my_history')">{{
-                __('Riwayat Tugas') }}
-            </x-responsive-nav-link>
-            @endrole
-
-            {{-- Responsive Menu Leader & Atasan --}}
-            @role('HK01', 'TK01', 'SC01', 'PK01', 'MG00', 'SA00')
-            @if(!str_starts_with(Auth::user()->role_id, 'WH')) {{-- Tambahkan juga di sini --}}
-            <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
-                <div class="px-4">
-                    <div class="font-medium text-base text-gray-800 dark:text-gray-200">Manajemen Tugas</div>
-                </div>
-                <div class="mt-1 space-y-1">
-                    <x-responsive-nav-link :href="route('tasks.create')">
-                        {{ __('Buat Tugas Baru') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.monitoring')">
-                        {{ __('Monitoring Tugas') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.review_list')">
-                        {{ __('Review Laporan') }}
-                    </x-responsive-nav-link>
-                </div>
-            </div>
-            @endif
-            @endrole
-
-            {{-- Responsive Menu Manajemen Data --}}
-            @role('SA00', 'MG00', 'WH01', 'WH02')
-            <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-                <div class="px-4">
-                    <div class="font-medium text-base text-gray-800 dark:text-gray-200">Manajemen Data</div>
-                </div>
-                <div class="mt-3 space-y-1">
-                    @role('SA00', 'MG00')
-                    <x-responsive-nav-link :href="route('master.buildings.index')">
-                        {{ __('Gedung') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.floors.index')">
-                        {{ __('Lantai') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.rooms.index')">
-                        {{ __('Ruangan') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.task_types.index')">
-                        {{ __('Jenis Tugas') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('master.maintenances.index')">
-                        {{ __('Jadwal Maintenance') }}
-                    </x-responsive-nav-link>
-                    @endrole
-
-                    {{-- PERBAIKAN: Tambahkan Manajemen Aset di sini --}}
-                    @if (auth()->user()->role_id !== 'WH02')
-                        <x-responsive-nav-link :href="route('master.assets.index')">
-                            {{ __('Manajemen Aset') }}
-                        </x-responsive-nav-link>
-                        <x-responsive-nav-link :href="route('master.asset_categories.index')" :active="request()->routeIs('master.asset-categories.*')">
-                            {{ __('Kategori Aset') }}
-                        </x-responsive-nav-link>
-                    @endif
-                    {{-- Akhir Perbaikan --}}
-
-                    <x-responsive-nav-link :href="route('stock.index')">
-                        {{ __('Manajemen Stok') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('packing_lists.index')">
-                        {{ __('Barang Keluar') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('asset_history.index')">
-                        {{ __('Riwayat Aset') }}
-                    </x-responsive-nav-link>
-                </div>
-            </div>
-            @endrole
-
-            {{-- Responsive Menu Laporan --}}
-            @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01')
-            <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-                <div class="px-4">
-                    <div class="font-medium text-base text-gray-800 dark:text-gray-200">Laporan</div>
-                </div>
-                <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('history.tasks')">
-                        {{ __('Riwayat Tugas') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tasks.completed_history')">
-                        {{ __('Riwayat Tugas Selesai') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('export.index')">
-                        {{ __('Ekspor Data') }}
-                    </x-responsive-nav-link>
-                </div>
-            </div>
-            @endrole
-
-            {{-- Responsive Menu Superadmin --}}
-            @role('SA00')
-            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                {{ __('Manajemen Pengguna') }}
-            </x-responsive-nav-link>
-            @endrole
-            @endauth
         </div>
+
+        @auth
+        {{-- Responsive Menu Keluhan --}}
+        @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+        <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Menu Keluhan</div>
+            </div>
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link :href="route('complaints.create')"
+                    :active="request()->routeIs('complaints.create')">
+                    <i class="fas fa-plus-circle w-4 text-center me-2"></i>
+                    {{ __('Lapor Keluhan Baru') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('complaints.index')"
+                    :active="request()->routeIs('complaints.index', 'complaints.show')">
+                    <i class="fas fa-list-alt w-4 text-center me-2"></i>
+                    {{ __('Daftar Keluhan') }}
+                </x-responsive-nav-link>
+            </div>
+        </div>
+        @endrole
+
+        {{-- Responsive Menu Alur Kerja Tugas --}}
+        <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Alur Kerja Tugas</div>
+            </div>
+            <div class="mt-3 space-y-1">
+                {{-- Menu Leader --}}
+                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                <x-responsive-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
+                    <i class="fas fa-plus-circle w-4 text-center me-2"></i>
+                    {{ __('Buat Tugas Baru') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('tasks.review_list')"
+                    :active="request()->routeIs('tasks.review_list')">
+                    <i class="fas fa-check-double w-4 text-center me-2"></i>
+                    {{ __('Review Laporan') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('tasks.monitoring')"
+                    :active="request()->routeIs('tasks.monitoring')">
+                    <i class="fas fa-tv w-4 text-center me-2"></i>
+                    {{ __('Monitoring Tugas') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('history.tasks')" :active="request()->routeIs('history.tasks')">
+                    <i class="fas fa-archive w-4 text-center me-2"></i>
+                    {{ __('Riwayat Semua Tugas') }}
+                </x-responsive-nav-link>
+                @endrole
+                {{-- Menu Staff --}}
+                @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
+                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                <div class="my-2 border-t border-gray-200 dark:border-gray-600"></div>
+                @endrole
+                <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
+                    <i class="fas fa-clipboard-list w-4 text-center me-2"></i>
+                    {{ __('Papan Tugas') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('tasks.my_tasks')" :active="request()->routeIs('tasks.my_tasks')">
+                    <i class="fas fa-bolt w-4 text-center me-2"></i>
+                    {{ __('Tugas Aktif Saya') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('tasks.my_history')"
+                    :active="request()->routeIs('tasks.my_history')">
+                    <i class="fas fa-history w-4 text-center me-2"></i>
+                    {{ __('Riwayat Tugas Saya') }}
+                </x-responsive-nav-link>
+                @endrole
+            </div>
+        </div>
+
+        {{-- Responsive Menu Gudang --}}
+        @role('SA00', 'MG00', 'WH01', 'WH02')
+        <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Menu Gudang</div>
+            </div>
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link :href="route('stock.index')" :active="request()->routeIs('stock.index')">
+                    <i class="fas fa-box-open w-4 text-center me-2"></i>
+                    {{ __('Stok Gudang') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('packing_lists.index')"
+                    :active="request()->routeIs('packing_lists.index')">
+                    <i class="fas fa-dolly w-4 text-center me-2"></i>
+                    {{ __('Packing List') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('asset_history.index')"
+                    :active="request()->routeIs('asset_history.index')">
+                    <i class="fas fa-history w-4 text-center me-2"></i>
+                    {{ __('Riwayat Aset') }}
+                </x-responsive-nav-link>
+            </div>
+        </div>
+        @endrole
+
+        {{-- Responsive Menu Administrasi --}}
+        @role('SA00', 'MG00', 'WH01')
+        <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Administrasi</div>
+            </div>
+            <div class="mt-3 space-y-1">
+                @role('SA00')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    <i class="fas fa-users-cog w-4 text-center me-2"></i>
+                    {{ __('Manajemen Pengguna') }}
+                </x-responsive-nav-link>
+                @endrole
+
+                <div class="block px-4 py-2 text-xs text-gray-400">
+                    {{ __('Master Data') }}
+                </div>
+                <x-responsive-nav-link :href="route('master.assets.index')"
+                    :active="request()->routeIs('master.assets.*')">
+                    {{ __('Master Aset') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.asset_categories.index')"
+                    :active="request()->routeIs('master.asset_categories.*')">
+                    {{ __('Master Kategori Aset') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.maintenances.index')"
+                    :active="request()->routeIs('master.maintenances.*')">
+                    {{ __('Master Maintenance') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.buildings.index')"
+                    :active="request()->routeIs('master.buildings.*')">
+                    {{ __('Master Gedung') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.floors.index')"
+                    :active="request()->routeIs('master.floors.*')">
+                    {{ __('Master Lantai') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.rooms.index')"
+                    :active="request()->routeIs('master.rooms.*')">
+                    {{ __('Master Ruangan') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('master.task_types.index')"
+                    :active="request()->routeIs('master.task_types.*')">
+                    {{ __('Master Jenis Tugas') }}
+                </x-responsive-nav-link>
+
+                <div class="my-2 border-t border-gray-200 dark:border-gray-600"></div>
+                <x-responsive-nav-link :href="route('export.index')" :active="request()->routeIs('export.index')">
+                    <i class="fas fa-file-export w-4 text-center me-2"></i>
+                    {{ __('Ekspor Data') }}
+                </x-responsive-nav-link>
+            </div>
+        </div>
+        @endrole
+        @endauth
 
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">
-                    {{ Auth::user()->name }}
-                </div>
-                <div class="font-medium text-sm text-gray-500">
-                    {{ Auth::user()->email }}
-                </div>
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
             </div>
+
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
+                    <i class="fas fa-user-circle w-4 text-center me-2"></i>
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')"
                         onclick="event.preventDefault(); this.closest('form').submit();">
+                        <i class="fas fa-sign-out-alt w-4 text-center me-2"></i>
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>

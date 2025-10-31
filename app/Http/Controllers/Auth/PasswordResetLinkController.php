@@ -15,7 +15,11 @@ class PasswordResetLinkController extends Controller
      */
     public function create(): View
     {
-        return view('auth.forgot-password');
+        // NOTE: Menggunakan $data untuk view
+        $data = [
+            'title' => 'Lupa Password'
+        ];
+        return view('auth.forgot-password', $data);
     }
 
     /**
@@ -37,8 +41,8 @@ class PasswordResetLinkController extends Controller
         );
 
         return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+            ? back()->with('status', __($status))
+            : back()->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

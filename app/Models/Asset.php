@@ -88,7 +88,7 @@ class Asset extends Model
     /**
      * [FUNGSI BARU] Relasi ke Kategori Aset.
      */
-    public function assetCategory(): BelongsTo
+    public function category(): BelongsTo
     {
         return $this->belongsTo(AssetCategory::class, 'asset_category_id');
     }

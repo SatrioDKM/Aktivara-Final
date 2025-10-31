@@ -35,17 +35,53 @@ class BuildingFloorRoomSeeder extends Seeder
         // 3. Buat Ruangan di setiap Lantai
         $rooms = [
             // Lantai 1
-            ['floor_id' => $floor1->id, 'name_room' => 'Lobi Utama', 'created_by' => $manager->id],
-            ['floor_id' => $floor1->id, 'name_room' => 'Toilet Pria Lobi', 'created_by' => $manager->id],
-            ['floor_id' => $floor1->id, 'name_room' => 'Toilet Wanita Lobi', 'created_by' => $manager->id],
-            ['floor_id' => $floor1->id, 'name_room' => 'Gudang Parkir B1', 'created_by' => $manager->id],
+            [
+                'floor_id' => $floor1->id,
+                'name_room' => 'Lobi Utama',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor1->id,
+                'name_room' => 'Toilet Pria Lobi',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor1->id,
+                'name_room' => 'Toilet Wanita Lobi',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor1->id,
+                'name_room' => 'Gudang Parkir B1',
+                'created_by' => $manager->id
+            ],
             // Lantai 2
-            ['floor_id' => $floor2->id, 'name_room' => 'Kantor Manajer', 'created_by' => $manager->id],
-            ['floor_id' => $floor2->id, 'name_room' => 'Ruang Server', 'created_by' => $manager->id],
-            ['floor_id' => $floor2->id, 'name_room' => 'Pantry Lt. 2', 'created_by' => $manager->id],
+            [
+                'floor_id' => $floor2->id,
+                'name_room' => 'Kantor Manajer',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor2->id,
+                'name_room' => 'Ruang Server',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor2->id,
+                'name_room' => 'Pantry Lt. 2',
+                'created_by' => $manager->id
+            ],
             // Lantai 5
-            ['floor_id' => $floor5->id, 'name_room' => 'Ruang Rapat Sakura', 'created_by' => $manager->id],
-            ['floor_id' => $floor5->id, 'name_room' => 'Taman Rooftop', 'created_by' => $manager->id],
+            [
+                'floor_id' => $floor5->id,
+                'name_room' => 'Ruang Rapat Sakura',
+                'created_by' => $manager->id
+            ],
+            [
+                'floor_id' => $floor5->id,
+                'name_room' => 'Taman Rooftop',
+                'created_by' => $manager->id
+            ],
         ];
 
         foreach ($rooms as $room) {

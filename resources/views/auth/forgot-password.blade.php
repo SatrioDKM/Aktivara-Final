@@ -36,10 +36,11 @@
         </div>
     </form>
 
-    {{-- HAPUS @push('styles') KARENA CSS IZI-TOAST SUDAH ADA DI app.js --}}
+    {{-- HAPUS BAGIAN INI --}}
+    {{-- @push('styles') ... @endpush --}}
 
     @push('scripts')
-    {{-- HAPUS LINK SCRIPT CDN IZI-TOAST --}}
+    {{-- HAPUS LINK CDN INI --}}
     <script>
         // Script ini akan tetap berfungsi karena window.iziToast sudah diset di app.js
         document.addEventListener('DOMContentLoaded', function() {

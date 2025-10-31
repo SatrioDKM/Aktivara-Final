@@ -33,6 +33,7 @@ use App\Http\Controllers\AssetMaintenanceController;
 */
 
 // === Rute Publik ===
+// NOTE: Rute ini dapat diakses siapa saja tanpa login
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 Route::prefix('lapor-keluhan')->name('guest.complaint.')->group(function () {
     Route::get('/', [GuestComplaintController::class, 'create'])->name('create');
@@ -40,9 +41,11 @@ Route::prefix('lapor-keluhan')->name('guest.complaint.')->group(function () {
 
 
 // === Rute Autentikasi ===
+// NOTE: Semua rute di dalam grup ini WAJIB login dan email terverifikasi
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Rute Umum ---
+    // NOTE: Rute dasar setelah login
     Route::get('/dashboard', [DashboardController::class, 'viewPage'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -52,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- Fitur Spesifik dengan Hak Akses ---
 
+    // NOTE: Rute untuk fitur Gudang (Packing List, Stok, Riwayat Aset)
     Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
         Route::get('packing-lists/{id}/pdf', [PackingListController::class, 'exportPdf'])->name('packing_lists.pdf')->where('id', '[0-9]+');
         Route::get('packing-lists', [PackingListController::class, 'viewPage'])->name('packing_lists.index');
@@ -59,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('asset-history', [AssetHistoryController::class, 'viewPage'])->name('asset_history.index');
     });
 
+    // NOTE: Rute untuk melihat dan membuat Keluhan (Internal)
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {
         // Rute untuk menampilkan halaman daftar laporan (menunjuk ke viewPage)
         Route::get('complaints', [ComplaintController::class, 'viewPage'])->name('complaints.index');
@@ -68,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('complaints/{id}', [ComplaintController::class, 'showPage'])->name('complaints.show')->where('id', '[0-9]+');
     });
 
+    // NOTE: Rute untuk monitoring dan ekspor data (Admin/Manager/Leader)
     Route::middleware(['role:SA00,MG00,HK01,TK01,SC01,PK01,WH01'])->group(function () {
         Route::get('/tasks/monitoring', [TaskWorkflowController::class, 'monitoringPage'])->name('tasks.monitoring');
         Route::get('/history/tasks', [TaskWorkflowController::class, 'historyPage'])->name('history.tasks');
@@ -83,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- Rute Data Master (Hanya Admin & Manager) ---
+    // NOTE: Grup rute ini hanya untuk Superadmin, Manager, dan Admin Gudang
     Route::middleware(['role:SA00,MG00,WH01'])->prefix('master')->name('master.')->group(function () {
 
         // --- Rute untuk Buildings ---
@@ -126,8 +133,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('category/{categoryId}', [AssetController::class, 'showByCategory'])->name('master.assets.assets.by_category');
         });
 
-        // --- Rute Halaman Web Asset Categories ---
-        Route::resource('asset_categories', AssetCategoryController::class);
+        // --- PERBAIKAN: Rute Halaman Web Asset Categories (Manual) ---
+        // NOTE: Menggantikan Route::resource untuk mematuhi aturan rute manual
+        Route::prefix('asset_categories')->name('asset_categories.')->group(function () {
+            Route::get('/', [AssetCategoryController::class, 'index'])->name('index');
+            Route::get('/create', [AssetCategoryController::class, 'create'])->name('create');
+            Route::get('/{asset_category}', [AssetCategoryController::class, 'show'])->name('show')->where('asset_category', '[0-9]+');
+            Route::get('/{asset_category}/edit', [AssetCategoryController::class, 'edit'])->name('edit')->where('asset_category', '[0-9]+');
+        });
+        // --- AKHIR PERBAIKAN ---
 
         // --- Rute untuk Maintenances ---
         Route::prefix('maintenances')->name('maintenances.')->group(function () {
@@ -139,6 +153,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- Rute Khusus Superadmin ---
+    // NOTE: Rute ini hanya bisa diakses oleh Superadmin (SA00)
     Route::middleware(['role:SA00'])->prefix('users')->name('users.')->group(function () {
         // Rute untuk menampilkan halaman daftar pengguna (menunjuk ke viewPage)
         Route::get('/', [UserController::class, 'viewPage'])->name('index');
@@ -152,20 +167,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- GRUP ROUTE UNTUK ALUR KERJA TUGAS ---
     Route::prefix('tasks')->name('tasks.')->group(function () {
-        // Halaman Buat Tugas (Bisa diakses Staff juga)
+        // NOTE: Halaman Buat Tugas (Bisa diakses Leader & Staff)
         Route::get('/create', [TaskWorkflowController::class, 'createPage'])->middleware('role:SA00,MG00,HK01,TK01,SC01,PK01,HK02,TK02,SC02,PK02')->name('create');
-        // Halaman Review Laporan
+        // NOTE: Halaman Review Laporan (Hanya Leader/Manager/SA)
         Route::get('/review', [TaskWorkflowController::class, 'reviewPage'])->middleware('role:SA00,MG00,HK01,TK01,SC01,PK01')->name('review_list');
 
-        // Rute Khusus Staff
+        // NOTE: Rute Khusus Staff
         Route::middleware(['role:HK02,TK02,SC02,PK02,WH02'])->group(function () {
             Route::get('/available', [TaskWorkflowController::class, 'availablePage'])->name('available');
             Route::get('/my-history', [TaskWorkflowController::class, 'showMyHistoryPage'])->name('my_history');
             Route::get('/my-tasks', [TaskWorkflowController::class, 'myTasksPage'])->name('my_tasks');
         });
 
+        // NOTE: Halaman riwayat tugas yang sudah selesai (untuk semua)
         Route::get('/completed-history', [TaskWorkflowController::class, 'completedHistoryPage'])->name('completed_history');
 
+        // NOTE: Halaman detail tugas (untuk semua)
         Route::get('/{taskId}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('taskId', '[0-9]+');
     });
 });

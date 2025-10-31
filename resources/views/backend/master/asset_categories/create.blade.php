@@ -23,13 +23,13 @@
                         <div>
                             <x-input-label for="name" :value="__('Nama Kategori')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name"
-                                          :value="old('name')" required autofocus />
+                                :value="old('name')" required autofocus />
                             <span id="name-error" class="text-sm text-red-600 hidden"></span>
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route('master.asset_categories.index') }}"
-                               class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 mr-4">
+                                class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 mr-4">
                                 Batal
                             </a>
                             <x-primary-button id="save-button">

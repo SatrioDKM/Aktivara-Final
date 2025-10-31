@@ -33,6 +33,9 @@ use App\Http\Controllers\AssetMaintenanceController;
 // Rute ini tidak memerlukan login
 Route::post('/guest-complaints', [GuestComplaintController::class, 'store'])->name('api.guest.complaint.store');
 
+// --- RUTE TERAUTENTIKASI ---
+// Semua rute di bawah ini memerlukan login (auth:sanctum)
+// dan memiliki prefix nama 'api.'
 Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
     // === Endpoint Umum ===
@@ -88,19 +91,18 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
         Route::delete('/{id}', [AssetController::class, 'destroy'])->where('id', '[0-9]+')->name('destroy')->middleware(['role:SA00,MG00']);
     });
 
-    Route::prefix('asset-categories')
-        ->name('asset_categories.')
-        ->middleware('auth:sanctum')
-        ->group(function () {
-            Route::get('/', [AssetCategoryController::class, 'apiIndex'])->name('api.asset-categories.index');
-            Route::post('/', [AssetCategoryController::class, 'apiStore'])->name('api.asset-categories.store');
-            Route::put('/{assetCategory}', [AssetCategoryController::class, 'apiUpdate'])->name('api.asset-categories.update');
-            Route::delete('/{assetCategory}', [AssetCategoryController::class, 'apiDestroy'])->name('api.asset-categories.destroy');
-        });
+    // --- Rute manual untuk Asset Categories ---
+    // PERBAIKAN: Disesuaikan dengan standar Anda (nama, middleware, dan binding)
+    Route::prefix('asset-categories')->name('asset_categories.')->group(function () {
+        Route::get('/', [AssetCategoryController::class, 'apiIndex'])->name('index'); // Menjadi: api.asset_categories.index
+        Route::post('/', [AssetCategoryController::class, 'apiStore'])->name('store'); // Menjadi: api.asset_categories.store
+        Route::put('/{id}', [AssetCategoryController::class, 'apiUpdate'])->where('id', '[0-9]+')->name('update'); // Menjadi: api.asset_categories.update
+        Route::delete('/{id}', [AssetCategoryController::class, 'apiDestroy'])->where('id', '[0-9]+')->name('destroy'); // Menjadi: api.asset_categories.destroy
+    });
 
+    // PERBAIKAN: Menghapus middleware berlebih dan memperbaiki nama
     Route::get('assets/by-category/{category}', [AssetController::class, 'apiShowByCategory'])
-        ->middleware('auth:sanctum')
-        ->name('api.assets.by_category');
+        ->name('assets.by_category'); // Menjadi: api.assets.by_category
 
     // --- Rute manual untuk Asset Maintenances ---
     Route::prefix('maintenances')->name('maintenances.')->group(function () {

@@ -16,7 +16,8 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
      */
     public function query()
     {
-        return Asset::query()->with(['room.floor.building', 'updater']);
+        // --- PERBAIKAN: Tambahkan 'category' untuk menghindari N+1 query ---
+        return Asset::query()->with(['room.floor.building', 'updater', 'category']);
     }
 
     /**
@@ -28,7 +29,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'ID Aset',
             'Nama Aset',
             'Nomor Seri',
-            'Kategori',
+            'Kategori', // <-- Kolom ini yang membutuhkan relasi
             'Lokasi (Ruangan)',
             'Lokasi (Lantai)',
             'Lokasi (Gedung)',
@@ -52,7 +53,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->id,
             $asset->name_asset,
             $asset->serial_number,
-            $asset->category,
+            $asset->category->name ?? 'N/A', // <-- PERBAIKAN: Akses via relasi
             $asset->room->name_room ?? 'Gudang',
             $asset->room->floor->name_floor ?? '-',
             $asset->room->floor->building->name_building ?? '-',
@@ -62,7 +63,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->minimum_stock,
             $asset->purchase_date,
             $asset->updater->name ?? 'N/A',
-            $asset->created_at->format('d-m-Y H:i:s'),
+            $asset->created_at->format('Y-m-d H:i'),
         ];
     }
 }

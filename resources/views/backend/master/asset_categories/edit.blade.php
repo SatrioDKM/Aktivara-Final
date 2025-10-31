@@ -12,32 +12,31 @@
 
                     {{-- Error Message --}}
                     @if($errors->any())
-                        <div class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg">
-                            <strong>Oops! Terjadi kesalahan.</strong>
-                            <ul class="mt-2 list-disc list-inside">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                    <div class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg">
+                        <strong>Oops! Terjadi kesalahan.</strong>
+                        <ul class="mt-2 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                     @endif
 
                     {{-- Form --}}
                     <form id="edit-category-form" method="POST"
-                          action="{{ route('master.asset_categories.update', $assetCategory) }}">
+                        action="{{ route('master.asset_categories.update', $assetCategory) }}">
                         @csrf
                         @method('PUT')
 
                         <div>
                             <x-input-label for="name" :value="__('Nama Kategori')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name"
-                                          value="{{ old('name', $assetCategory->name) }}"
-                                          required autofocus />
+                                value="{{ old('name', $assetCategory->name) }}" required autofocus />
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route('master.asset_categories.index') }}"
-                               class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 mr-4">
+                                class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 mr-4">
                                 Batal
                             </a>
                             <x-primary-button id="save-button">

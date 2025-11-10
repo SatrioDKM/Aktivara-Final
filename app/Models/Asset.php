@@ -26,6 +26,7 @@ class Asset extends Model
         'room_id',
         'created_by',
         'updated_by',
+        'location_detail',
     ];
 
     protected function casts(): array
@@ -84,6 +85,15 @@ class Asset extends Model
     {
         return $this->belongsToMany(PackingList::class, 'asset_packing_list');
     }
+
+    /**
+     * Relasi ke semua pergerakan aset ini.
+     */
+    public function movements(): HasMany
+    {
+        return $this->hasMany(AssetMovement::class)->latest();
+    }
+
 
     /**
      * [FUNGSI BARU] Relasi ke Kategori Aset.

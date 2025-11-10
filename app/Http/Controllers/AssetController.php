@@ -46,7 +46,10 @@ class AssetController extends Controller
                 'creator:id,name',
                 'maintenances.technician:id,name',
                 'tasks.assignee:id,name',
-                'AssetCategory'
+                'category',
+                'movements.fromRoom', // Eager load movements and their rooms
+                'movements.toRoom',
+                'movements.movedBy',
             ])->findOrFail($id)
         ];
         return view('backend.master.assets.show', compact('data'));
@@ -69,93 +72,93 @@ class AssetController extends Controller
     // API METHODS
     // ===================================================================
 
-        /**
-         * API: Menampilkan daftar aset dengan paginasi dan filter.
-         *
-         * @param Request $request
-         * @return JsonResponse
-         */
-    
-        public function index(Request $request): JsonResponse
-        {
-            $request->validate([
-                'page' => 'nullable|integer|min:1',
-                'perPage' => 'nullable|integer|min:1|max:100',
-                'search' => 'nullable|string|max:255',
-                'asset_type' => 'required|in:fixed_asset,consumable',
-            ]);
-    
-            $search = $request->input('search');
-            $assetType = $request->input('asset_type');
-            $perPage = $request->input('perPage', 10);
-    
-            if ($assetType == 'consumable') {
-    
-                // --- Alur 1: Barang Habis Pakai (Tidak Berubah) ---
-                $query = Asset::query()
-                    ->with(['room', 'assetCategory'])
-                    ->where('asset_type', 'consumable')
-                    ->when($search, function ($q, $search) {
-                        $q->where('name_asset', 'like', '%' . $search . '%')
-                            ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
-                    })
-                    ->latest();
-    
-                return response()->json($query->paginate($perPage));
-            } else {
-    
-                // --- Alur 2: Aset Tetap (FIXED: Menggunakan groupBy) ---
-    
-                $query = Asset::query()
-                    ->with('assetCategory') // Wajib Eager Load
-                    ->where('asset_type', 'fixed_asset')
-                    ->when($search, function ($q, $search) {
-                        $q->where('name_asset', 'like', '%' . $search . '%')
-                            ->orWhere('serial_number', 'like', '%' . $search . '%')
-                            ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
-                    });
-    
-                $allAssets = $query->get();
-    
-                // Kelompokkan berdasarkan nama kategori.
-                // Aset dengan category_id=NULL akan masuk ke grup 'Tanpa Kategori'.
-                $grouped = $allAssets->groupBy(function ($asset) {
-                    return $asset->assetCategory->name ?? 'Tanpa Kategori';
+    /**
+     * API: Menampilkan daftar aset dengan paginasi dan filter.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+
+    public function index(Request $request): JsonResponse
+    {
+        $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'perPage' => 'nullable|integer|min:1|max:100',
+            'search' => 'nullable|string|max:255',
+            'asset_type' => 'required|in:fixed_asset,consumable',
+        ]);
+
+        $search = $request->input('search');
+        $assetType = $request->input('asset_type');
+        $perPage = $request->input('perPage', 10);
+
+        if ($assetType == 'consumable') {
+
+            // --- Alur 1: Barang Habis Pakai (Tidak Berubah) ---
+            $query = Asset::query()
+                ->with(['room', 'category'])
+                ->where('asset_type', 'consumable')
+                ->when($search, function ($q, $search) {
+                    $q->where('name_asset', 'like', '%' . $search . '%')
+                        ->orWhereHas('category', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                })
+                ->latest();
+
+            return response()->json($query->paginate($perPage));
+        } else {
+
+            // --- Alur 2: Aset Tetap (FIXED: Menggunakan groupBy) ---
+
+            $query = Asset::query()
+                ->with('category') // Wajib Eager Load
+                ->where('asset_type', 'fixed_asset')
+                ->when($search, function ($q, $search) {
+                    $q->where('name_asset', 'like', '%' . $search . '%')
+                        ->orWhere('serial_number', 'like', '%' . $search . '%')
+                        ->orWhereHas('category', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
                 });
-    
-                // Ubah formatnya agar sesuai dengan yg diharapkan frontend
-                $categorySummary = $grouped->map(function ($assets, $categoryName) {
-                    // Tentukan ID. Jika 'Tanpa Kategori', kita beri ID '0'.
-                    $id = ($categoryName == 'Tanpa Kategori') ? 0 : $assets->first()->asset_category_id;
-    
-                    return [
-                        'id' => $id, // ID Kategori (atau 0 jika null)
-                        'name' => $categoryName,
-                        'assets_count' => $assets->count()
-                    ];
-                })->sortBy('name')->values(); // Urutkan A-Z dan reset keys
-    
-                return response()->json($categorySummary);
-            }
+
+            $allAssets = $query->get();
+
+            // Kelompokkan berdasarkan nama kategori.
+            // Aset dengan category_id=NULL akan masuk ke grup 'Tanpa Kategori'.
+            $grouped = $allAssets->groupBy(function ($asset) {
+                return $asset->category->name ?? 'Tanpa Kategori';
+            });
+
+            // Ubah formatnya agar sesuai dengan yg diharapkan frontend
+            $categorySummary = $grouped->map(function ($assets, $categoryName) {
+                // Tentukan ID. Jika 'Tanpa Kategori', kita beri ID '0'.
+                $id = ($categoryName == 'Tanpa Kategori') ? 0 : $assets->first()->asset_category_id;
+
+                return [
+                    'id' => $id, // ID Kategori (atau 0 jika null)
+                    'name' => $categoryName,
+                    'assets_count' => $assets->count()
+                ];
+            })->sortBy('name')->values(); // Urutkan A-Z dan reset keys
+
+            return response()->json($categorySummary);
         }
-    
-        /**
-         * API: Mengambil daftar semua aset yang tersedia atau sedang digunakan untuk dropdown.
-         *
-         * @return JsonResponse
-         */
-        public function listAllForDropdown(): JsonResponse
-        {
-            $assets = Asset::whereIn('status', ['available', 'in_use'])
-                ->orderBy('name_asset')
-                ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']); // Tambahkan 'current_stock'
-    
-            return response()->json($assets);
-        }
-    
-        /**
-         * API: Menyimpan data aset baru (bisa lebih dari satu).
-         *     * @param Request $request
+    }
+
+    /**
+     * API: Mengambil daftar semua aset yang tersedia atau sedang digunakan untuk dropdown.
+     *
+     * @return JsonResponse
+     */
+    public function listAllForDropdown(): JsonResponse
+    {
+        $assets = Asset::whereIn('status', ['available', 'in_use'])
+            ->orderBy('name_asset')
+            ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']); // Tambahkan 'current_stock'
+
+        return response()->json($assets);
+    }
+
+    /**
+     * API: Menyimpan data aset baru (bisa lebih dari satu).
+     *     * @param Request $request
      * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
@@ -166,6 +169,7 @@ class AssetController extends Controller
             'assets.*.asset_type' => 'required|in:fixed_asset,consumable',
             'assets.*.asset_category_id' => 'required|exists:asset_categories,id',
             'assets.*.room_id' => 'nullable|exists:rooms,id',
+            'assets.*.location_detail' => 'nullable|string|max:255', // Add this line
             'assets.*.purchase_date' => 'nullable|date',
             'assets.*.current_stock' => 'required|integer|min:1',
             'assets.*.minimum_stock' => 'nullable|integer|min:0',
@@ -195,6 +199,7 @@ class AssetController extends Controller
                         $singleAssetData = $data;
                         $singleAssetData['current_stock'] = 1;
                         $singleAssetData['minimum_stock'] = 0;
+                        $singleAssetData['location_detail'] = $data['location_detail'] ?? null; // Add this line
                         // Ambil nama kategori dari ID
                         $categoryName = AssetCategory::find($data['asset_category_id'])->name;
                         $singleAssetData['serial_number'] = $this->generateSerialNumber($categoryName);
@@ -239,6 +244,7 @@ class AssetController extends Controller
         $validator = Validator::make($request->all(), [
             'name_asset' => 'required|string|max:100',
             'room_id' => 'nullable|exists:rooms,id',
+            'location_detail' => 'nullable|string|max:255', // Add this line
             'asset_category_id' => 'required|exists:asset_categories,id',
             'serial_number' => 'nullable|string|max:100|unique:assets,serial_number,' . $asset->id,
             'purchase_date' => 'nullable|date',
@@ -259,6 +265,19 @@ class AssetController extends Controller
         unset($data['asset_type']); // Mencegah perubahan tipe aset setelah dibuat
 
         $asset->update($data);
+
+        // --- LOGIKA BARU: Log pergerakan aset jika room_id berubah ---
+        if ($asset->room_id !== $oldRoomId) {
+            AssetMovement::create([
+                'asset_id' => $asset->id,
+                'from_room_id' => $oldRoomId,
+                'to_room_id' => $asset->room_id,
+                'moved_by_user_id' => Auth::id(),
+                'description' => 'Perpindahan aset melalui update manual.',
+            ]);
+        }
+        // --- AKHIR LOGIKA BARU ---
+
         $this->checkAndNotifyLowStock($asset);
 
         return response()->json($asset->load(['room.floor.building', 'updater:id,name']));

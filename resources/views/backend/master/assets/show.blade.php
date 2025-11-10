@@ -37,6 +37,10 @@
                                     'Gudang' }}</dd>
                             </div>
                             <div>
+                                <dt class="text-sm font-medium text-gray-500">Lokasi Spesifik</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $data['asset']->location_detail ?? 'N/A' }}</dd>
+                            </div>
+                            <div>
                                 <dt class="text-sm font-medium text-gray-500">Tipe Aset</dt>
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $data['asset']->asset_type
                                     == 'fixed_asset' ? 'Aset Tetap' : 'Barang Habis Pakai' }}</dd>
@@ -72,7 +76,7 @@
                     </div>
 
                     <div
-                        class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">Riwayat Perbaikan</h4>
                             <ul class="space-y-3 max-h-60 overflow-y-auto">
@@ -99,6 +103,20 @@
                                 </li>
                                 @empty
                                 <li class="text-gray-500 text-sm">Aset ini belum pernah terkait tugas.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">Riwayat Pergerakan Aset</h4>
+                            <ul class="space-y-3 max-h-60 overflow-y-auto">
+                                @forelse ($data['asset']->movements as $movement)
+                                <li class="border dark:border-gray-700 p-3 rounded-md text-sm">
+                                    <p><strong>@tanggal($movement->movement_time):</strong> Dari {{ $movement->fromRoom->name_room ?? 'N/A' }} ke {{ $movement->toRoom->name_room ?? 'N/A' }}</p>
+                                    <p class="text-xs text-gray-500">Oleh: {{ $movement->movedBy->name ?? 'N/A' }}</p>
+                                    <p class="text-xs text-gray-500">Keterangan: {{ $movement->description ?? 'N/A' }}</p>
+                                </li>
+                                @empty
+                                <li class="text-gray-500 text-sm">Tidak ada riwayat pergerakan aset.</li>
                                 @endforelse
                             </ul>
                         </div>

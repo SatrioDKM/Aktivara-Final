@@ -247,6 +247,39 @@ class TaskWorkflowController extends Controller
         // Muat relasi yang dibutuhkan, termasuk taskType
         $task->load('taskType');
 
+        // --- LOGIKA BARU: Update kondisi dan status aset saat tugas dibuat ---
+        if ($task->asset_id) {
+            $asset = Asset::find($task->asset_id);
+            if ($asset) {
+                // Asumsi: Jika ada asset_id, dan bukan tugas UMUM, maka ini adalah laporan kerusakan aset.
+                // Atau bisa juga berdasarkan taskType tertentu. Untuk saat ini, kita asumsikan jika ada asset_id,
+                // dan taskType bukan UMUM, maka aset tersebut rusak dan sedang diperbaiki.
+                // Jika taskType adalah UMUM, kita tidak otomatis mengubah status aset.
+                if ($task->taskType && $task->taskType->departemen !== 'UMUM') {
+                    $asset->update([
+                        'condition' => 'Rusak',
+                        'status' => 'Perbaikan',
+                    ]);
+                }
+
+                // --- LOGIKA BARU: Log pergerakan aset saat tugas dibuat ---
+                if ($task->room_id && $asset->room_id !== $task->room_id) {
+                    AssetMovement::create([
+                        'asset_id' => $asset->id,
+                        'from_room_id' => $asset->room_id, // Current room of the asset
+                        'to_room_id' => $task->room_id, // New room from the task
+                        'moved_by_user_id' => Auth::id(),
+                        'task_id' => $task->id,
+                        'description' => 'Aset dipindahkan karena pembuatan tugas baru.',
+                    ]);
+                    // Update the asset's room_id to reflect the new location from the task
+                    $asset->update(['room_id' => $task->room_id]);
+                }
+                // --- AKHIR LOGIKA BARU ---
+            }
+        }
+        // --- AKHIR LOGIKA BARU ---
+
         // --- KIRIM NOTIFIKASI TUGAS BARU (LOGIKA BARU) ---
         try {
             $departmentCode = $task->taskType->departemen; // Ambil departemen dari relasi
@@ -315,6 +348,24 @@ class TaskWorkflowController extends Controller
                 $taskToClaim->update($updateData);
 
                 $claimedTask = $taskToClaim;
+
+                // --- LOGIKA BARU: Log pergerakan aset saat tugas diklaim ---
+                if ($claimedTask->asset_id && $claimedTask->room_id) {
+                    $asset = Asset::find($claimedTask->asset_id);
+                    if ($asset && $asset->room_id !== $claimedTask->room_id) {
+                        AssetMovement::create([
+                            'asset_id' => $asset->id,
+                            'from_room_id' => $asset->room_id, // Current room of the asset
+                            'to_room_id' => $claimedTask->room_id, // New room from the task
+                            'moved_by_user_id' => Auth::id(),
+                            'task_id' => $claimedTask->id,
+                            'description' => 'Aset dipindahkan saat tugas diklaim.',
+                        ]);
+                        // Update the asset's room_id to reflect the new location from the task
+                        $asset->update(['room_id' => $claimedTask->room_id]);
+                    }
+                }
+                // --- AKHIR LOGIKA BARU ---
             });
 
             // Kirim notifikasi setelah transaksi berhasil
@@ -566,6 +617,17 @@ class TaskWorkflowController extends Controller
         switch ($reviewAction) {
             case 'complete':
                 $newStatus = 'completed';
+                // --- LOGIKA BARU: Update kondisi dan status aset saat tugas selesai ---
+                if ($task->asset_id) {
+                    $asset = Asset::find($task->asset_id);
+                    if ($asset) {
+                        $asset->update([
+                            'condition' => 'Baik',
+                            'status' => 'Tersedia',
+                        ]);
+                    }
+                }
+                // --- AKHIR LOGIKA BARU ---
                 break;
             case 'cancel':
                 $newStatus = 'cancelled';
@@ -660,7 +722,7 @@ class TaskWorkflowController extends Controller
         // Filter berdasarkan status
         $query->when($request->filled('status'), function ($q) use ($request) {
             if ($request->status === 'active') {
-                return $q->whereIn('status', ['in_progress', 'rejected']);
+                return $q->whereIn('status', ['in_progress', 'rejected', 'revised']);
             }
             return $q->where('status', $request->status);
         });

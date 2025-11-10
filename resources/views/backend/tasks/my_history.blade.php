@@ -57,6 +57,8 @@
                                         <option value="">Semua Status</option>
                                         <option value="in_progress">Dikerjakan</option>
                                         <option value="rejected">Ditolak</option>
+                                        <option value="revised">Revisi Diminta</option>
+                                        <option value="cancelled">Dibatalkan</option>
                                         <option value="pending_review">Menunggu Review</option>
                                         <option value="completed">Selesai</option>
                                     </select>
@@ -226,7 +228,9 @@
                         'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                         'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
                         'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                        'revised': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+                        'cancelled': 'bg-gray-400 text-gray-800 dark:bg-gray-600 dark:text-gray-200'
                     };
                     return colors[status] || 'bg-gray-100 text-gray-800';
                 },
@@ -236,7 +240,9 @@
                         'in_progress': 'Dikerjakan',
                         'pending_review': 'Review',
                         'completed': 'Selesai',
-                        'rejected': 'Ditolak'
+                        'rejected': 'Ditolak',
+                        'revised': 'Revisi Diminta',
+                        'cancelled': 'Dibatalkan'
                     };
                     return texts[status] || status.replace(/_/g, ' ');
                 }

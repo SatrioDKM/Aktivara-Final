@@ -77,14 +77,15 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
     // --- Rute manual untuk Assets ---
     Route::prefix('assets')->name('assets.')->group(function () {
-        // Rute yang boleh diakses Warehouse, Manager, Admin
-        Route::middleware(['role:SA00,MG00,WH01,WH02'])->group(function () {
+        // Rute yang boleh diakses Warehouse, Manager, Admin, dan Staff (untuk klaim tugas)
+        Route::middleware(['role:SA00,MG00,WH01,WH02,HK02,TK02,SC02'])->group(function () {
             Route::get('/', [AssetController::class, 'index'])->name('index'); // Read List
             Route::post('/', [AssetController::class, 'store'])->name('store'); // Create
             Route::get('/{id}', [AssetController::class, 'show'])->where('id', '[0-9]+')->name('show'); // Read Detail
             // NOTE: Menggunakan POST untuk update karena form mungkin berisi file (gambar)
             Route::post('/{id}', [AssetController::class, 'update'])->where('id', '[0-9]+')->name('update'); // Update
             Route::post('/{id}/stock-out', [AssetController::class, 'stockOut'])->name('stock_out')->where('id', '[0-9]+'); // Stock Out (jika Warehouse boleh)
+            Route::get('/list-for-dropdown', [AssetController::class, 'listAllForDropdown'])->name('list_for_dropdown'); // New route for dropdowns
         });
 
         // Rute Delete (HANYA Manager & Admin)

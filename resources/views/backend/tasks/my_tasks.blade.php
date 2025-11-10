@@ -61,13 +61,15 @@
                                             </span>
                                         </div>
                                     </div>
-                                    {{-- Pesan Revisi jika ditolak --}}
-                                    <template x-if="task.status === 'rejected' && task.rejection_notes">
-                                        <div class="mt-4 border-t border-red-200 dark:border-red-900 pt-3">
-                                            <p class="text-sm text-red-600 dark:text-red-400 flex items-start">
+                                    {{-- Pesan Revisi/Pembatalan --}}
+                                    <template x-if="(task.status === 'revised' || task.status === 'cancelled') && task.review_notes">
+                                        <div class="mt-4 border-t pt-3"
+                                            :class="task.status === 'revised' ? 'border-yellow-200 dark:border-yellow-900' : 'border-gray-200 dark:border-gray-900'">
+                                            <p class="text-sm flex items-start"
+                                                :class="task.status === 'revised' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'">
                                                 <i class="fas fa-exclamation-circle fa-fw mr-2 mt-1"></i>
-                                                <span><strong>Catatan Revisi:</strong> <span
-                                                        x-text="task.rejection_notes"></span></span>
+                                                <span><strong>Catatan Review:</strong> <span
+                                                        x-text="task.review_notes"></span></span>
                                             </p>
                                         </div>
                                     </template>
@@ -130,6 +132,8 @@
                     const colors = {
                         'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                         'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                        'revised': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                        'cancelled': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
                     };
                     return colors[status] || 'bg-gray-100 text-gray-800';
                 },
@@ -138,13 +142,17 @@
                     const colors = {
                         'in_progress': 'border-blue-500',
                         'rejected': 'border-red-500',
+                        'revised': 'border-yellow-500',
+                        'cancelled': 'border-gray-500',
                     };
                     return colors[status] || 'border-gray-300';
                 },
 
                 statusText(status) {
                     if (status === 'in_progress') return 'Sedang Dikerjakan';
-                    if (status === 'rejected') return 'Ditolak / Perlu Revisi';
+                    if (status === 'rejected') return 'Ditolak'; // 'Rejected' is now a final state, not 'Perlu Revisi'
+                    if (status === 'revised') return 'Perlu Revisi';
+                    if (status === 'cancelled') return 'Dibatalkan';
                     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 }
             }));

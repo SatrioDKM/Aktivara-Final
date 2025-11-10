@@ -33,7 +33,8 @@
             <div x-data="taskDetail({
                 initialTaskData: {{ Js::from($data['task']) }},
                 assets: {{ Js::from($data['assets']) }},
-                currentUser: {{ Js::from(Auth::user()) }}
+                currentUser: {{ Js::from(Auth::user()) }},
+                isAuthorizedToReview: {{ Js::from($data['isAuthorizedToReview']) }}
             })" x-cloak>
 
                 {{-- Komponen Notifikasi Global --}}
@@ -69,16 +70,28 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         <div class="lg:col-span-2 space-y-6">
-                            {{-- Notifikasi Jika Tugas Ditolak --}}
-                            <template x-if="task.status === 'rejected' && task.rejection_notes">
-                                <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded-md shadow-sm"
+                            {{-- Notifikasi Jika Tugas Perlu Revisi/Dibatalkan/Ditolak --}}
+                            <template x-if="(task.status === 'revised' || task.status === 'cancelled' || task.status === 'rejected') && task.review_notes">
+                                <div class="border-l-4 p-4 rounded-md shadow-sm"
+                                    :class="{
+                                        'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500 text-yellow-700 dark:text-yellow-300': task.status === 'revised',
+                                        'bg-gray-100 dark:bg-gray-900/30 border-gray-500 text-gray-700 dark:text-gray-300': task.status === 'cancelled',
+                                        'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-300': task.status === 'rejected'
+                                    }"
                                     role="alert">
                                     <div class="flex">
-                                        <div class="py-1"><i class="fas fa-exclamation-triangle mr-3"></i></div>
+                                        <div class="py-1">
+                                            <i class="fas mr-3"
+                                                :class="{
+                                                    'fa-exclamation-triangle': task.status === 'revised',
+                                                    'fa-info-circle': task.status === 'cancelled',
+                                                    'fa-times-circle': task.status === 'rejected'
+                                                }"></i>
+                                        </div>
                                         <div>
-                                            <p class="font-bold">Tugas Ditolak, Perlu Revisi</p>
-                                            <p class="mt-1 text-sm"><strong>Alasan:</strong> <span
-                                                    x-text="task.rejection_notes"></span></p>
+                                            <p class="font-bold" x-text="statusText(task.status)"></p>
+                                            <p class="mt-1 text-sm"><strong>Catatan:</strong> <span
+                                                    x-text="task.review_notes"></span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -201,7 +214,7 @@
 
                             {{-- Form Laporan (Hanya untuk Staff yang ditugaskan) --}}
                             <template
-                                x-if="(task.status === 'in_progress' || task.status === 'rejected') && currentUser.id === task.user_id">
+                                x-if="(task.status === 'in_progress' || task.status === 'revised') && currentUser.id === task.user_id">
                                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
                                     <form @submit.prevent="submitReport" class="p-6">
                                         <h3
@@ -254,7 +267,7 @@
                             </template>
 
                             {{-- Tombol Aksi Review (Hanya untuk Leader/pembuat tugas) --}}
-                            <template x-if="task.status === 'pending_review' && currentUser.id === task.created_by">
+                            <template x-if="task.status === 'pending_review' && isAuthorizedToReview">
                                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
                                     <div class="p-6">
                                         <h3
@@ -262,12 +275,15 @@
                                             <i class="fas fa-check-double mr-3 text-gray-400"></i> Aksi Review
                                         </h3>
                                         <div class="space-y-2">
-                                            <button @click="submitApproval()" :disabled="isSubmitting"
+                                            <button @click="submitReviewAction('complete')" :disabled="isSubmitting"
                                                 class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-green-700 disabled:opacity-50">Setujui
                                                 & Selesaikan</button>
-                                            <button @click="openRejectionModal()"
-                                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-red-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-red-700">Tolak
-                                                (Revisi)</button>
+                                            <button @click="openReviewActionModal('request_revision')"
+                                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-yellow-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-yellow-700">Minta
+                                                Revisi</button>
+                                            <button @click="openReviewActionModal('cancel')"
+                                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-gray-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-gray-700">Batalkan
+                                                Tugas</button>
                                         </div>
                                     </div>
                                 </div>
@@ -276,30 +292,35 @@
                     </div>
                 </template>
 
-                {{-- Modal untuk Alasan Penolakan --}}
-                <div x-show="showRejectionModal" x-transition:enter="ease-out duration-300"
+                {{-- Modal untuk Tindakan Review (Revisi/Batal) --}}
+                <div x-show="showReviewActionModal" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 overflow-y-auto"
                     style="display: none;">
                     <div class="flex items-center justify-center min-h-screen px-4">
-                        <div @click="showRejectionModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
+                        <div @click="showReviewActionModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-                            @click.away="showRejectionModal = false">
+                            @click.away="showReviewActionModal = false">
                             <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Alasan Penolakan</h3>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Tulis alasan mengapa tugas ini
-                                    ditolak. Pesan ini akan dikirimkan ke staff.</p>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                    x-text="currentReviewAction === 'request_revision' ? 'Minta Revisi Tugas' : 'Batalkan Tugas'">
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                                    x-text="currentReviewAction === 'request_revision' ? 'Tulis catatan revisi untuk staff. Catatan ini akan dikirimkan ke staff.' : 'Tulis alasan pembatalan tugas. Catatan ini akan disimpan.'">
+                                </p>
                                 <div class="mt-4">
-                                    <textarea x-model="rejectionNotes" rows="4"
+                                    <textarea x-model="reviewNotes" rows="4"
                                         class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Contoh: Lampiran foto kurang jelas, mohon ulangi."
+                                        :placeholder="currentReviewAction === 'request_revision' ? 'Contoh: Lampiran foto kurang jelas, mohon ulangi.' : 'Contoh: Tugas tidak relevan lagi atau sudah diselesaikan secara manual.'"
                                         required></textarea>
                                 </div>
                             </div>
                             <div class="bg-gray-50 dark:bg-gray-900 px-6 py-3 flex justify-end space-x-3">
-                                <x-secondary-button @click="showRejectionModal = false">Batal</x-secondary-button>
-                                <x-danger-button @click="submitRejection()">Kirim Penolakan</x-danger-button>
+                                <x-secondary-button @click="showReviewActionModal = false">Batal</x-secondary-button>
+                                <x-danger-button @click="submitReviewAction(currentReviewAction)">
+                                    <span x-text="currentReviewAction === 'request_revision' ? 'Kirim Revisi' : 'Batalkan Tugas'"></span>
+                                </x-danger-button>
                             </div>
                         </div>
                     </div>
@@ -308,170 +329,169 @@
         </div>
     </div>
 
-    @push('scripts')
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('taskDetail', (data) => ({
-                task: {},
-                initialTaskData: data.initialTaskData,
-                assets: data.assets,
-                currentUser: data.currentUser,
-                isLoading: true,
-                isSubmitting: false,
-                formData: { report_text: '', image_before: null, image_after: null },
-                imageBeforePreview: null,
-                imageAfterPreview: null,
-                showRejectionModal: false,
-                rejectionNotes: '',
-                notification: { show: false, message: '', type: 'success' },
-
-                init() {
-                    console.log("[DEBUG] Alpine init started. Initial data from server:", this.initialTaskData);
-                    if (this.initialTaskData && this.initialTaskData.id) {
-                        this.task = this.initialTaskData;
-                        this.isLoading = false;
-                        console.log("[DEBUG] Task data loaded from server.", this.task);
-                    } else {
-                        console.warn("[DEBUG] Initial data is invalid. Fetching from API as a fallback.");
-                        const taskId = window.location.pathname.split('/').pop();
-                        this.getTaskDetails(taskId);
-                    }
-                },
-
-                getTaskDetails(taskId) {
-                    this.isLoading = true;
-                    const idToFetch = taskId || this.task.id;
-                    console.log(`[DEBUG] Fetching data for task ID: ${idToFetch}...`);
-                    axios.get(`/api/tasks/${idToFetch}`)
-                        .then(response => {
-                            console.log('[DEBUG] API Response Success:', response.data);
-                            this.task = response.data;
-                        })
-                        .catch(error => {
-                            console.error('[DEBUG] API Response Error:', error.response || error);
-                            this.showNotification('Gagal memuat detail tugas. Coba refresh halaman.', 'error');
-                        })
-                        .finally(() => { this.isLoading = false; });
-                },
-
-                previewImage(event, type) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        if (type === 'before') this.imageBeforePreview = e.target.result;
-                        else this.imageAfterPreview = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                    if (type === 'before') this.formData.image_before = file;
-                    else this.formData.image_after = file;
-                },
-
-                submitReport() {
-                    this.isSubmitting = true;
-                    const fd = new FormData();
-                    fd.append('report_text', this.formData.report_text);
-                    if (this.formData.image_before) fd.append('image_before', this.formData.image_before);
-                    if (this.formData.image_after) fd.append('image_after', this.formData.image_after);
-
-                    axios.post(`/api/tasks/${this.task.id}/report`, fd)
-                        .then(response => {
-                            this.showNotification(response.data.message, 'success');
-                            this.getTaskDetails();
-                            this.formData = { report_text: '', image_before: null, image_after: null };
-                            this.imageBeforePreview = null;
-                            this.imageAfterPreview = null;
-
-                            // === PERBAIKAN DI SINI: Gunakan x-ref ===
-                            if (this.$refs.fileInputBefore) {
-                                this.$refs.fileInputBefore.value = null;
-                            }
-                            if (this.$refs.fileInputAfter) {
-                                this.$refs.fileInputAfter.value = null;
-                            }
-                        })
-                        .catch(error => {
-                            let msg = 'Terjadi kesalahan saat mengirim laporan.'; // Pesan error default
-                            if (error.response?.status === 422) {
-                                msg = Object.values(error.response.data.errors).flat().join('<br>');
-                            } else if (error.response?.data?.message) {
-                                msg = error.response.data.message;
-                            }
-                            this.showNotification(msg, 'error');
-                        })
-                        .finally(() => this.isSubmitting = false);
-                },
-
-                openRejectionModal() {
-                    this.rejectionNotes = '';
-                    this.showRejectionModal = true;
-                },
-
-                submitApproval() {
-                    this.submitReview('completed');
-                },
-
-                submitRejection() {
-                    if (!this.rejectionNotes.trim()) {
-                        this.showNotification('Alasan penolakan tidak boleh kosong.', 'error');
-                        return;
-                    }
-                    this.submitReview('rejected', this.rejectionNotes);
-                    this.showRejectionModal = false;
-                },
-
-                submitReview(decision, notes = null) {
-                    this.isSubmitting = true;
-                    axios.post(`/api/tasks/${this.task.id}/review`, {
-                        decision: decision,
-                        rejection_notes: notes
-                    })
-                    .then(response => {
-                        this.showNotification(response.data.message, 'success');
-                        this.getTaskDetails();
-                    })
-                    .catch(error => {
-                        let msg = 'Gagal mengirim review.';
-                        if (error.response?.data?.message) {
-                            msg = error.response.data.message;
+        @push('scripts')
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('taskDetail', (data) => ({
+                    task: {},
+                    initialTaskData: data.initialTaskData,
+                    assets: data.assets,
+                    currentUser: data.currentUser,
+                    isAuthorizedToReview: data.isAuthorizedToReview, // Added this line
+                    isLoading: true,
+                    isSubmitting: false,
+                    formData: { report_text: '', image_before: null, image_after: null },
+                    imageBeforePreview: null,
+                    imageAfterPreview: null,
+                    showReviewActionModal: false, // Changed from showRejectionModal
+                    currentReviewAction: '', // New: stores 'revised' or 'cancelled'
+                    reviewNotes: '', // Changed from rejectionNotes
+                    notification: { show: false, message: '', type: 'success' },
+    
+                    init() {
+                        console.log("[DEBUG] Alpine init started. Initial data from server:", this.initialTaskData);
+                        if (this.initialTaskData && this.initialTaskData.id) {
+                            this.task = this.initialTaskData;
+                            this.isLoading = false;
+                            console.log("[DEBUG] Task data loaded from server.", this.task);
+                        } else {
+                            console.warn("[DEBUG] Initial data is invalid. Fetching from API as a fallback.");
+                            const taskId = window.location.pathname.split('/').pop();
+                            this.getTaskDetails(taskId);
                         }
-                        this.showNotification(msg, 'error');
-                    })
-                    .finally(() => this.isSubmitting = false);
-                },
-
-                showNotification(message, type) {
-                    window.iziToast[type.toLowerCase()]({
-                        title: type === 'success' ? 'Berhasil' : 'Error',
-                        message: message,
-                        position: 'topRight'
-                    });
-                },
-
-                statusColor(status) {
-                    const colors = {
-                        'unassigned': 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
-                        'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                        'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                        'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-                    };
-                    return colors[status] || 'bg-gray-100';
-                },
-
-                statusText(status) {
-                    if (!status) return 'Memuat...';
-                    const texts = {
-                        'unassigned': 'Belum Diambil',
-                        'in_progress': 'Dikerjakan',
-                        'pending_review': 'Review',
-                        'completed': 'Selesai',
-                        'rejected': 'Ditolak'
-                    };
-                    return texts[status] || status.replace(/_/g, ' ');
-                }
-            }));
-        });
-    </script>
-    @endpush
-</x-app-layout>
+                    },
+    
+                    getTaskDetails(taskId) {
+                        this.isLoading = true;
+                        const idToFetch = taskId || this.task.id;
+                        console.log(`[DEBUG] Fetching data for task ID: ${idToFetch}...`);
+                        axios.get(`/api/tasks/${idToFetch}`)
+                            .then(response => {
+                                console.log('[DEBUG] API Response Success:', response.data);
+                                this.task = response.data;
+                            })
+                            .catch(error => {
+                                console.error('[DEBUG] API Response Error:', error.response || error);
+                                this.showNotification('Gagal memuat detail tugas. Coba refresh halaman.', 'error');
+                            })
+                            .finally(() => { this.isLoading = false; });
+                    },
+    
+                    previewImage(event, type) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            if (type === 'before') this.imageBeforePreview = e.target.result;
+                            else this.imageAfterPreview = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                        if (type === 'before') this.formData.image_before = file;
+                        else this.formData.image_after = file;
+                    },
+    
+                    submitReport() {
+                        this.isSubmitting = true;
+                        const fd = new FormData();
+                        fd.append('report_text', this.formData.report_text);
+                        if (this.formData.image_before) fd.append('image_before', this.formData.image_before);
+                        if (this.formData.image_after) fd.append('image_after', this.formData.image_after);
+    
+                        axios.post(`/api/tasks/${this.task.id}/report`, fd)
+                            .then(response => {
+                                this.showNotification(response.data.message, 'success');
+                                this.getTaskDetails();
+                                this.formData = { report_text: '', image_before: null, image_after: null };
+                                this.imageBeforePreview = null;
+                                this.imageAfterPreview = null;
+    
+                                // === PERBAIKAN DI SINI: Gunakan x-ref ===
+                                if (this.$refs.fileInputBefore) {
+                                    this.$refs.fileInputBefore.value = null;
+                                }
+                                if (this.$refs.fileInputAfter) {
+                                    this.$refs.fileInputAfter.value = null;
+                                }
+                            })
+                            .catch(error => {
+                                let msg = 'Terjadi kesalahan saat mengirim laporan.'; // Pesan error default
+                                if (error.response?.status === 422) {
+                                    msg = Object.values(error.response.data.errors).flat().join('<br>');
+                                } else if (error.response?.data?.message) {
+                                    msg = error.response.data.message;
+                                }
+                                this.showNotification(msg, 'error');
+                            })
+                            .finally(() => this.isSubmitting = false);
+                    },
+    
+                    // New function to open the review action modal
+                    openReviewActionModal(action) {
+                        this.currentReviewAction = action;
+                        this.reviewNotes = ''; // Clear notes when opening
+                        this.showReviewActionModal = true;
+                    },
+    
+                                    // Renamed and updated to handle new review actions
+                                    submitReviewAction(action) {
+                                        if ((action === 'revised' || action === 'cancel') && !this.reviewNotes.trim()) { // Changed 'cancelled' to 'cancel'
+                                            this.showNotification('Catatan tidak boleh kosong untuk tindakan ini.', 'error');
+                                            return;
+                                        }
+                                        this.isSubmitting = true;
+                                        axios.post(`/api/tasks/${this.task.id}/review`, {
+                                            review_action: action, // Changed from 'decision'
+                                            review_notes: this.reviewNotes // Changed from 'rejection_notes'
+                                        })
+                                        .then(response => {
+                                            this.showNotification(response.data.message, 'success');
+                                            this.getTaskDetails();
+                                            this.showReviewActionModal = false; // Close modal on success
+                                        })
+                                        .catch(error => {
+                                            let msg = 'Gagal mengirim review.';
+                                            if (error.response?.data?.message) {
+                                                msg = error.response.data.message;
+                                            }
+                                            this.showNotification(msg, 'error');
+                                        })
+                                        .finally(() => this.isSubmitting = false);
+                                    },    
+                    showNotification(message, type) {
+                        window.iziToast[type.toLowerCase()]({ 
+                            title: type === 'success' ? 'Berhasil' : 'Error',
+                            message: message,
+                            position: 'topRight'
+                        });
+                    },
+    
+                    statusColor(status) {
+                        const colors = {
+                            'unassigned': 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
+                            'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                            'pending_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                            'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                            'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+                            'revised': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300', // New status color
+                            'cancelled': 'bg-gray-400 text-gray-800 dark:bg-gray-700 dark:text-gray-100', // New status color
+                        };
+                        return colors[status] || 'bg-gray-100';
+                    },
+    
+                    statusText(status) {
+                        if (!status) return 'Memuat...';
+                        const texts = {
+                            'unassigned': 'Belum Diambil',
+                            'in_progress': 'Dikerjakan',
+                            'pending_review': 'Menunggu Review', // Changed
+                            'completed': 'Selesai',
+                            'rejected': 'Ditolak',
+                            'revised': 'Revisi Diminta', // New status text
+                            'cancelled': 'Dibatalkan', // New status text
+                        };
+                        return texts[status] || status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    }
+                }));
+            });
+        </script>
+        @endpush</x-app-layout>

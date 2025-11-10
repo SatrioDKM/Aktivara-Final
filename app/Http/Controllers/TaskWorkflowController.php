@@ -79,11 +79,38 @@ class TaskWorkflowController extends Controller
 
         $this->authorizeTaskAccess($task);
 
+        $user = Auth::user();
+        $isCreator = $user->id === $task->created_by;
+        $isManagerOrAdmin = in_array($user->role_id, ['SA00', 'MG00']);
+        $isLeader = str_ends_with($user->role_id, '01');
+
+        $isAuthorizedLeaderToReview = false;
+        if ($isLeader) {
+            $departmentCode = substr($user->role_id, 0, 2);
+            // Ensure relations are loaded for the check
+            if (!$task->relationLoaded('taskType')) {
+                $task->load('taskType');
+            }
+            if (!$task->relationLoaded('assignee')) {
+                $task->load('assignee');
+            }
+
+            if (
+                ($task->taskType && $task->taskType->departemen === $departmentCode) ||
+                ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode))
+            ) {
+                $isAuthorizedLeaderToReview = true;
+            }
+        }
+
+        $isAuthorizedToReview = $isCreator || $isManagerOrAdmin || $isAuthorizedLeaderToReview;
+
         $data = [
             'task' => $task,
             'assets' => Asset::where('asset_type', 'fixed_asset')
                 ->orderBy('name_asset')
                 ->get(['id', 'name_asset', 'serial_number']),
+            'isAuthorizedToReview' => $isAuthorizedToReview, // Pass the flag to the view
         ];
         return view('backend.tasks.show', compact('data'));
     }
@@ -253,18 +280,39 @@ class TaskWorkflowController extends Controller
     public function claimTask(Request $request, string $id): JsonResponse
     {
         try {
+            // Validate input before starting transaction
+            $validator = Validator::make($request->all(), [
+                'room_id' => 'nullable|exists:rooms,id',
+                'asset_id' => 'nullable|exists:assets,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
             $claimedTask = null;
-            DB::transaction(function () use ($id, &$claimedTask) {
+            DB::transaction(function () use ($id, &$claimedTask, $request) {
                 $taskToClaim = Task::where('id', $id)->lockForUpdate()->firstOrFail();
 
-                if ($taskToClaim->status !== 'unassigned' || $taskToClaim->user_id !== null) {
-                    throw new \Exception('Tugas ini sudah diambil oleh staff lain.');
+                if (!($taskToClaim->status === 'unassigned' && $taskToClaim->user_id === null) &&
+                    !($taskToClaim->status === 'revised' && $taskToClaim->user_id === Auth::id())) {
+                    throw new \Exception('Tugas ini tidak dapat diambil. Status tidak sesuai atau sudah diambil oleh staff lain.');
                 }
 
-                $taskToClaim->update([
+                $updateData = [
                     'user_id' => Auth::id(),
                     'status' => 'in_progress',
-                ]);
+                ];
+
+                // Conditionally update room_id and asset_id if provided and currently null
+                if ($request->filled('room_id') && is_null($taskToClaim->room_id)) {
+                    $updateData['room_id'] = $request->input('room_id');
+                }
+                if ($request->filled('asset_id') && is_null($taskToClaim->asset_id)) {
+                    $updateData['asset_id'] = $request->input('asset_id');
+                }
+
+                $taskToClaim->update($updateData);
 
                 $claimedTask = $taskToClaim;
             });
@@ -306,7 +354,7 @@ class TaskWorkflowController extends Controller
     {
         $userDepartment = substr(Auth::user()->role_id, 0, 2);
 
-        $availableTasks = Task::with(['room.floor.building', 'creator:id,name', 'taskType'])
+        $availableTasks = Task::with(['room.floor.building', 'creator:id,name', 'taskType', 'asset'])
             // --- PERBAIKAN QUERY DI SINI ---
             ->where('status', 'unassigned')
             ->whereNull('user_id') // Pastikan tugas belum dimiliki siapa pun
@@ -327,7 +375,7 @@ class TaskWorkflowController extends Controller
     {
         $myTasks = Task::with(['taskType', 'room.floor.building'])
             ->where('user_id', Auth::id())
-            ->whereIn('status', ['in_progress', 'rejected'])
+            ->whereIn('status', ['in_progress', 'rejected', 'revised'])
             ->latest()->get();
 
         return response()->json($myTasks);
@@ -367,6 +415,11 @@ class TaskWorkflowController extends Controller
         // Langkah 2: Lakukan verifikasi kepemilikan secara eksplisit.
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Anda tidak berhak melaporkan tugas ini.'], 403);
+        }
+
+        // Langkah 2.5: Pastikan tugas dalam status yang memungkinkan pengiriman laporan
+        if (!in_array($task->status, ['in_progress', 'revised'])) {
+            return response()->json(['message' => 'Laporan hanya bisa dikirim untuk tugas yang sedang dikerjakan atau perlu revisi.'], 403);
         }
 
         // Langkah 3: Lakukan validasi input sesuai dengan form
@@ -418,11 +471,39 @@ class TaskWorkflowController extends Controller
      */
     public function showReviewList(): JsonResponse
     {
-        // PERBAIKAN: Mengganti 'staff:id,name' menjadi 'assignee:id,name'
-        $tasksToReview = Task::with(['taskType', 'assignee:id,name', 'room:id,name_room'])
-            ->where('status', 'pending_review')
-            ->where('created_by', Auth::id())
-            ->latest()->get();
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        $query = Task::with(['taskType', 'assignee:id,name,role_id', 'room:id,name_room'])
+            ->where('status', 'pending_review');
+
+        // Filter berdasarkan peran
+        if ($roleId === 'SA00' || $roleId === 'MG00') {
+            // Superadmin dan Manager melihat semua tugas pending review
+            // Tidak perlu filter tambahan
+        } elseif (str_ends_with($roleId, '01')) { // Jika Leader
+            $departmentCode = substr($roleId, 0, 2);
+            $query->where(function ($q) use ($departmentCode) {
+                // Tugas di mana departemen taskType cocok dengan departemen leader
+                $q->whereHas('taskType', function ($subQ) use ($departmentCode) {
+                    $subQ->where('departemen', $departmentCode);
+                })
+                // ATAU tugas di mana departemen taskType adalah 'UMUM' DAN assignee berada di departemen leader
+                ->orWhere(function ($subQ) use ($departmentCode) {
+                    $subQ->whereHas('taskType', function ($subSubQ) {
+                        $subSubQ->where('departemen', 'UMUM');
+                    })
+                    ->whereHas('assignee', function ($subSubQ) use ($departmentCode) {
+                        $subSubQ->where('role_id', 'like', $departmentCode . '02'); // Asumsi peran staf berakhiran '02'
+                    });
+                });
+            });
+        } else {
+            // Peran lain tidak seharusnya melihat daftar review ini, atau tidak ada tugas
+            $query->where('id', null); // Return empty if not authorized
+        }
+
+        $tasksToReview = $query->latest()->get();
 
         return response()->json($tasksToReview);
     }
@@ -441,28 +522,66 @@ class TaskWorkflowController extends Controller
         $user = Auth::user();
         $isCreator = $user->id === $task->created_by;
         $isManagerOrAdmin = in_array($user->role_id, ['SA00', 'MG00']);
+        $isLeader = str_ends_with($user->role_id, '01');
+
+        $isAuthorizedLeader = false;
+        if ($isLeader) {
+            $departmentCode = substr($user->role_id, 0, 2);
+            // Muat relasi taskType dan assignee jika belum dimuat
+            if (!$task->relationLoaded('taskType')) {
+                $task->load('taskType');
+            }
+            if (!$task->relationLoaded('assignee')) {
+                $task->load('assignee');
+            }
+
+            // Cek apakah departemen taskType cocok dengan departemen leader
+            if ($task->taskType && $task->taskType->departemen === $departmentCode) {
+                $isAuthorizedLeader = true;
+            }
+            // ATAU jika taskType adalah 'UMUM' dan assignee berada di departemen leader
+            if ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode)) {
+                $isAuthorizedLeader = true;
+            }
+        }
 
         // Logika otorisasi sekarang akan bekerja dengan benar karena $task->created_by sudah ada nilainya.
-        if (!$isCreator && !$isManagerOrAdmin) {
+        if (!$isCreator && !$isManagerOrAdmin && !$isAuthorizedLeader) {
             return response()->json(['message' => 'Anda tidak berwenang mereview tugas ini.'], 403);
         }
 
         $validator = Validator::make($request->all(), [
-            'decision' => 'required|in:completed,rejected',
-            'rejection_notes' => 'required_if:decision,rejected|nullable|string|min:10',
+            'review_action' => 'required|in:complete,cancel,request_revision',
+            'review_notes' => 'required_if:review_action,cancel,request_revision|nullable|string|min:10',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $decision = $request->input('decision');
-        $notes = $request->input('rejection_notes');
+        $reviewAction = $request->input('review_action');
+        $notes = $request->input('review_notes');
+
+        $newStatus = '';
+        switch ($reviewAction) {
+            case 'complete':
+                $newStatus = 'completed';
+                break;
+            case 'cancel':
+                $newStatus = 'cancelled';
+                break;
+            case 'request_revision':
+                $newStatus = 'revised';
+                break;
+            default:
+                return response()->json(['message' => 'Aksi review tidak valid.'], 400);
+        }
 
         $task->update([
-            'status' => $decision,
+            'status' => $newStatus,
             'reviewed_by' => $user->id,
-            'rejection_notes' => $decision === 'rejected' ? $notes : null,
+            'review_notes' => $notes, // Use review_notes for all actions
+            'rejection_notes' => null, // Clear old rejection notes
         ]);
 
         try {
@@ -569,7 +688,7 @@ class TaskWorkflowController extends Controller
 
         // PERBAIKAN: Mengganti 'staff:id,name' menjadi 'assignee:id,name'
         $query = Task::with(['taskType', 'assignee:id,name', 'creator:id,name', 'room.floor.building'])
-            ->whereIn('status', ['unassigned', 'in_progress', 'pending_review']);
+            ->whereIn('status', ['unassigned', 'in_progress', 'pending_review', 'revised']);
 
         // Filter ini tetap berlaku untuk Leader agar hanya melihat tugas yang dibuatnya
         if (str_ends_with($roleId, '01')) {
@@ -627,6 +746,26 @@ class TaskWorkflowController extends Controller
         if ($user->role_id === 'SA00' || $user->role_id === 'MG00') return; // Admin/Manager bisa lihat semua
         if ($user->id === $task->created_by) return; // Pembuat tugas bisa lihat
         if ($user->id === $task->user_id) return; // Pengerja tugas bisa lihat
+
+        // Jika user adalah Leader (role_id berakhir dengan '01'), cek departemen
+        if (str_ends_with($user->role_id, '01')) {
+            $departmentCode = substr($user->role_id, 0, 2);
+            // Muat relasi taskType dan assignee jika belum dimuat
+            if (!$task->relationLoaded('taskType')) {
+                $task->load('taskType');
+            }
+            if (!$task->relationLoaded('assignee')) {
+                $task->load('assignee');
+            }
+
+            // Leader bisa lihat tugas di departemennya ATAU tugas UMUM yang ditugaskan ke staff di departemennya
+            if (
+                ($task->taskType && $task->taskType->departemen === $departmentCode) ||
+                ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode))
+            ) {
+                return;
+            }
+        }
         abort(403, 'AKSES DITOLAK');
     }
 }

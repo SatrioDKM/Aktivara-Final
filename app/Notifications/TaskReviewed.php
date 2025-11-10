@@ -40,8 +40,31 @@ class TaskReviewed extends Notification
      */
     public function toDatabase(object $notifiable): array
     {
-        $statusText = $this->task->status === 'completed' ? 'disetujui' : 'ditolak dan perlu revisi';
-        $message = "Tugas '{$this->task->title}' yang Anda kerjakan telah {$statusText}.";
+        $statusText = '';
+        $message = '';
+
+        switch ($this->task->status) {
+            case 'completed':
+                $statusText = 'disetujui';
+                $message = "Tugas '{$this->task->title}' yang Anda kerjakan telah disetujui.";
+                break;
+            case 'revised':
+                $statusText = 'membutuhkan revisi';
+                $message = "Tugas '{$this->task->title}' yang Anda kerjakan membutuhkan revisi. Silakan cek detail tugas.";
+                break;
+            case 'cancelled':
+                $statusText = 'dibatalkan';
+                $message = "Tugas '{$this->task->title}' yang Anda kerjakan telah dibatalkan.";
+                break;
+            case 'rejected': // 'rejected' is now a final state, not 'needs revision'
+                $statusText = 'ditolak';
+                $message = "Tugas '{$this->task->title}' yang Anda kerjakan telah ditolak.";
+                break;
+            default:
+                $statusText = 'diperbarui';
+                $message = "Tugas '{$this->task->title}' yang Anda kerjakan telah diperbarui.";
+                break;
+        }
 
         return [
             'task_id' => $this->task->id,
@@ -57,11 +80,33 @@ class TaskReviewed extends Notification
     public function toTelegram(object $notifiable)
     {
         $url = route('tasks.show', $this->task->id);
+        $content = '';
 
-        if ($this->task->status === 'completed') {
-            $content = "✅ *Tugas Disetujui*\n\nKerja bagus! Tugas *'{$this->task->title}'* yang Anda kerjakan telah disetujui oleh Leader.";
-        } else {
-            $content = "⚠️ *Tugas Ditolak*\n\nTugas *'{$this->task->title}'* yang Anda kerjakan ditolak dan memerlukan revisi. Silakan cek detail tugas untuk perbaikan.";
+        switch ($this->task->status) {
+            case 'completed':
+                $content = "✅ *Tugas Disetujui*\n\nKerja bagus! Tugas *'{$this->task->title}'* yang Anda kerjakan telah disetujui oleh Leader.";
+                break;
+            case 'revised':
+                $content = "🔄 *Tugas Membutuhkan Revisi*\n\nTugas *'{$this->task->title}'* yang Anda kerjakan membutuhkan revisi. Silakan cek detail tugas untuk perbaikan.";
+                if ($this->task->review_notes) {
+                    $content .= "\n\n*Catatan Review:* {$this->task->review_notes}";
+                }
+                break;
+            case 'cancelled':
+                $content = "❌ *Tugas Dibatalkan*\n\nTugas *'{$this->task->title}'* yang Anda kerjakan telah dibatalkan oleh Leader.";
+                if ($this->task->review_notes) {
+                    $content .= "\n\n*Catatan Pembatalan:* {$this->task->review_notes}";
+                }
+                break;
+            case 'rejected':
+                $content = "🚫 *Tugas Ditolak*\n\nTugas *'{$this->task->title}'* yang Anda kerjakan telah ditolak oleh Leader.";
+                if ($this->task->review_notes) {
+                    $content .= "\n\n*Catatan Penolakan:* {$this->task->review_notes}";
+                }
+                break;
+            default:
+                $content = "ℹ️ *Tugas Diperbarui*\n\nTugas *'{$this->task->title}'* yang Anda kerjakan telah diperbarui.";
+                break;
         }
 
         return TelegramMessage::create()

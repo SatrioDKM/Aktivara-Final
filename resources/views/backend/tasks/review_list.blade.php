@@ -31,7 +31,6 @@
                                         <p class="flex items-center">
                                             <i class="fas fa-user-cog fa-fw mr-2 text-gray-400"></i>
                                             Dikerjakan oleh:
-                                            {{-- PERBAIKAN: Mengganti task.staff menjadi task.assignee --}}
                                             <strong class="ml-1 text-gray-700 dark:text-gray-200"
                                                 x-text="task.assignee ? task.assignee.name : 'N/A'"></strong>
                                         </p>
@@ -43,13 +42,17 @@
                                     </div>
                                 </div>
                                 <div class="flex-shrink-0 flex items-center space-x-2 w-full sm:w-auto">
-                                    <button @click="openRejectModal(task)"
-                                        class="w-1/2 sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900">
-                                        <i class="fas fa-times mr-2"></i> Tolak
-                                    </button>
-                                    <button @click="approveTask(task.id)"
-                                        class="w-1/2 sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900">
+                                    <button @click="submitReviewAction(task.id, 'complete')"
+                                        class="w-1/3 sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900">
                                         <i class="fas fa-check mr-2"></i> Setujui
+                                    </button>
+                                    <button @click="openReviewActionModal(task, 'request_revision')"
+                                        class="w-1/3 sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900">
+                                        <i class="fas fa-sync-alt mr-2"></i> Minta Revisi
+                                    </button>
+                                    <button @click="openReviewActionModal(task, 'cancel')"
+                                        class="w-1/3 sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900">
+                                        <i class="fas fa-times mr-2"></i> Batalkan
                                     </button>
                                 </div>
                             </div>
@@ -67,7 +70,7 @@
                     </template>
                 </div>
 
-                {{-- Modal untuk Alasan Penolakan --}}
+                {{-- Modal untuk Tindakan Review (Revisi/Batal) --}}
                 <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
                     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
@@ -76,23 +79,24 @@
                         <div @click="showModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full"
                             @click.away="showModal = false">
-                            <form @submit.prevent="submitRejection">
+                            <form @submit.prevent="submitReviewAction(selectedTask.id, currentReviewAction, reviewNotes)">
                                 <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Alasan Penolakan
-                                    </h3>
-                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Tulis alasan mengapa tugas
-                                        "<span class="font-bold" x-text="selectedTask.title"></span>" ditolak.</p>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                                        x-text="modalTitle"></h3>
+                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        Tulis catatan untuk tugas "<span class="font-bold" x-text="selectedTask.title"></span>".
+                                    </p>
                                     <div class="mt-4">
-                                        <textarea x-model="rejectionNotes" rows="4"
+                                        <textarea x-model="reviewNotes" rows="4"
                                             class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                            placeholder="Contoh: Lampiran foto kurang jelas, mohon ulangi."
+                                            :placeholder="notesPlaceholder"
                                             required></textarea>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-900 px-6 py-3 flex justify-end space-x-3">
                                     <x-secondary-button type="button" @click="showModal = false">Batal
                                     </x-secondary-button>
-                                    <x-danger-button type="submit">Kirim Penolakan</x-danger-button>
+                                    <x-primary-button type="submit" x-text="submitButtonText"></x-primary-button>
                                 </div>
                             </form>
                         </div>
@@ -111,7 +115,8 @@
                 isLoading: true,
                 showModal: false,
                 selectedTask: {},
-                rejectionNotes: '',
+                reviewNotes: '',
+                currentReviewAction: '', // 'complete', 'cancel', 'request_revision'
 
                 init() {
                     this.getTasks();
@@ -123,48 +128,64 @@
                         .then(response => {
                             this.tasks = response.data;
                         })
-                        .catch(error => alert('Gagal memuat daftar tugas.'))
+                        .catch(error => {
+                            window.iziToast.error({
+                                title: 'Gagal!',
+                                message: 'Gagal memuat daftar tugas.',
+                                position: 'topRight'
+                            });
+                            console.error(error);
+                        })
                         .finally(() => this.isLoading = false);
                 },
 
-                approveTask(taskId) {
-                    if (!confirm('Apakah Anda yakin ingin menyetujui dan menyelesaikan tugas ini?')) return;
-                    this.submitReview(taskId, 'completed');
-                },
-
-                openRejectModal(task) {
+                openReviewActionModal(task, actionType) {
                     this.selectedTask = task;
-                    this.rejectionNotes = '';
+                    this.currentReviewAction = actionType;
+                    this.reviewNotes = ''; // Clear notes for new action
                     this.showModal = true;
                 },
 
-                submitRejection() {
-                    if (!this.rejectionNotes.trim()) {
-                        alert('Alasan penolakan tidak boleh kosong.');
-                        return;
+                submitReviewAction(taskId, actionType, notes = null) {
+                    const minNotesLength = 10;
+                    if ((actionType === 'cancel' || actionType === 'request_revision')) {
+                        if (!notes.trim()) {
+                            window.iziToast.error({
+                                title: 'Gagal!',
+                                message: 'Catatan review tidak boleh kosong untuk tindakan ini.',
+                                position: 'topRight'
+                            });
+                            return;
+                        }
+                        if (notes.trim().length < minNotesLength) {
+                            window.iziToast.error({
+                                title: 'Gagal!',
+                                message: `Catatan review minimal ${minNotesLength} karakter.`,
+                                position: 'topRight'
+                            });
+                            return;
+                        }
                     }
-                    this.submitReview(this.selectedTask.id, 'rejected', this.rejectionNotes);
-                    this.showModal = false;
-                },
 
-                submitReview(taskId, decision, notes = null) {
                     axios.post(`/api/tasks/${taskId}/review`, {
-                        decision: decision,
-                        rejection_notes: notes
+                        review_action: actionType,
+                        review_notes: notes
                     })
                     .then(response => {
                         this.tasks = this.tasks.filter(t => t.id !== taskId);
-                        // Menggunakan iziToast untuk notifikasi yang lebih baik
                         window.iziToast.success({
                             title: 'Berhasil',
-                            message: 'Review berhasil dikirim.',
+                            message: response.data.message || 'Review berhasil dikirim.',
                             position: 'topRight'
                         });
+                        this.showModal = false; // Close modal on success
                     })
                     .catch(error => {
                         let message = 'Gagal mengirim review.';
                         if (error.response && error.response.data && error.response.data.message) {
                            message = error.response.data.message;
+                        } else if (error.response && error.response.data && error.response.data.errors) {
+                            message = Object.values(error.response.data.errors).flat().join(', ');
                         }
                         window.iziToast.error({
                             title: 'Error',
@@ -172,6 +193,25 @@
                             position: 'topRight'
                         });
                     });
+                },
+
+                // Computed properties for modal text
+                get modalTitle() {
+                    if (this.currentReviewAction === 'request_revision') return 'Minta Revisi Tugas';
+                    if (this.currentReviewAction === 'cancel') return 'Batalkan Tugas';
+                    return 'Tindakan Review';
+                },
+
+                get notesPlaceholder() {
+                    if (this.currentReviewAction === 'request_revision') return 'Contoh: Lampiran foto kurang jelas, mohon ulangi.';
+                    if (this.currentReviewAction === 'cancel') return 'Contoh: Tugas tidak relevan atau sudah diselesaikan secara manual.';
+                    return 'Catatan review (opsional)';
+                },
+
+                get submitButtonText() {
+                    if (this.currentReviewAction === 'request_revision') return 'Kirim Revisi';
+                    if (this.currentReviewAction === 'cancel') return 'Batalkan Tugas';
+                    return 'Kirim Review';
                 }
             }));
         });

@@ -69,80 +69,93 @@ class AssetController extends Controller
     // API METHODS
     // ===================================================================
 
-    /**
-     * API: Menampilkan daftar aset dengan paginasi dan filter.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-
-    public function index(Request $request): JsonResponse
-    {
-        $request->validate([
-            'page' => 'nullable|integer|min:1',
-            'perPage' => 'nullable|integer|min:1|max:100',
-            'search' => 'nullable|string|max:255',
-            'asset_type' => 'required|in:fixed_asset,consumable',
-        ]);
-
-        $search = $request->input('search');
-        $assetType = $request->input('asset_type');
-        $perPage = $request->input('perPage', 10);
-
-        if ($assetType == 'consumable') {
-
-            // --- Alur 1: Barang Habis Pakai (Tidak Berubah) ---
-            $query = Asset::query()
-                ->with(['room', 'assetCategory'])
-                ->where('asset_type', 'consumable')
-                ->when($search, function ($q, $search) {
-                    $q->where('name_asset', 'like', '%' . $search . '%')
-                        ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
-                })
-                ->latest();
-
-            return response()->json($query->paginate($perPage));
-        } else {
-
-            // --- Alur 2: Aset Tetap (FIXED: Menggunakan groupBy) ---
-
-            $query = Asset::query()
-                ->with('assetCategory') // Wajib Eager Load
-                ->where('asset_type', 'fixed_asset')
-                ->when($search, function ($q, $search) {
-                    $q->where('name_asset', 'like', '%' . $search . '%')
-                        ->orWhere('serial_number', 'like', '%' . $search . '%')
-                        ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+        /**
+         * API: Menampilkan daftar aset dengan paginasi dan filter.
+         *
+         * @param Request $request
+         * @return JsonResponse
+         */
+    
+        public function index(Request $request): JsonResponse
+        {
+            $request->validate([
+                'page' => 'nullable|integer|min:1',
+                'perPage' => 'nullable|integer|min:1|max:100',
+                'search' => 'nullable|string|max:255',
+                'asset_type' => 'required|in:fixed_asset,consumable',
+            ]);
+    
+            $search = $request->input('search');
+            $assetType = $request->input('asset_type');
+            $perPage = $request->input('perPage', 10);
+    
+            if ($assetType == 'consumable') {
+    
+                // --- Alur 1: Barang Habis Pakai (Tidak Berubah) ---
+                $query = Asset::query()
+                    ->with(['room', 'assetCategory'])
+                    ->where('asset_type', 'consumable')
+                    ->when($search, function ($q, $search) {
+                        $q->where('name_asset', 'like', '%' . $search . '%')
+                            ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                    })
+                    ->latest();
+    
+                return response()->json($query->paginate($perPage));
+            } else {
+    
+                // --- Alur 2: Aset Tetap (FIXED: Menggunakan groupBy) ---
+    
+                $query = Asset::query()
+                    ->with('assetCategory') // Wajib Eager Load
+                    ->where('asset_type', 'fixed_asset')
+                    ->when($search, function ($q, $search) {
+                        $q->where('name_asset', 'like', '%' . $search . '%')
+                            ->orWhere('serial_number', 'like', '%' . $search . '%')
+                            ->orWhereHas('assetCategory', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                    });
+    
+                $allAssets = $query->get();
+    
+                // Kelompokkan berdasarkan nama kategori.
+                // Aset dengan category_id=NULL akan masuk ke grup 'Tanpa Kategori'.
+                $grouped = $allAssets->groupBy(function ($asset) {
+                    return $asset->assetCategory->name ?? 'Tanpa Kategori';
                 });
-
-            $allAssets = $query->get();
-
-            // Kelompokkan berdasarkan nama kategori. 
-            // Aset dengan category_id=NULL akan masuk ke grup 'Tanpa Kategori'.
-            $grouped = $allAssets->groupBy(function ($asset) {
-                return $asset->assetCategory->name ?? 'Tanpa Kategori';
-            });
-
-            // Ubah formatnya agar sesuai dengan yg diharapkan frontend
-            $categorySummary = $grouped->map(function ($assets, $categoryName) {
-                // Tentukan ID. Jika 'Tanpa Kategori', kita beri ID '0'.
-                $id = ($categoryName == 'Tanpa Kategori') ? 0 : $assets->first()->asset_category_id;
-
-                return [
-                    'id' => $id, // ID Kategori (atau 0 jika null)
-                    'name' => $categoryName,
-                    'assets_count' => $assets->count()
-                ];
-            })->sortBy('name')->values(); // Urutkan A-Z dan reset keys
-
-            return response()->json($categorySummary);
+    
+                // Ubah formatnya agar sesuai dengan yg diharapkan frontend
+                $categorySummary = $grouped->map(function ($assets, $categoryName) {
+                    // Tentukan ID. Jika 'Tanpa Kategori', kita beri ID '0'.
+                    $id = ($categoryName == 'Tanpa Kategori') ? 0 : $assets->first()->asset_category_id;
+    
+                    return [
+                        'id' => $id, // ID Kategori (atau 0 jika null)
+                        'name' => $categoryName,
+                        'assets_count' => $assets->count()
+                    ];
+                })->sortBy('name')->values(); // Urutkan A-Z dan reset keys
+    
+                return response()->json($categorySummary);
+            }
         }
-    }
-
-    /**
-     * API: Menyimpan data aset baru (bisa lebih dari satu).
-     *
-     * @param Request $request
+    
+        /**
+         * API: Mengambil daftar semua aset yang tersedia atau sedang digunakan untuk dropdown.
+         *
+         * @return JsonResponse
+         */
+        public function listAllForDropdown(): JsonResponse
+        {
+            $assets = Asset::whereIn('status', ['available', 'in_use'])
+                ->orderBy('name_asset')
+                ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']); // Tambahkan 'current_stock'
+    
+            return response()->json($assets);
+        }
+    
+        /**
+         * API: Menyimpan data aset baru (bisa lebih dari satu).
+         *     * @param Request $request
      * @return JsonResponse
      */
     public function store(Request $request): JsonResponse

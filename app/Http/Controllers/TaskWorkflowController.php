@@ -11,6 +11,7 @@ use App\Models\Building;
 use App\Models\TaskType;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
+use App\Models\AssetMovement;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Notifications\TaskClaimed;
@@ -327,8 +328,10 @@ class TaskWorkflowController extends Controller
             DB::transaction(function () use ($id, &$claimedTask, $request) {
                 $taskToClaim = Task::where('id', $id)->lockForUpdate()->firstOrFail();
 
-                if (!($taskToClaim->status === 'unassigned' && $taskToClaim->user_id === null) &&
-                    !($taskToClaim->status === 'revised' && $taskToClaim->user_id === Auth::id())) {
+                if (
+                    !($taskToClaim->status === 'unassigned' && $taskToClaim->user_id === null) &&
+                    !($taskToClaim->status === 'revised' && $taskToClaim->user_id === Auth::id())
+                ) {
                     throw new \Exception('Tugas ini tidak dapat diambil. Status tidak sesuai atau sudah diambil oleh staff lain.');
                 }
 
@@ -539,15 +542,15 @@ class TaskWorkflowController extends Controller
                 $q->whereHas('taskType', function ($subQ) use ($departmentCode) {
                     $subQ->where('departemen', $departmentCode);
                 })
-                // ATAU tugas di mana departemen taskType adalah 'UMUM' DAN assignee berada di departemen leader
-                ->orWhere(function ($subQ) use ($departmentCode) {
-                    $subQ->whereHas('taskType', function ($subSubQ) {
-                        $subSubQ->where('departemen', 'UMUM');
-                    })
-                    ->whereHas('assignee', function ($subSubQ) use ($departmentCode) {
-                        $subSubQ->where('role_id', 'like', $departmentCode . '02'); // Asumsi peran staf berakhiran '02'
+                    // ATAU tugas di mana departemen taskType adalah 'UMUM' DAN assignee berada di departemen leader
+                    ->orWhere(function ($subQ) use ($departmentCode) {
+                        $subQ->whereHas('taskType', function ($subSubQ) {
+                            $subSubQ->where('departemen', 'UMUM');
+                        })
+                            ->whereHas('assignee', function ($subSubQ) use ($departmentCode) {
+                                $subSubQ->where('role_id', 'like', $departmentCode . '02'); // Asumsi peran staf berakhiran '02'
+                            });
                     });
-                });
             });
         } else {
             // Peran lain tidak seharusnya melihat daftar review ini, atau tidak ada tugas

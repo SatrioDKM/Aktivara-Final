@@ -295,11 +295,11 @@
                                                             class="font-medium capitalize"
                                                             x-text="task.priority"></span></p>
                                                 </div>
-                                                <div class="mt-3 sm:mt-0">
-                                                    <x-primary-button @click="claimTask(task.id)"
-                                                        ::disabled="isSubmitting"><span
-                                                            x-show="!isSubmitting">Ambil</span><span
-                                                            x-show="isSubmitting">Memproses...</span></x-primary-button>
+                                        <x-primary-button @click="openClaimModal(task)"
+                                                        ::disabled="isSubmitting.includes(task.id)">
+                                                        <span x-show="!isSubmitting.includes(task.id)">Ambil</span>
+                                                        <span x-show="isSubmitting.includes(task.id)">Memproses...</span>
+                                                    </x-primary-button>
                                                 </div>
                                             </div>
                                         </template>
@@ -331,6 +331,110 @@
                     @endif
                     
                 </div>
+
+                {{-- Modal untuk Klaim Tugas (DARI AVAILABLE.BLADE.PHP) --}}
+                <div x-show="showClaimModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+                    role="dialog" aria-modal="true">
+                    <div
+                        class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div x-show="showClaimModal" x-transition:enter="ease-out duration-300"
+                            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                            x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
+                        </div>
+                        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                        <div x-show="showClaimModal" x-transition:enter="ease-out duration-300"
+                            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                            x-transition:leave="ease-in duration-200"
+                            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="sm:flex sm:items-start">
+                                    <div
+                                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <i class="fas fa-hand-paper text-indigo-600"></i>
+                                    </div>
+                                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                                            id="modal-title">
+                                            Ambil Tugas
+                                        </h3>
+                                        <div class="mt-2">
+                                            <p class="text-sm text-gray-500 dark:text-gray-400" x-show="currentTaskToClaim">
+                                                Anda akan mengklaim tugas "<strong x-text="currentTaskToClaim ? currentTaskToClaim.title : ''"></strong>".
+                                                Mohon konfirmasi atau perbarui detail lokasi dan aset jika diperlukan.
+                                            </p>
+                                            <div class="mt-4 space-y-4" x-show="currentTaskToClaim">
+                                                {{-- DEBUGGING --}}
+                                                <div class="p-2 bg-red-100 text-red-800 rounded-md text-xs">
+                                                    <p>DEBUG:</p>
+                                                    <p>Selected Room ID: <strong x-text="selectedRoomId || 'None'"></strong></p>
+                                                    <p>Selected Asset ID: <strong x-text="selectedAssetId || 'None'"></strong></p>
+                                                </div>
+                                                {{-- END DEBUGGING --}}
+                                                <div>
+                                                    <label for="room_id_modal" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lokasi</label>
+                                                    <template x-if="currentTaskToClaim && currentTaskToClaim.room_id">
+                                                        <p class="mt-1 text-sm text-gray-900 dark:text-gray-100"
+                                                            x-text="currentTaskToClaim.room && currentTaskToClaim.room.floor && currentTaskToClaim.room.floor.building ? `${currentTaskToClaim.room.floor.building.name_building} / ${currentTaskToClaim.room.floor.name_floor} / ${currentTaskToClaim.room.name_room}` : 'Tidak spesifik'">
+                                                        </p>
+                                                    </template>
+                                                    <template x-if="currentTaskToClaim && !currentTaskToClaim.room_id">
+                                                        <select id="room_id_modal" name="room_id" x-model="selectedRoomId"
+                                                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                                            <option value="">Pilih Lokasi (Opsional)</option>
+                                                            <template x-for="room in allRooms" :key="room.id">
+                                                                <option :value="room.id"
+                                                                    x-text="`${room.floor.building.name_building} / ${room.floor.name_floor} / ${room.name_room}`">
+                                                                </option>
+                                                            </template>
+                                                        </select>
+                                                    </template>
+                                                </div>
+                                                <div>
+                                                    <label for="asset_id_modal" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset</label>
+                                                    <template x-if="currentTaskToClaim && currentTaskToClaim.asset_id">
+                                                        <p class="mt-1 text-sm text-gray-900 dark:text-gray-100"
+                                                            x-text="currentTaskToClaim.asset ? `${currentTaskToClaim.asset.name_asset} (${currentTaskToClaim.asset.serial_number})` : 'Tidak spesifik'">
+                                                        </p>
+                                                    </template>
+                                                    <template x-if="currentTaskToClaim && !currentTaskToClaim.asset_id">
+                                                        <select id="asset_id_modal" name="asset_id" x-model="selectedAssetId"
+                                                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                                            <option value="">Pilih Aset (Opsional)</option>
+                                                            <template x-for="asset in allAssets" :key="asset.id">
+                                                                <option :value="asset.id"
+                                                                    x-text="`${asset.name_asset} ${asset.serial_number ? '(' + asset.serial_number + ')' : ''} - Stok: ${asset.current_stock}`">
+                                                                </option>
+                                                            </template>
+                                                        </select>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button type="button" @click="claimTask()" :disabled="isSubmitting.includes(currentTaskToClaim ? currentTaskToClaim.id : null)"
+                                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
+                                    <template x-if="isSubmitting.includes(currentTaskToClaim ? currentTaskToClaim.id : null)">
+                                        <i class="fas fa-circle-notch fa-spin mr-2"></i>
+                                    </template>
+                                    Klaim Tugas
+                                </button>
+                                <button type="button" @click="showClaimModal = false"
+                                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -348,7 +452,6 @@
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.tailwindcss.js"></script> --}}
 
     <script>
-        // PERBAIKAN: Semua logika disatukan ke dalam satu komponen Alpine
         function dashboard() {
             return {
                 isLoading: true,
@@ -357,8 +460,16 @@
                 availableTasks: { data: [], from: 0, to: 0, total: 0, current_page: 1, prev_page_url: null, next_page_url: null },
                 search: '',
                 isLoadingTasks: false,
-                isSubmitting: false,
+                isSubmitting: [], // Array for tracking submitting tasks by ID
                 tasksTable: null,
+
+                // Properties from available.blade.php
+                allRooms: [],
+                allAssets: [],
+                showClaimModal: false,
+                currentTaskToClaim: null,
+                selectedRoomId: '',
+                selectedAssetId: '',
 
                 initDashboard() {
                     const endDate = new Date();
@@ -367,6 +478,9 @@
                     this.filters.start_date = startDate.toISOString().split('T')[0];
                     this.filters.end_date = endDate.toISOString().split('T')[0];
                     this.getDashboardData();
+                    // Fetch data for modals
+                    this.getRooms();
+                    this.getAssets();
                 },
 
                 getDashboardData(page = 1) {
@@ -387,6 +501,54 @@
                         .finally(() => {
                             this.isLoading = false;
                             this.isLoadingTasks = false;
+                        });
+                },
+
+                // Methods from available.blade.php
+                getRooms() {
+                    axios.get('{{ route("api.rooms.list") }}')
+                        .then(response => { this.allRooms = response.data; })
+                        .catch(error => console.error('Gagal memuat daftar ruangan:', error));
+                },
+
+                getAssets() {
+                    axios.get('{{ route("api.assets.list_for_dropdown") }}')
+                        .then(response => { this.allAssets = response.data; })
+                        .catch(error => console.error('Gagal memuat daftar aset:', error));
+                },
+
+                openClaimModal(task) {
+                    this.currentTaskToClaim = task;
+                    this.selectedRoomId = task.room_id || '';
+                    this.selectedAssetId = task.asset_id || '';
+                    this.showClaimModal = true;
+                },
+
+                claimTask() {
+                    if (!this.currentTaskToClaim) return;
+                    const taskId = this.currentTaskToClaim.id;
+                    this.isSubmitting.push(taskId);
+                    const payload = {};
+                    if (this.selectedRoomId) payload.room_id = this.selectedRoomId;
+                    if (this.selectedAssetId) payload.asset_id = this.selectedAssetId;
+
+                    axios.post(`/api/tasks/${taskId}/claim`, payload)
+                        .then(response => {
+                            sessionStorage.setItem('toastMessage', 'Tugas berhasil diambil!');
+                            window.location.href = '{{ route("tasks.my_tasks") }}';
+                        })
+                        .catch(error => {
+                            let message = 'Gagal mengambil tugas.';
+                            if (error.response && error.response.data && error.response.data.message) {
+                                message = error.response.data.message;
+                            } else if (error.response && error.response.data && error.response.data.errors) {
+                                message = Object.values(error.response.data.errors).flat().join(', ');
+                            }
+                            window.iziToast.error({ title: 'Gagal!', message: message, position: 'topRight' });
+                            this.isSubmitting = this.isSubmitting.filter(id => id !== taskId);
+                        })
+                        .finally(() => {
+                            this.showClaimModal = false;
                         });
                 },
 
@@ -416,14 +578,6 @@
                     if (!ctx) return;
                     if (window.assetMovementChart instanceof Chart) window.assetMovementChart.destroy();
                     window.assetMovementChart = new Chart(ctx, { type: 'bar', data: { labels: ['Masuk', 'Keluar'], datasets: [{ label: 'Jumlah', data: [this.stats.asset_movement.in, this.stats.asset_movement.out], backgroundColor: ['#10B981', '#EF4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
-                },
-
-                claimTask(taskId) {
-                    this.isSubmitting = true;
-                    axios.post(`/api/tasks/${taskId}/claim`)
-                        .then(() => { window.location.href = '{{ route("tasks.my_tasks") }}'; })
-                        .catch(err => window.iziToast.error({ title: 'Gagal', message: err.response?.data?.message || 'Gagal mengambil tugas.', position: 'topRight' }))
-                        .finally(() => this.isSubmitting = false);
                 },
 
                 initializeLeaderPlugins() {

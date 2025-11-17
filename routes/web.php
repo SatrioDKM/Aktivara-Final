@@ -19,8 +19,7 @@ use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
-
-
+use App\Http\Controllers\NotificationController; // Add this line
 
 /*
 |--------------------------------------------------------------------------
@@ -184,6 +183,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // NOTE: Halaman detail tugas (untuk semua)
         Route::get('/{taskId}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('taskId', '[0-9]+');
+    });
+
+    // --- Rute Notifikasi ---
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'viewPage'])->name('index');
+        Route::patch('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        Route::patch('/mark-one-as-read', [NotificationController::class, 'markOneAsRead'])->name('markAsRead');
     });
 });
 

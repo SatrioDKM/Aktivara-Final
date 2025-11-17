@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Auth; // Pastikan ini di-import
 
 class NotificationController extends Controller
 {
+    public function viewPage()
+    {
+        $user = Auth::user();
+        $unreadNotifications = $user->unreadNotifications()->paginate(10);
+        $readNotifications = $user->readNotifications()->paginate(10);
+
+        return view('notifications.index', compact('unreadNotifications', 'readNotifications'));
+    }
+
     /**
      * Mengambil notifikasi (belum dibaca & sudah dibaca).
      */

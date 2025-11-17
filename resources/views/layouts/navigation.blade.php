@@ -251,6 +251,48 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                {{-- Notification Dropdown --}}
+                <div x-data="notifications()" x-init="init()" class="relative">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button @click="toggle()"
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <i class="fas fa-bell w-4 text-center"></i>
+                                <span x-show="unreadCount > 0"
+                                    class="ms-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
+                                    x-text="unreadCount"></span>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="block px-4 py-2 text-xs text-gray-400">
+                                Notifikasi (<span x-text="unreadCount"></span> belum dibaca)
+                            </div>
+
+                            <template x-for="notification in unread" :key="notification.id">
+                                <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
+                                    class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                    <p class="font-bold" x-text="notification.data.message"></p>
+                                    <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                </a>
+                            </template>
+
+                            <div class="border-t border-gray-200 dark:border-gray-600"></div>
+
+                            <x-dropdown-link :href="route('notifications.index')">
+                                {{ __('Lihat Semua Notifikasi') }}
+                            </x-dropdown-link>
+
+                            <div class="border-t border-gray-200 dark:border-gray-600" x-show="unreadCount > 0"></div>
+
+                            <button @click="markAllAsRead()" x-show="unreadCount > 0"
+                                class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                Tandai semua sudah dibaca
+                            </button>
+                        </x-slot>
+                    </x-dropdown>
+                </div>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
@@ -266,13 +308,11 @@
                             </div>
                         </button>
                     </x-slot>
-
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
                             <i class="fas fa-user-circle w-4 text-center me-2"></i>
                             {{ __('Profile') }}
                         </x-dropdown-link>
-
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
@@ -459,6 +499,30 @@
         </div>
         @endrole
         @endauth
+
+        {{-- Responsive Notification Link --}}
+        <div x-data="notifications()" x-init="init()" class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">
+                    Notifikasi
+                    <span x-show="unreadCount > 0"
+                        class="ms-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
+                        x-text="unreadCount"></span>
+                </div>
+            </div>
+            <div class="mt-3 space-y-1">
+                <template x-for="notification in unread" :key="notification.id">
+                    <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
+                        class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:text-gray-800 dark:focus:text-gray-200 focus:bg-gray-50 dark:focus:bg-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition duration-150 ease-in-out">
+                        <p class="font-bold" x-text="notification.data.message"></p>
+                        <p class="text-sm text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                    </a>
+                </template>
+                <x-responsive-nav-link :href="route('notifications.index')">
+                    {{ __('Lihat Semua Notifikasi') }}
+                </x-responsive-nav-link>
+            </div>
+        </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">

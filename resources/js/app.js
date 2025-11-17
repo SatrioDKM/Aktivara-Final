@@ -118,7 +118,7 @@ function notifications() {
 
         init() {
             this.fetchNotifications();
-            setInterval(() => this.fetchNotifications(), 60000);
+            setInterval(() => this.fetchNotifications(), 15000); // Fetch every 15 seconds
         },
     };
 }

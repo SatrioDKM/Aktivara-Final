@@ -24,6 +24,7 @@ use App\Notifications\ReportSubmitted;
 use App\Notifications\NewTaskAvailable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\TaskReportHistory;
 use Illuminate\Support\Facades\Notification;
 
 class TaskWorkflowController extends Controller
@@ -75,7 +76,9 @@ class TaskWorkflowController extends Controller
             'room.floor.building',
             'asset',
             'creator',
-            'assignee'
+            'assignee',
+            'reportHistories.submittedBy',
+            'reportHistories.reviewedBy'
         ])->findOrFail($taskId);
 
         $this->authorizeTaskAccess($task);
@@ -568,9 +571,6 @@ class TaskWorkflowController extends Controller
      */
     public function submitReview(Request $request, string $id): JsonResponse
     {
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // 1. Ubah parameter dari `Task $task` menjadi `string $id`.
-        // 2. Ambil data task secara manual menggunakan findOrFail untuk memastikan semua kolom termuat.
         $task = Task::findOrFail($id);
 
         $user = Auth::user();
@@ -581,25 +581,18 @@ class TaskWorkflowController extends Controller
         $isAuthorizedLeader = false;
         if ($isLeader) {
             $departmentCode = substr($user->role_id, 0, 2);
-            // Muat relasi taskType dan assignee jika belum dimuat
             if (!$task->relationLoaded('taskType')) {
                 $task->load('taskType');
             }
             if (!$task->relationLoaded('assignee')) {
                 $task->load('assignee');
             }
-
-            // Cek apakah departemen taskType cocok dengan departemen leader
-            if ($task->taskType && $task->taskType->departemen === $departmentCode) {
-                $isAuthorizedLeader = true;
-            }
-            // ATAU jika taskType adalah 'UMUM' dan assignee berada di departemen leader
-            if ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode)) {
+            if (($task->taskType && $task->taskType->departemen === $departmentCode) ||
+                ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode))) {
                 $isAuthorizedLeader = true;
             }
         }
 
-        // Logika otorisasi sekarang akan bekerja dengan benar karena $task->created_by sudah ada nilainya.
         if (!$isCreator && !$isManagerOrAdmin && !$isAuthorizedLeader) {
             return response()->json(['message' => 'Anda tidak berwenang mereview tugas ini.'], 403);
         }
@@ -615,22 +608,38 @@ class TaskWorkflowController extends Controller
 
         $reviewAction = $request->input('review_action');
         $notes = $request->input('review_notes');
-
         $newStatus = '';
+
+        // Save history before updating the task status
+        if ($reviewAction === 'request_revision' || $reviewAction === 'cancel') {
+            if ($task->report_text || $task->image_before || $task->image_after) {
+                TaskReportHistory::create([
+                    'task_id' => $task->id,
+                    'submitted_by' => $task->user_id,
+                    'report_text' => $task->report_text,
+                    'image_before' => $task->image_before,
+                    'image_after' => $task->image_after,
+                    'submitted_at' => $task->updated_at,
+                    'review_action' => $reviewAction,
+                    'review_notes' => $notes,
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                ]);
+            }
+        }
+
         switch ($reviewAction) {
             case 'complete':
                 $newStatus = 'completed';
-                // --- LOGIKA BARU: Update kondisi dan status aset saat tugas selesai ---
                 if ($task->asset_id) {
                     $asset = Asset::find($task->asset_id);
                     if ($asset) {
                         $asset->update([
                             'condition' => 'Baik',
-                            'status' => 'Tersedia',
+                            'status' => 'available',
                         ]);
                     }
                 }
-                // --- AKHIR LOGIKA BARU ---
                 break;
             case 'cancel':
                 $newStatus = 'cancelled';
@@ -642,12 +651,20 @@ class TaskWorkflowController extends Controller
                 return response()->json(['message' => 'Aksi review tidak valid.'], 400);
         }
 
-        $task->update([
+        $updateData = [
             'status' => $newStatus,
-            'reviewed_by' => $user->id,
-            'review_notes' => $notes, // Use review_notes for all actions
-            'rejection_notes' => null, // Clear old rejection notes
-        ]);
+            'reviewed_by' => Auth::id(),
+            'review_notes' => $notes,
+            'rejection_notes' => null,
+        ];
+
+        if ($reviewAction === 'request_revision') {
+            $updateData['report_text'] = null;
+            $updateData['image_before'] = null;
+            $updateData['image_after'] = null;
+        }
+
+        $task->update($updateData);
 
         try {
             if ($task->assignee) {

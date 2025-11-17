@@ -93,4 +93,12 @@ class Task extends Model
     {
         return $this->belongsTo(AssetsMaintenance::class, 'assets_maintenance_id');
     }
+
+    /**
+     * Relasi ke riwayat laporan tugas.
+     */
+    public function reportHistories(): HasMany
+    {
+        return $this->hasMany(TaskReportHistory::class)->orderBy('created_at', 'desc');
+    }
 }

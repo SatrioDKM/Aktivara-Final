@@ -129,36 +129,25 @@ class PackingListController extends Controller
      */
     public function getAvailableAssets(Request $request): JsonResponse
     {
-        // ... (Method getAvailableAssets tidak berubah) ...
         $search = $request->input('q');
 
         $assets = Asset::query()
             ->where('status', 'available')
+            ->where('asset_type', 'consumable') // Hanya ambil barang habis pakai
+            ->where('current_stock', '>', 0)   // yang stoknya lebih dari 0
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name_asset', 'like', "%{$search}%")
                         ->orWhere('serial_number', 'like', "%{$search}%");
                 });
             })
-            ->where(function ($query) {
-                $query->where('asset_type', 'fixed_asset') // tampil meski stok 0
-                    ->orWhere(function ($q) {
-                        $q->where('asset_type', 'consumable')
-                            ->where('current_stock', '>', 0); // konsumsi harus ada stok
-                    });
-            })
             ->orderBy('name_asset')
             ->limit(20)
             ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']);
 
-
         $formattedAssets = $assets->map(function ($asset) {
-            $text = $asset->name_asset;
-            if ($asset->asset_type == 'fixed_asset') {
-                $text .= ' (S/N: ' . ($asset->serial_number ?? 'N/A') . ')';
-            } else {
-                $text .= ' (Stok: ' . $asset->current_stock . ')';
-            }
+            // Format teks tidak perlu diubah karena sudah menangani consumable
+            $text = $asset->name_asset . ' (Stok: ' . $asset->current_stock . ')';
             return ['id' => $asset->id, 'text' => $text];
         });
 

@@ -169,6 +169,54 @@
                                     </template>
                                 </div>
                             </div>
+
+                            {{-- Riwayat Laporan --}}
+                            <template x-if="task.report_histories && task.report_histories.length > 0">
+                                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center">
+                                            <i class="fas fa-history mr-3 text-gray-400"></i> Riwayat Laporan
+                                        </h3>
+                                        <div class="space-y-6">
+                                            <template x-for="(history, index) in task.report_histories" :key="history.id">
+                                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                                    <div class="flex justify-between items-center mb-3">
+                                                        <h4 class="font-semibold text-gray-800 dark:text-gray-200" x-text="`Laporan #${task.report_histories.length - index}`"></h4>
+                                                        <span class="text-xs text-gray-500" x-text="`Direview pada: ${new Date(history.reviewed_at).toLocaleString('id-ID')}`"></span>
+                                                    </div>
+                                                    <div class="mb-4 p-3 rounded-md" :class="{
+                                                        'bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500': history.review_action === 'request_revision',
+                                                        'bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500': history.review_action === 'rejected'
+                                                    }">
+                                                        <p class="font-bold text-sm" x-text="history.review_action === 'request_revision' ? 'Revisi Diminta' : 'Ditolak'"></p>
+                                                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">Catatan dari <strong x-text="history.reviewed_by ? history.reviewed_by.name : 'N/A'"></strong>: <span x-text="history.review_notes"></span></p>
+                                                    </div>
+                                                    <div class="space-y-4">
+                                                        <div>
+                                                            <h5 class="font-semibold text-sm text-gray-800 dark:text-gray-200">Deskripsi Laporan:</h5>
+                                                            <p class="text-sm text-gray-700 dark:text-gray-300 mt-1" x-text="history.report_text"></p>
+                                                        </div>
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <h5 class="font-semibold text-sm text-gray-800 dark:text-gray-200">Foto Sebelum:</h5>
+                                                                <a :href="history.image_before ? `/storage/${history.image_before}` : '#'" target="_blank">
+                                                                    <img :src="history.image_before ? `/storage/${history.image_before}` : `{{ asset('assets/backend/img/image-default.png') }}`" alt="Foto Sebelum" class="mt-2 rounded-lg w-full h-40 object-cover shadow-md">
+                                                                </a>
+                                                            </div>
+                                                            <div>
+                                                                <h5 class="font-semibold text-sm text-gray-800 dark:text-gray-200">Foto Sesudah:</h5>
+                                                                <a :href="history.image_after ? `/storage/${history.image_after}` : '#'" target="_blank">
+                                                                    <img :src="history.image_after ? `/storage/${history.image_after}` : `{{ asset('assets/backend/img/image-default.png') }}`" alt="Foto Sesudah" class="mt-2 rounded-lg w-full h-40 object-cover shadow-md">
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                         <div class="lg:col-span-1 space-y-6">
@@ -221,6 +269,24 @@
                                             class="text-lg font-bold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center">
                                             <i class="fas fa-paper-plane mr-3 text-gray-400"></i> Submit Laporan
                                         </h3>
+
+                                        {{-- Konfirmasi Aset & Lokasi --}}
+                                        <div class="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                            <h4 class="font-semibold text-md text-gray-800 dark:text-gray-200 mb-2">Konfirmasi Detail Tugas</h4>
+                                            <div class="space-y-2 text-sm">
+                                                <div class="flex justify-between items-start">
+                                                    <span class="text-gray-500 dark:text-gray-400 flex-shrink-0 mr-2">Lokasi:</span>
+                                                    <span class="font-semibold text-gray-800 dark:text-gray-200 text-right"
+                                                        x-text="task.room && task.room.floor && task.room.floor.building ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor} / ${task.room.name_room}` : 'Tidak spesifik'"></span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-500 dark:text-gray-400">Aset Terkait:</span>
+                                                    <span class="font-semibold text-gray-800 dark:text-gray-200"
+                                                        x-text="task.asset ? `${task.asset.name_asset} (${task.asset.serial_number || 'N/A'})` : '-'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="space-y-4">
                                             <div>
                                                 <label for="report_text"

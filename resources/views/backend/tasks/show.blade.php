@@ -171,12 +171,12 @@
                             </div>
 
                             {{-- Riwayat Laporan --}}
-                            <template x-if="task.report_histories && task.report_histories.length > 0">
-                                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
-                                    <div class="p-6">
-                                        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center">
-                                            <i class="fas fa-history mr-3 text-gray-400"></i> Riwayat Laporan
-                                        </h3>
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
+                                <div class="p-6">
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center">
+                                        <i class="fas fa-history mr-3 text-gray-400"></i> Riwayat Laporan
+                                    </h3>
+                                    <template x-if="task.report_histories && task.report_histories.length > 0">
                                         <div class="space-y-6">
                                             <template x-for="(history, index) in task.report_histories" :key="history.id">
                                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -186,9 +186,9 @@
                                                     </div>
                                                     <div class="mb-4 p-3 rounded-md" :class="{
                                                         'bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500': history.review_action === 'request_revision',
-                                                        'bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500': history.review_action === 'rejected'
+                                                        'bg-gray-100 dark:bg-gray-900/30 border-l-4 border-gray-500': history.review_action === 'cancel'
                                                     }">
-                                                        <p class="font-bold text-sm" x-text="history.review_action === 'request_revision' ? 'Revisi Diminta' : 'Ditolak'"></p>
+                                                        <p class="font-bold text-sm" x-text="history.review_action === 'request_revision' ? 'Revisi Diminta' : 'Dibatalkan'"></p>
                                                         <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">Catatan dari <strong x-text="history.reviewed_by ? history.reviewed_by.name : 'N/A'"></strong>: <span x-text="history.review_notes"></span></p>
                                                     </div>
                                                     <div class="space-y-4">
@@ -214,9 +214,15 @@
                                                 </div>
                                             </template>
                                         </div>
-                                    </div>
+                                    </template>
+                                    <template x-if="!task.report_histories || task.report_histories.length === 0">
+                                        <div class="text-center py-8">
+                                            <i class="fas fa-info-circle text-4xl text-gray-400"></i>
+                                            <p class="mt-4 text-gray-500 dark:text-gray-400">Tidak ada riwayat laporan untuk tugas ini.</p>
+                                        </div>
+                                    </template>
                                 </div>
-                            </template>
+                            </div>
                         </div>
 
                         <div class="lg:col-span-1 space-y-6">

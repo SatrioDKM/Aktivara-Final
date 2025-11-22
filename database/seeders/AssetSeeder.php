@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Asset;
-use App\Models\AssetCategory; // <-- DITAMBAHKAN
+use App\Models\AssetCategory;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -12,128 +12,141 @@ class AssetSeeder extends Seeder
 {
     public function run(): void
     {
+        // 1. Ambil Data Pendukung (User & Room)
         $adminUser = User::where('role_id', 'SA00')->first();
         $officeRoom = Room::where('name_room', 'Kantor Manajer')->first();
         $meetingRoom = Room::where('name_room', 'Ruang Rapat Sakura')->first();
         $storageRoom = Room::where('name_room', 'Gudang Parkir B1')->first();
 
+        // Cek jika data pendukung tidak ada
         if (!$adminUser || !$officeRoom || !$meetingRoom || !$storageRoom) {
-            $this->command->info('Prerequisite User/Room not found, skipping AssetSeeder.');
+            $this->command->info('User admin atau Ruangan belum dibuat. Pastikan UserSeeder & RoomSeeder sudah jalan.');
             return;
         }
 
-        // --- PERBAIKAN: Buat atau cari Kategori Aset spesifik dengan kode ---
-        $catAC = AssetCategory::firstOrCreate(
-            ['code' => 'AC'],
-            ['name' => 'Air Conditioner']
-        );
-        $catMON = AssetCategory::firstOrCreate(
-            ['code' => 'MON'],
-            ['name' => 'Monitor']
-        );
-        $catPRJ = AssetCategory::firstOrCreate(
-            ['code' => 'PRJ'],
-            ['name' => 'Proyektor']
-        );
-        $catPRT = AssetCategory::firstOrCreate(
-            ['code' => 'PRT'],
-            ['name' => 'Printer']
-        );
-        $catLTP = AssetCategory::firstOrCreate(
-            ['code' => 'LTP'],
-            ['name' => 'Laptop']
-        );
-        $catCHR = AssetCategory::firstOrCreate(
-            ['code' => 'CHR'],
-            ['name' => 'Kursi Kerja']
-        );
-        // --- AKHIR PERBAIKAN ---
+        // 2. Buat Kategori Spesifik (Sesuai Request: AC, Monitor, dll)
+        // Format: firstOrCreate(['code' => 'KODE'], ['name' => 'NAMA'])
+        $catAC  = AssetCategory::firstOrCreate(['code' => 'AC'], ['name' => 'Air Conditioner']);
+        $catMON = AssetCategory::firstOrCreate(['code' => 'MON'], ['name' => 'Monitor']);
+        $catPRJ = AssetCategory::firstOrCreate(['code' => 'PRJ'], ['name' => 'Proyektor']);
+        $catLTP = AssetCategory::firstOrCreate(['code' => 'LTP'], ['name' => 'Laptop']);
+        $catFUR = AssetCategory::firstOrCreate(['code' => 'FUR'], ['name' => 'Furniture']); // Untuk Meja/Kursi
+        
+        // Kategori untuk Barang Habis Pakai (Biar logis)
+        $catFNB = AssetCategory::firstOrCreate(['code' => 'FNB'], ['name' => 'Konsumsi']);
+        $catCLN = AssetCategory::firstOrCreate(['code' => 'CLN'], ['name' => 'Kebersihan']);
+        $catATK = AssetCategory::firstOrCreate(['code' => 'ATK'], ['name' => 'Alat Tulis Kantor']);
+        $catELK = AssetCategory::firstOrCreate(['code' => 'ELK'], ['name' => 'Elektronik Umum']);
 
-        // Kebutuhan: Aset Tetap (5-10 data)
+        // 3. Fungsi Generator Serial Number (Logic Lokal untuk Seeder)
+        $generateSN = function ($categoryCode) {
+            static $counters = [];
+            
+            if (!isset($counters[$categoryCode])) {
+                $counters[$categoryCode] = 1;
+            } else {
+                $counters[$categoryCode]++;
+            }
+
+            // Format: KODE-YYYYMMDD-000X (Sesuai standar baru)
+            return $categoryCode . '-' . date('Ymd') . '-' . str_pad($counters[$categoryCode], 4, '0', STR_PAD_LEFT);
+        };
+
+        // 4. Data Aset Tetap (Fixed Assets)
         $fixedAssets = [
             [
                 'name_asset' => 'AC Central Daikin',
-                'asset_category_id' => $catAC->id,
-                // Serial number akan di‑generate otomatis oleh controller
+                'cat_obj' => $catAC, // Pakai Object agar bisa ambil ID dan CODE
                 'condition' => 'Baik',
                 'status' => 'in_use',
                 'room_id' => $meetingRoom->id
             ],
             [
                 'name_asset' => 'Proyektor Epson EB-X500',
-                'asset_category_id' => $catPRJ->id,
-                // Serial number akan di‑generate otomatis oleh controller
+                'cat_obj' => $catPRJ,
                 'condition' => 'Baik',
                 'status' => 'available',
                 'room_id' => $meetingRoom->id
             ],
             [
+                'name_asset' => 'Monitor LG 24 Inch',
+                'cat_obj' => $catMON,
+                'condition' => 'Baik',
+                'status' => 'in_use',
+                'room_id' => $officeRoom->id
+            ],
+            [
                 'name_asset' => 'Meja Kerja Manajer',
-                'asset_category_id' => $catCHR->id,
-                // Serial number akan di‑generate otomatis oleh controller
+                'cat_obj' => $catFUR,
                 'condition' => 'Baik',
                 'status' => 'in_use',
                 'room_id' => $officeRoom->id
             ],
         ];
 
-        foreach ($fixedAssets as $asset) {
-            Asset::create(array_merge($asset, [
+        foreach ($fixedAssets as $item) {
+            Asset::create([
+                'name_asset' => $item['name_asset'],
+                'asset_category_id' => $item['cat_obj']->id,
                 'asset_type' => 'fixed_asset',
-                'created_by' => $adminUser->id,
-                'current_stock' => 1, // Aset tetap biasanya 1
+                'serial_number' => $generateSN($item['cat_obj']->code), // Generate SN di sini!
+                'condition' => $item['condition'],
+                'status' => $item['status'],
+                'room_id' => $item['room_id'],
+                'current_stock' => 1,
                 'minimum_stock' => 1,
-            ]));
+                'created_by' => $adminUser->id,
+            ]);
         }
 
-        // Kebutuhan: Aset Habis Pakai (Stok Normal & Stok Menipis)
+        // 5. Data Aset Habis Pakai (Consumables)
+        // Kategori disesuaikan agar logis
         $consumableAssets = [
-            // Stok Normal
             [
-                'name_asset' => 'Kopi Sachet ABC',
-                'asset_category_id' => $catPRT->id, // contoh menggunakan kategori Printer untuk konsumsi
-                'current_stock' => 15,
-                'minimum_stock' => 5,
-                'status' => 'available'
-            ],
-            // Stok Menipis
-            [
-                'name_asset' => 'Bohlam LED Philips 12W',
-                'asset_category_id' => $catPRT->id,
-                'current_stock' => 8,
-                'minimum_stock' => 10,
-                'status' => 'available'
+                'name' => 'Kopi Sachet ABC', 
+                'cat_obj' => $catFNB, 
+                'stock' => 15, 
+                'min' => 5
             ],
             [
-                'name_asset' => 'Cairan Pembersih Lantai 1L',
-                'asset_category_id' => $catCHR->id,
-                'current_stock' => 4,
-                'minimum_stock' => 5,
-                'status' => 'available'
+                'name' => 'Bohlam LED Philips 12W', 
+                'cat_obj' => $catELK, 
+                'stock' => 8, 
+                'min' => 10
             ],
             [
-                'name_asset' => 'Baterai AA Alkaline',
-                'asset_category_id' => $catLTP->id,
-                'current_stock' => 20,
-                'minimum_stock' => 24,
-                'status' => 'available'
+                'name' => 'Cairan Pembersih Lantai 1L', 
+                'cat_obj' => $catCLN, 
+                'stock' => 4, 
+                'min' => 5
             ],
             [
-                'name_asset' => 'Spidol Papan Tulis Hitam',
-                'asset_category_id' => $catMON->id,
-                'current_stock' => 10,
-                'minimum_stock' => 12,
-                'status' => 'available'
+                'name' => 'Baterai AA Alkaline', 
+                'cat_obj' => $catELK, 
+                'stock' => 20, 
+                'min' => 24
+            ],
+            [
+                'name' => 'Spidol Papan Tulis Hitam', 
+                'cat_obj' => $catATK, 
+                'stock' => 10, 
+                'min' => 12
             ],
         ];
 
-        foreach ($consumableAssets as $asset) {
-            Asset::create(array_merge($asset, [
+        foreach ($consumableAssets as $item) {
+            Asset::create([
+                'name_asset' => $item['name'],
+                'asset_category_id' => $item['cat_obj']->id,
                 'asset_type' => 'consumable',
-                'room_id' => $storageRoom->id,
-                'created_by' => $adminUser->id,
+                'serial_number' => $generateSN($item['cat_obj']->code), // Tetap generate SN biar rapi
                 'condition' => 'Baik',
-            ]));
+                'status' => 'available',
+                'room_id' => $storageRoom->id,
+                'current_stock' => $item['stock'],
+                'minimum_stock' => $item['min'],
+                'created_by' => $adminUser->id,
+            ]);
         }
     }
 }

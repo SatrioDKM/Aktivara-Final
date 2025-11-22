@@ -13,7 +13,15 @@
                     @forelse ($unreadNotifications as $notification)
                         <div class="mb-4 p-4 border rounded-lg {{ $notification->read_at ? 'bg-gray-100 dark:bg-gray-700' : 'bg-blue-50 dark:bg-blue-900' }}">
                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $notification->created_at->diffForHumans() }}</p>
-                            <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}</p>
+                            <p class="mt-1 text-gray-800 dark:text-gray-200">
+                                @if(isset($notification->data['task_id']))
+                                    <a href="{{ route('tasks.check', $notification->data['task_id']) }}" class="hover:underline text-blue-600 dark:text-blue-400">
+                                        {{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}
+                                    </a>
+                                @else
+                                    {{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}
+                                @endif
+                            </p>
                             @if (!$notification->read_at)
                                 <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST" class="mt-2">
                                     @csrf
@@ -33,7 +41,15 @@
                     @forelse ($readNotifications as $notification)
                         <div class="mb-4 p-4 border rounded-lg bg-gray-100 dark:bg-gray-700">
                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $notification->created_at->diffForHumans() }}</p>
-                            <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}</p>
+                            <p class="mt-1 text-gray-800 dark:text-gray-200">
+                                @if(isset($notification->data['task_id']))
+                                    <a href="{{ route('tasks.check', $notification->data['task_id']) }}" class="hover:underline text-blue-600 dark:text-blue-400">
+                                        {{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}
+                                    </a>
+                                @else
+                                    {{ $notification->data['message'] ?? 'Pesan notifikasi tidak tersedia.' }}
+                                @endif
+                            </p>
                         </div>
                     @empty
                         <p>Tidak ada notifikasi sudah dibaca.</p>

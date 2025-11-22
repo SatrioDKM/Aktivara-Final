@@ -114,6 +114,7 @@ class TaskWorkflowController extends Controller
             'assets' => Asset::where('asset_type', 'fixed_asset')
                 ->orderBy('name_asset')
                 ->get(['id', 'name_asset', 'serial_number']),
+            'buildings' => Building::with('floors.rooms')->where('status', 'active')->orderBy('name_building')->get(),
             'isAuthorizedToReview' => $isAuthorizedToReview, // Pass the flag to the view
         ];
         return view('backend.tasks.show', compact('data'));
@@ -259,11 +260,19 @@ class TaskWorkflowController extends Controller
                 // Atau bisa juga berdasarkan taskType tertentu. Untuk saat ini, kita asumsikan jika ada asset_id,
                 // dan taskType bukan UMUM, maka aset tersebut rusak dan sedang diperbaiki.
                 // Jika taskType adalah UMUM, kita tidak otomatis mengubah status aset.
-                if ($task->taskType && $task->taskType->departemen !== 'UMUM') {
-                    $asset->update([
-                        'condition' => 'Rusak',
-                        'status' => 'Perbaikan',
-                    ]);
+                if ($task->taskType) {
+                    $updates = [];
+                    // Cek settingan "on create" dari TaskType
+                    if (!empty($task->taskType->asset_condition_on_create)) {
+                        $updates['condition'] = $task->taskType->asset_condition_on_create;
+                    }
+                    if (!empty($task->taskType->asset_status_on_create)) {
+                        $updates['status'] = $task->taskType->asset_status_on_create;
+                    }
+
+                    if (!empty($updates)) {
+                        $asset->update($updates);
+                    }
                 }
 
                 // --- LOGIKA BARU: Log pergerakan aset saat tugas dibuat ---
@@ -484,6 +493,8 @@ class TaskWorkflowController extends Controller
             'report_text' => 'required|string|min:10',
             'image_before' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'image_after' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'room_id' => 'nullable|exists:rooms,id',
+            'asset_id' => 'nullable|exists:assets,id',
         ]);
 
         if ($validator->fails()) {
@@ -494,6 +505,37 @@ class TaskWorkflowController extends Controller
         try {
             DB::transaction(function () use ($request, $task) {
                 $dataToUpdate['report_text'] = $request->input('report_text');
+
+                // Update Lokasi & Aset jika ada perubahan
+                if ($request->filled('room_id')) {
+                    $newRoomId = $request->input('room_id');
+                    
+                    // Cek jika ada aset dan lokasi berubah, catat perpindahan
+                    if ($request->filled('asset_id')) {
+                        $assetId = $request->input('asset_id');
+                        $asset = Asset::find($assetId);
+                        
+                        if ($asset && $asset->room_id != $newRoomId) {
+                            AssetMovement::create([
+                                'asset_id' => $asset->id,
+                                'from_room_id' => $asset->room_id,
+                                'to_room_id' => $newRoomId,
+                                'moved_by_user_id' => Auth::id(),
+                                'task_id' => $task->id,
+                                'description' => 'Aset dipindahkan saat konfirmasi laporan tugas.',
+                            ]);
+                            
+                            // Update lokasi aset master
+                            $asset->update(['room_id' => $newRoomId]);
+                        }
+                    }
+
+                    $dataToUpdate['room_id'] = $newRoomId;
+                }
+
+                if ($request->filled('asset_id')) {
+                    $dataToUpdate['asset_id'] = $request->input('asset_id');
+                }
 
                 if ($request->hasFile('image_before')) {
                     if ($task->image_before) Storage::disk('public')->delete($task->image_before);
@@ -633,11 +675,19 @@ class TaskWorkflowController extends Controller
                 $newStatus = 'completed';
                 if ($task->asset_id) {
                     $asset = Asset::find($task->asset_id);
-                    if ($asset) {
-                        $asset->update([
-                            'condition' => 'Baik',
-                            'status' => 'available',
-                        ]);
+                    if ($asset && $task->taskType) {
+                        $updates = [];
+                        // Cek settingan "on complete" dari TaskType
+                        if (!empty($task->taskType->asset_condition_on_complete)) {
+                            $updates['condition'] = $task->taskType->asset_condition_on_complete;
+                        }
+                        if (!empty($task->taskType->asset_status_on_complete)) {
+                            $updates['status'] = $task->taskType->asset_status_on_complete;
+                        }
+
+                        if (!empty($updates)) {
+                            $asset->update($updates);
+                        }
                     }
                 }
                 break;
@@ -815,11 +865,36 @@ class TaskWorkflowController extends Controller
             $query->where('created_by', $user->id);
         }
         // Admin & Manager bisa melihat semua
+        if (in_array($roleId, ['SA00', 'MG00'])) {
+            // No filter needed
+        }
 
         // OPTIMASI: Menggunakan paginate()
         $completedTasks = $query->latest('updated_at')->paginate(10);
 
         return response()->json($completedTasks);
+    }
+
+    /**
+     * Cek status tugas dan arahkan user ke halaman yang tepat.
+     */
+    public function checkAndRedirect($id)
+    {
+        $task = Task::findOrFail($id);
+        $user = Auth::user();
+
+        // Cek apakah user adalah Staff (akhiran '02')
+        $isStaff = str_ends_with($user->role_id, '02');
+
+        // LOGIKA REDIRECT:
+        // 1. Jika Staff DAN Tugas belum diambil -> Arahkan ke Job Board (Papan Tugas)
+        if ($isStaff && $task->status === 'unassigned') {
+            return redirect()->route('tasks.available')->with('highlight', $id);
+        }
+
+        // 2. Untuk Leader/Admin ATAU jika tugas sudah diambil -> Arahkan ke Detail Tugas
+        // (Leader memiliki akses ke detail tugas departemennya, jadi ini aman)
+        return redirect()->route('tasks.show', $id);
     }
 
     private function authorizeTaskAccess(Task $task)

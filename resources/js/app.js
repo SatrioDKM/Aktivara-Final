@@ -69,7 +69,14 @@ function notifications() {
                 const notification = [...this.unread, ...this.read].find(
                     (n) => n.id === notificationId
                 );
-                const targetUrl = notification?.data?.url; // Simpan URL target
+                
+                // PERBAIKAN: Gunakan tasks.check untuk smart redirect
+                let targetUrl = notification?.data?.url; // URL default dari notification data
+                
+                // Jika notifikasi berisi task_id, gunakan smart redirect route
+                if (notification?.data?.task_id) {
+                    targetUrl = `/tasks/${notification.data.task_id}/check`;
+                }
 
                 // Kirim POST request ke endpoint baru
                 await axios.post("/api/notifications/mark-one-read", {

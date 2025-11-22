@@ -81,21 +81,40 @@ class GuestComplaintController extends Controller
 
                     // Hanya kirim notifikasi jika ada kode departemen spesifik (bukan UMUM)
                     if ($departmentCode && $departmentCode !== 'UMUM') {
-                        $leaderRole = $departmentCode . '01'; // Targetkan hanya Leader
-                        $recipients = User::where('role_id', $leaderRole)->get(); // Cari Leader
+                        $leaderRole = $departmentCode . '01';
+                        $staffRole  = $departmentCode . '02'; // Tambahkan target Staff
+
+                        // DEBUG: Log departemen dan role yang dicari
+                        Log::info("Guest Complaint - Mencari penerima notifikasi", [
+                            'departmentCode' => $departmentCode,
+                            'leaderRole' => $leaderRole,
+                            'staffRole' => $staffRole,
+                            'taskId' => $newTask->id
+                        ]);
+
+                        // PERBAIKAN:
+                        // 1. Gunakan whereIn untuk mengambil Leader DAN Staff.
+                        // 2. HAPUS filter whereNotNull('telegram_chat_id') agar user yang belum connect Telegram
+                        //    tetap mendapatkan notifikasi via Database (Web).
+                        $recipients = User::whereIn('role_id', [$leaderRole, $staffRole])->get();
+
+                        // DEBUG: Log jumlah penerima yang ditemukan
+                        Log::info("Guest Complaint - Penerima ditemukan", [
+                            'count' => $recipients->count(),
+                            'recipients' => $recipients->pluck('name', 'role_id')->toArray()
+                        ]);
 
                         $guestName = $request->input('reporter_name') . " (Tamu)";
 
                         if ($recipients->isNotEmpty()) {
-                            // Kirim notifikasi HANYA ke Leader
                             Notification::send($recipients, new NewTaskAvailable($newTask, $guestName));
+                            Log::info("Guest Complaint - Notifikasi terkirim ke {$recipients->count()} user");
                         } else {
-                            Log::warning("Tidak ditemukan Leader ({$leaderRole}) untuk notifikasi tugas tamu #{$newTask->id}");
-                            // Opsional: Kirim ke Superadmin sebagai fallback jika Leader tidak ada
+                            // Logika fallback ke Superadmin (jika kosong) biarkan tetap ada
+                            Log::warning("Tidak ditemukan Leader/Staff untuk departemen {$departmentCode}");
                             $superadmin = User::where('role_id', 'SA00')->get();
                             if ($superadmin->isNotEmpty()) {
                                 Notification::send($superadmin, new NewTaskAvailable($newTask, $guestName));
-                                Log::info("Notifikasi tugas tamu #{$newTask->id} dikirim ke Superadmin sebagai fallback.");
                             }
                         }
                     } else {

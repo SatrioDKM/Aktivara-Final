@@ -33,6 +33,7 @@
             <div x-data="taskDetail({
                 initialTaskData: {{ Js::from($data['task']) }},
                 assets: {{ Js::from($data['assets']) }},
+                buildings: {{ Js::from($data['buildings']) }},
                 currentUser: {{ Js::from(Auth::user()) }},
                 isAuthorizedToReview: {{ Js::from($data['isAuthorizedToReview']) }}
             })" x-cloak>
@@ -277,18 +278,70 @@
                                         </h3>
 
                                         {{-- Konfirmasi Aset & Lokasi --}}
-                                        <div class="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-                                            <h4 class="font-semibold text-md text-gray-800 dark:text-gray-200 mb-2">Konfirmasi Detail Tugas</h4>
-                                            <div class="space-y-2 text-sm">
-                                                <div class="flex justify-between items-start">
-                                                    <span class="text-gray-500 dark:text-gray-400 flex-shrink-0 mr-2">Lokasi:</span>
-                                                    <span class="font-semibold text-gray-800 dark:text-gray-200 text-right"
-                                                        x-text="task.room && task.room.floor && task.room.floor.building ? `${task.room.floor.building.name_building} / ${task.room.floor.name_floor} / ${task.room.name_room}` : 'Tidak spesifik'"></span>
+                                        <div class="mb-6 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                                            x-data="{
+                                                selectedBuildingId: task.room && task.room.floor ? task.room.floor.building_id : '',
+                                                selectedFloorId: task.room ? task.room.floor_id : '',
+                                                selectedRoomId: task.room_id || '',
+                                                
+                                                get floors() {
+                                                    return buildings.find(b => b.id == this.selectedBuildingId)?.floors || [];
+                                                },
+                                                get rooms() {
+                                                    return this.floors.find(f => f.id == this.selectedFloorId)?.rooms || [];
+                                                },
+
+                                                init() {
+                                                    // Watch for changes to update parent formData
+                                                    this.$watch('selectedRoomId', value => formData.room_id = value);
+                                                    
+                                                    // Initialize formData with current values
+                                                    formData.room_id = this.selectedRoomId;
+                                                    formData.asset_id = task.asset_id;
+                                                }
+                                            }">
+                                            
+                                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📍 Konfirmasi Lokasi & Aset</h3>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gedung</label>
+                                                    <select x-model="selectedBuildingId" @change="selectedFloorId = ''; selectedRoomId = ''" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                                        <option value="">-- Pilih Gedung --</option>
+                                                        <template x-for="building in buildings" :key="building.id">
+                                                            <option :value="building.id" x-text="building.name_building" :selected="building.id == selectedBuildingId"></option>
+                                                        </template>
+                                                    </select>
                                                 </div>
-                                                <div class="flex justify-between">
-                                                    <span class="text-gray-500 dark:text-gray-400">Aset Terkait:</span>
-                                                    <span class="font-semibold text-gray-800 dark:text-gray-200"
-                                                        x-text="task.asset ? `${task.asset.name_asset} (${task.asset.serial_number || 'N/A'})` : '-'"></span>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lantai</label>
+                                                    <select x-model="selectedFloorId" @change="selectedRoomId = ''" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                                        <option value="">-- Pilih Lantai --</option>
+                                                        <template x-for="floor in floors" :key="floor.id">
+                                                            <option :value="floor.id" x-text="floor.name_floor" :selected="floor.id == selectedFloorId"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+
+                                                <div class="md:col-span-2">
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ruangan (Lokasi Terkini)</label>
+                                                    <select x-model="selectedRoomId" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                                        <option value="">-- Pilih Ruangan --</option>
+                                                        <template x-for="room in rooms" :key="room.id">
+                                                            <option :value="room.id" x-text="room.name_room" :selected="room.id == selectedRoomId"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+
+                                                <div class="md:col-span-2">
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset yang Dikerjakan</label>
+                                                    <select x-model="formData.asset_id" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                                        <option value="">-- Tidak ada aset spesifik --</option>
+                                                        <template x-for="asset in assets" :key="asset.id">
+                                                            <option :value="asset.id" x-text="`${asset.name_asset} (${asset.serial_number})`" :selected="asset.id == formData.asset_id"></option>
+                                                        </template>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
@@ -408,11 +461,12 @@
                     task: {},
                     initialTaskData: data.initialTaskData,
                     assets: data.assets,
+                    buildings: data.buildings,
                     currentUser: data.currentUser,
                     isAuthorizedToReview: data.isAuthorizedToReview, // Added this line
                     isLoading: true,
                     isSubmitting: false,
-                    formData: { report_text: '', image_before: null, image_after: null },
+                    formData: { report_text: '', image_before: null, image_after: null, room_id: null, asset_id: null },
                     imageBeforePreview: null,
                     imageAfterPreview: null,
                     showReviewActionModal: false, // Changed from showRejectionModal
@@ -466,6 +520,8 @@
                         this.isSubmitting = true;
                         const fd = new FormData();
                         fd.append('report_text', this.formData.report_text);
+                        if (this.formData.room_id) fd.append('room_id', this.formData.room_id);
+                        if (this.formData.asset_id) fd.append('asset_id', this.formData.asset_id);
                         if (this.formData.image_before) fd.append('image_before', this.formData.image_before);
                         if (this.formData.image_after) fd.append('image_after', this.formData.image_after);
     

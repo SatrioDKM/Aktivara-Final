@@ -104,6 +104,10 @@ Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
     // PERBAIKAN: Menghapus middleware berlebih dan memperbaiki nama
     Route::get('assets/by-category/{category}', [AssetController::class, 'apiShowByCategory'])
         ->name('assets.by_category'); // Menjadi: api.assets.by_category
+    
+    // Endpoint untuk mengambil grouping nama aset dalam kategori
+    Route::get('assets/by-category/{category}/groups', [AssetController::class, 'getAssetNameGroups'])
+        ->name('assets.name_groups'); // Menjadi: api.assets.name_groups
 
     // --- Rute manual untuk Asset Maintenances ---
     Route::prefix('maintenances')->name('maintenances.')->group(function () {

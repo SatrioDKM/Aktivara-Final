@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory; // Added for HasFactory
 
+/**
+ * @mixin IdeHelperAssetMovement
+ */
 class AssetMovement extends Model
 {
     use HasFactory; // Added for HasFactory

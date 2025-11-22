@@ -22,37 +22,55 @@ class AssetSeeder extends Seeder
             return;
         }
 
-        // --- PERBAIKAN: Buat atau cari Kategori Aset ---
-        $catElektronik = AssetCategory::firstOrCreate(['name' => 'Elektronik']);
-        $catFurnitur = AssetCategory::firstOrCreate(['name' => 'Furnitur']);
-        $catKebersihan = AssetCategory::firstOrCreate(['name' => 'Kebersihan']);
-        $catKonsumsi = AssetCategory::firstOrCreate(['name' => 'Konsumsi']);
-        $catKelistrikan = AssetCategory::firstOrCreate(['name' => 'Kelistrikan']);
-        $catATK = AssetCategory::firstOrCreate(['name' => 'ATK']);
+        // --- PERBAIKAN: Buat atau cari Kategori Aset spesifik dengan kode ---
+        $catAC = AssetCategory::firstOrCreate(
+            ['code' => 'AC'],
+            ['name' => 'Air Conditioner']
+        );
+        $catMON = AssetCategory::firstOrCreate(
+            ['code' => 'MON'],
+            ['name' => 'Monitor']
+        );
+        $catPRJ = AssetCategory::firstOrCreate(
+            ['code' => 'PRJ'],
+            ['name' => 'Proyektor']
+        );
+        $catPRT = AssetCategory::firstOrCreate(
+            ['code' => 'PRT'],
+            ['name' => 'Printer']
+        );
+        $catLTP = AssetCategory::firstOrCreate(
+            ['code' => 'LTP'],
+            ['name' => 'Laptop']
+        );
+        $catCHR = AssetCategory::firstOrCreate(
+            ['code' => 'CHR'],
+            ['name' => 'Kursi Kerja']
+        );
         // --- AKHIR PERBAIKAN ---
 
         // Kebutuhan: Aset Tetap (5-10 data)
         $fixedAssets = [
             [
                 'name_asset' => 'AC Central Daikin',
-                'asset_category_id' => $catElektronik->id, // <-- PERBAIKAN
-                'serial_number' => 'AC-2025-001',
+                'asset_category_id' => $catAC->id,
+                // Serial number akan di‑generate otomatis oleh controller
                 'condition' => 'Baik',
                 'status' => 'in_use',
                 'room_id' => $meetingRoom->id
             ],
             [
                 'name_asset' => 'Proyektor Epson EB-X500',
-                'asset_category_id' => $catElektronik->id, // <-- PERBAIKAN
-                'serial_number' => 'PROJ-2025-001',
+                'asset_category_id' => $catPRJ->id,
+                // Serial number akan di‑generate otomatis oleh controller
                 'condition' => 'Baik',
                 'status' => 'available',
                 'room_id' => $meetingRoom->id
             ],
             [
                 'name_asset' => 'Meja Kerja Manajer',
-                'asset_category_id' => $catFurnitur->id, // <-- PERBAIKAN
-                'serial_number' => 'MEJA-2025-001',
+                'asset_category_id' => $catCHR->id,
+                // Serial number akan di‑generate otomatis oleh controller
                 'condition' => 'Baik',
                 'status' => 'in_use',
                 'room_id' => $officeRoom->id
@@ -73,7 +91,7 @@ class AssetSeeder extends Seeder
             // Stok Normal
             [
                 'name_asset' => 'Kopi Sachet ABC',
-                'asset_category_id' => $catKonsumsi->id, // <-- PERBAIKAN
+                'asset_category_id' => $catPRT->id, // contoh menggunakan kategori Printer untuk konsumsi
                 'current_stock' => 15,
                 'minimum_stock' => 5,
                 'status' => 'available'
@@ -81,28 +99,28 @@ class AssetSeeder extends Seeder
             // Stok Menipis
             [
                 'name_asset' => 'Bohlam LED Philips 12W',
-                'asset_category_id' => $catKelistrikan->id, // <-- PERBAIKAN
+                'asset_category_id' => $catPRT->id,
                 'current_stock' => 8,
                 'minimum_stock' => 10,
                 'status' => 'available'
             ],
             [
                 'name_asset' => 'Cairan Pembersih Lantai 1L',
-                'asset_category_id' => $catKebersihan->id, // <-- PERBAIKAN
+                'asset_category_id' => $catCHR->id,
                 'current_stock' => 4,
                 'minimum_stock' => 5,
                 'status' => 'available'
             ],
             [
                 'name_asset' => 'Baterai AA Alkaline',
-                'asset_category_id' => $catElektronik->id, // <-- PERBAIKAN
+                'asset_category_id' => $catLTP->id,
                 'current_stock' => 20,
                 'minimum_stock' => 24,
                 'status' => 'available'
             ],
             [
                 'name_asset' => 'Spidol Papan Tulis Hitam',
-                'asset_category_id' => $catATK->id, // <-- PERBAIKAN
+                'asset_category_id' => $catMON->id,
                 'current_stock' => 10,
                 'minimum_stock' => 12,
                 'status' => 'available'

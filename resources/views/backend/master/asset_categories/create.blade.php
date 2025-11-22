@@ -23,8 +23,17 @@
                         <div>
                             <x-input-label for="name" :value="__('Nama Kategori')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name"
-                                :value="old('name')" required autofocus />
+                                :value="old('name')" required autofocus placeholder="Contoh: Air Conditioner" />
                             <span id="name-error" class="text-sm text-red-600 hidden"></span>
+                        </div>
+
+                        <div class="mt-4">
+                            <x-input-label for="code" :value="__('Kode Kategori')" />
+                            <x-text-input id="code" class="block mt-1 w-full uppercase" type="text" name="code"
+                                :value="old('code')" required maxlength="10" placeholder="Contoh: AC, MON, PRJ"
+                                style="text-transform: uppercase;" />
+                            <p class="mt-1 text-sm text-gray-500">Kode singkatan (max 10 karakter, huruf besar & angka saja)</p>
+                            <span id="code-error" class="text-sm text-red-600 hidden"></span>
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
@@ -51,6 +60,7 @@
             const errorMessageContainer = document.getElementById('error-message-container');
             const errorList = document.getElementById('error-list');
             const nameError = document.getElementById('name-error');
+            const codeError = document.getElementById('code-error');
 
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
@@ -60,9 +70,11 @@
                 errorMessageContainer.classList.add('hidden');
                 errorList.innerHTML = '';
                 nameError.classList.add('hidden');
+                codeError.classList.add('hidden');
 
                 const data = {
                     name: document.getElementById('name').value.trim(),
+                    code: document.getElementById('code').value.trim().toUpperCase(),
                 };
 
                 try {
@@ -90,6 +102,11 @@
                                 if (key === 'name') {
                                     nameError.textContent = messages[0];
                                     nameError.classList.remove('hidden');
+                                }
+                                
+                                if (key === 'code') {
+                                    codeError.textContent = messages[0];
+                                    codeError.classList.remove('hidden');
                                 }
                             }
                         } else {

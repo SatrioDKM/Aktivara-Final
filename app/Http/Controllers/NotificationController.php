@@ -34,31 +34,47 @@ class NotificationController extends Controller
      * Menandai SEMUA notifikasi yang belum dibaca sebagai sudah dibaca.
      * Nama method diganti agar lebih jelas.
      */
-    public function markAllAsRead(): JsonResponse
+    public function markAllAsRead(Request $request)
     {
         Auth::user()->unreadNotifications()->update(['read_at' => now()]);
-        return response()->json(['message' => 'Semua notifikasi ditandai terbaca.']);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Semua notifikasi ditandai terbaca.']);
+        }
+
+        return back()->with('success', 'Semua notifikasi telah ditandai sebagai sudah dibaca.');
     }
 
     /**
      * --- METHOD BARU DITAMBAHKAN DI SINI ---
      * Menandai SATU notifikasi spesifik sebagai sudah dibaca.
      */
-    public function markOneAsRead(Request $request): JsonResponse
+    public function markOneAsRead(Request $request, $id = null)
     {
-        $request->validate(['id' => 'required|string']); // Validasi ID notifikasi
+        // Support ID dari URL parameter atau Request body
+        $notificationId = $id ?? $request->input('id');
+
+        if (!$notificationId) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'ID notifikasi diperlukan.'], 422);
+            }
+            return back()->with('error', 'Terjadi kesalahan sistem.');
+        }
 
         $notification = Auth::user()
             ->unreadNotifications()
-            ->where('id', $request->input('id'))
+            ->where('id', $notificationId)
             ->first();
 
         if ($notification) {
             $notification->markAsRead();
+        }
+
+        if ($request->wantsJson()) {
             return response()->json(['message' => 'Notifikasi ditandai terbaca.']);
         }
 
-        return response()->json(['message' => 'Notifikasi tidak ditemukan atau sudah dibaca.'], 404);
+        return back()->with('success', 'Notifikasi ditandai terbaca.');
     }
     // --- AKHIR METHOD BARU ---
 

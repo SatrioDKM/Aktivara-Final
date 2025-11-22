@@ -26,10 +26,12 @@ class AssetCategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:asset_categories',
+            'code' => 'required|string|max:10|unique:asset_categories|regex:/^[A-Z0-9]+$/', // Uppercase alphanumeric
         ]);
 
         AssetCategory::create([
             'name' => $request->name,
+            'code' => strtoupper($request->code), // Force uppercase
         ]);
 
         return redirect()->route('master.asset_categories.index')
@@ -50,10 +52,18 @@ class AssetCategoryController extends Controller
                 'max:255',
                 Rule::unique('asset_categories')->ignore($assetCategory->id),
             ],
+            'code' => [
+                'required',
+                'string',
+                'max:10',
+                'regex:/^[A-Z0-9]+$/',
+                Rule::unique('asset_categories')->ignore($assetCategory->id),
+            ],
         ]);
 
         $assetCategory->update([
             'name' => $request->name,
+            'code' => strtoupper($request->code),
         ]);
 
         return redirect()->route('master.asset_categories.index')
@@ -87,9 +97,13 @@ class AssetCategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:asset_categories',
+            'code' => 'required|string|max:10|unique:asset_categories|regex:/^[A-Z0-9]+$/',
         ]);
 
-        $category = AssetCategory::create(['name' => $request->name]);
+        $category = AssetCategory::create([
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+        ]);
 
         return response()->json([
             'message' => 'Kategori aset berhasil ditambahkan.',
@@ -106,9 +120,19 @@ class AssetCategoryController extends Controller
                 'max:255',
                 Rule::unique('asset_categories')->ignore($assetCategory->id),
             ],
+            'code' => [
+                'required',
+                'string',
+                'max:10',
+                'regex:/^[A-Z0-9]+$/',
+                Rule::unique('asset_categories')->ignore($assetCategory->id),
+            ],
         ]);
 
-        $assetCategory->update(['name' => $request->name]);
+        $assetCategory->update([
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+        ]);
 
         return response()->json([
             'message' => 'Kategori aset berhasil diperbarui.',

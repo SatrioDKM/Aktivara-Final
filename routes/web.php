@@ -137,8 +137,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::prefix('asset_categories')->name('asset_categories.')->group(function () {
             Route::get('/', [AssetCategoryController::class, 'index'])->name('index');
             Route::get('/create', [AssetCategoryController::class, 'create'])->name('create');
+            Route::post('/', [AssetCategoryController::class, 'store'])->name('store');
             Route::get('/{asset_category}', [AssetCategoryController::class, 'show'])->name('show')->where('asset_category', '[0-9]+');
             Route::get('/{asset_category}/edit', [AssetCategoryController::class, 'edit'])->name('edit')->where('asset_category', '[0-9]+');
+            Route::put('/{asset_category}', [AssetCategoryController::class, 'update'])->name('update')->where('asset_category', '[0-9]+');
+            Route::delete('/{asset_category}', [AssetCategoryController::class, 'destroy'])->name('destroy')->where('asset_category', '[0-9]+');
         });
         // --- AKHIR PERBAIKAN ---
 
@@ -183,6 +186,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // NOTE: Halaman detail tugas (untuk semua)
         Route::get('/{taskId}', [TaskWorkflowController::class, 'showPage'])->name('show')->where('taskId', '[0-9]+');
+        
+        // NOTE: Smart Redirect untuk notifikasi
+        Route::get('/{id}/check', [TaskWorkflowController::class, 'checkAndRedirect'])->name('check');
     });
 
     // --- Rute Notifikasi ---

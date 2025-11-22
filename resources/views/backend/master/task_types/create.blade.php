@@ -66,6 +66,56 @@
                                 </div>
                             </div>
 
+                            {{-- Otomatisasi Status Aset --}}
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Otomatisasi Status Aset</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {{-- Saat Tugas Dibuat --}}
+                                    <div wire:ignore>
+                                        <label for="asset_condition_on_create"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kondisi Aset (Saat Tugas Dibuat)</label>
+                                        <select id="asset_condition_on_create" class="mt-1 block w-full">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="Baik">Baik</option>
+                                            <option value="Rusak">Rusak</option>
+                                        </select>
+                                    </div>
+                                    <div wire:ignore>
+                                        <label for="asset_status_on_create"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status Aset (Saat Tugas Dibuat)</label>
+                                        <select id="asset_status_on_create" class="mt-1 block w-full">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="available">Available</option>
+                                            <option value="in_use">In Use</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="disposed">Disposed</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- Saat Tugas Selesai --}}
+                                    <div wire:ignore>
+                                        <label for="asset_condition_on_complete"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kondisi Aset (Saat Tugas Selesai)</label>
+                                        <select id="asset_condition_on_complete" class="mt-1 block w-full">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="Baik">Baik</option>
+                                            <option value="Rusak">Rusak</option>
+                                        </select>
+                                    </div>
+                                    <div wire:ignore>
+                                        <label for="asset_status_on_complete"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status Aset (Saat Tugas Selesai)</label>
+                                        <select id="asset_status_on_complete" class="mt-1 block w-full">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="available">Available</option>
+                                            <option value="in_use">In Use</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="disposed">Disposed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Deskripsi --}}
                             <div>
                                 <label for="description"
@@ -111,6 +161,11 @@
                     name_task: '',
                     departemen: '',
                     priority_level: 'medium',
+                    priority_level: 'medium',
+                    asset_condition_on_create: '',
+                    asset_status_on_create: '',
+                    asset_condition_on_complete: '',
+                    asset_status_on_complete: '',
                     description: ''
                 },
                 errors: {},
@@ -122,6 +177,15 @@
 
                     $('#priority_level').select2({ theme: "classic", width: '100%', minimumResultsForSearch: Infinity })
                         .on('change', function() { self.formData.priority_level = $(this).val(); });
+
+                    $('#asset_condition_on_create').select2({ theme: "classic", width: '100%', minimumResultsForSearch: Infinity })
+                        .on('change', function() { self.formData.asset_condition_on_create = $(this).val(); });
+                    $('#asset_status_on_create').select2({ theme: "classic", width: '100%', minimumResultsForSearch: Infinity })
+                        .on('change', function() { self.formData.asset_status_on_create = $(this).val(); });
+                    $('#asset_condition_on_complete').select2({ theme: "classic", width: '100%', minimumResultsForSearch: Infinity })
+                        .on('change', function() { self.formData.asset_condition_on_complete = $(this).val(); });
+                    $('#asset_status_on_complete').select2({ theme: "classic", width: '100%', minimumResultsForSearch: Infinity })
+                        .on('change', function() { self.formData.asset_status_on_complete = $(this).val(); });
                 },
 
                 save() {

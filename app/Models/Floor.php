@@ -8,6 +8,9 @@ use App\Models\Building;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperFloor
+ */
 class Floor extends Model
 {
     use HasFactory;

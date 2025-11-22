@@ -6,6 +6,9 @@ use App\Models\Asset;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperAssetCategory
+ */
 class AssetCategory extends Model
 {
     use HasFactory;
@@ -24,6 +27,7 @@ class AssetCategory extends Model
      */
     protected $fillable = [
         'name',
+        'code', // Kode singkatan kategori
     ];
 
     /**

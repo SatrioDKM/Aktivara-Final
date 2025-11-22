@@ -35,7 +35,16 @@ class NewTaskAvailable extends Notification
 
     public function via(object $notifiable): array
     {
-        return $notifiable->telegram_chat_id ? ['database', 'telegram'] : ['database'];
+        $channels = ['database']; // Selalu kirim ke database
+        
+        // Hanya tambahkan Telegram jika:
+        // 1. User punya telegram_chat_id
+        // 2. Telegram bot token dikonfigurasi
+        if ($notifiable->telegram_chat_id && config('telegram-notification.telegram_bot_token')) {
+            $channels[] = 'telegram';
+        }
+        
+        return $channels;
     }
 
     public function toDatabase(object $notifiable): array
@@ -47,21 +56,23 @@ class NewTaskAvailable extends Notification
             'task_id' => $this->task->id,
             'title' => $this->task->title,
             'creator_name' => $creatorName,
-            'message' => "Tugas baru '{$this->task->title}' (dari {$creatorName}) telah tersedia di Papan Tugas.",
-            'url' => route('tasks.available'),
+            'message' => "Tugas baru '{$this->task->title}' (dari {$creatorName}) telah tersedia.",
+            // GANTI 'tasks.available' MENJADI 'tasks.show'
+            'url' => route('tasks.show', $this->task->id),
         ];
     }
 
     public function toTelegram(object $notifiable)
     {
-        $url = route('tasks.available');
+        // GANTI DI SINI JUGA
+        $url = route('tasks.show', $this->task->id);
 
         // Logika ini sekarang aman dari N+1
         $creatorName = $this->originatorName ?? $this->task->creator->name;
 
         return TelegramMessage::create()
             ->to($notifiable->telegram_chat_id)
-            ->content("🔔 *Tugas Baru Tersedia*\n\nSebuah tugas baru telah dibuat oleh *{$creatorName}*.\n\n*Judul:* {$this->task->title}\n\nSilakan cek papan tugas untuk mengambilnya.")
-            ->button('Lihat Papan Tugas', $url);
+            ->content("🔔 *Tugas Baru Tersedia*\n\nSebuah tugas baru telah dibuat oleh *{$creatorName}*.\n\n*Judul:* {$this->task->title}\n\nSilakan cek detail tugas.")
+            ->button('Lihat Detail Tugas', $url); // Ubah label tombol
     }
 }

@@ -86,11 +86,13 @@ class AssetController extends Controller
             'perPage' => 'nullable|integer|min:1|max:100',
             'search' => 'nullable|string|max:255',
             'asset_type' => 'required|in:fixed_asset,consumable',
+            'status' => 'nullable|in:available,in_use,maintenance,disposed', // Tambahan filter status
         ]);
 
         $search = $request->input('search');
         $assetType = $request->input('asset_type');
         $perPage = $request->input('perPage', 10);
+        $status = $request->input('status'); // Ambil filter status
 
         if ($assetType == 'consumable') {
 
@@ -101,6 +103,10 @@ class AssetController extends Controller
                 ->when($search, function ($q, $search) {
                     $q->where('name_asset', 'like', '%' . $search . '%')
                         ->orWhereHas('category', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                })
+                ->when($status, function ($q, $status) {
+                    // Filter berdasarkan status jika ada
+                    $q->where('status', $status);
                 })
                 ->latest();
 
@@ -116,6 +122,10 @@ class AssetController extends Controller
                     $q->where('name_asset', 'like', '%' . $search . '%')
                         ->orWhere('serial_number', 'like', '%' . $search . '%')
                         ->orWhereHas('category', fn($qc) => $qc->where('name', 'like', '%' . $search . '%'));
+                })
+                ->when($status, function ($q, $status) {
+                    // Filter berdasarkan status jika ada
+                    $q->where('status', $status);
                 });
 
             $allAssets = $query->get();
@@ -200,9 +210,9 @@ class AssetController extends Controller
                         $singleAssetData['current_stock'] = 1;
                         $singleAssetData['minimum_stock'] = 0;
                         $singleAssetData['location_detail'] = $data['location_detail'] ?? null; // Add this line
-                        // Ambil nama kategori dari ID
-                        $categoryName = AssetCategory::find($data['asset_category_id'])->name;
-                        $singleAssetData['serial_number'] = $this->generateSerialNumber($categoryName);
+                        // Ambil kode kategori dari ID untuk generate serial number
+                        $categoryCode = AssetCategory::find($data['asset_category_id'])->code;
+                        $singleAssetData['serial_number'] = $this->generateSerialNumber($categoryCode);
                         $createdAssets[] = Asset::create($singleAssetData);
                     }
                 } else {
@@ -264,6 +274,9 @@ class AssetController extends Controller
         $data['updated_by'] = Auth::id();
         unset($data['asset_type']); // Mencegah perubahan tipe aset setelah dibuat
 
+        // Simpan room_id lama untuk pengecekan perpindahan
+        $oldRoomId = $asset->room_id;
+
         $asset->update($data);
 
         // --- LOGIKA BARU: Log pergerakan aset jika room_id berubah ---
@@ -319,10 +332,14 @@ class AssetController extends Controller
             'page' => 'nullable|integer|min:1',
             'perPage' => 'nullable|integer|min:1|max:100',
             'search' => 'nullable|string|max:255',
+            'name_asset' => 'nullable|string|max:255', // Tambahan untuk filter grup
+            'status' => 'nullable|in:available,in_use,maintenance,disposed', // Filter status
         ]);
 
         $search = $request->input('search');
         $perPage = $request->input('perPage', 10);
+        $nameAsset = $request->input('name_asset'); // Ambil filter nama aset
+        $status = $request->input('status'); // Ambil filter status
 
         $query = Asset::query()
             ->with(['room'])
@@ -330,6 +347,14 @@ class AssetController extends Controller
             ->when($search, function ($q, $search) {
                 $q->where('name_asset', 'like', '%' . $search . '%')
                     ->orWhere('serial_number', 'like', '%' . $search . '%');
+            })
+            ->when($nameAsset, function ($q, $name) {
+                // Filter berdasarkan nama aset (untuk mode list dari grup tertentu)
+                $q->where('name_asset', $name);
+            })
+            ->when($status, function ($q, $status) {
+                // Filter berdasarkan status
+                $q->where('status', $status);
             });
 
         // Logika untuk handle ID 0 (Tanpa Kategori)
@@ -342,6 +367,29 @@ class AssetController extends Controller
         $assets = $query->latest()->paginate($perPage);
 
         return response()->json($assets);
+    }
+
+    /**
+     * API: Mengambil grouping nama aset berdasarkan kategori
+     */
+    public function getAssetNameGroups($categoryId): JsonResponse
+    {
+        // Query untuk grouping
+        $query = Asset::where('asset_type', 'fixed_asset')
+            ->select('name_asset', DB::raw('count(*) as total'));
+
+        // Handle ID 0 (Tanpa Kategori)
+        if ($categoryId == 0) {
+            $query->whereNull('asset_category_id');
+        } else {
+            $query->where('asset_category_id', $categoryId);
+        }
+
+        $groups = $query->groupBy('name_asset')
+            ->orderBy('name_asset')
+            ->get();
+
+        return response()->json($groups);
     }
 
     /**
@@ -398,12 +446,33 @@ class AssetController extends Controller
      * @param string $categoryName
      * @return string
      */
-    private function generateSerialNumber(string $categoryName): string
+    /**
+     * Generate serial number otomatis dengan format: CODE-YYMMDD-XXXX
+     * Contoh: AC-251123-0001
+     *
+     * @param string $categoryCode Kode kategori (AC, MON, PRJ, dll)
+     * @return string
+     */
+    private function generateSerialNumber(string $categoryCode): string
     {
-        $categoryCode = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $categoryName), 0, 3));
-        $prefix = $categoryCode . date('dmy');
-        $lastAsset = Asset::where('serial_number', 'like', $prefix . '%')->orderBy('serial_number', 'desc')->first();
-        $nextNumber = $lastAsset ? ((int) substr($lastAsset->serial_number, -4)) + 1 : 1;
+        // Format: CODE-YYMMDD-XXXX
+        $dateCode = date('ymd'); // YYMMDD
+        $prefix = strtoupper($categoryCode) . '-' . $dateCode . '-';
+        
+        // Cari serial number terakhir dengan prefix yang sama
+        $lastAsset = Asset::where('serial_number', 'like', $prefix . '%')
+            ->orderBy('serial_number', 'desc')
+            ->first();
+        
+        if ($lastAsset) {
+            // Ambil 4 digit terakhir dan tambahkan 1
+            $lastNumber = (int) substr($lastAsset->serial_number, -4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            // Mulai dari 1 jika belum ada
+            $nextNumber = 1;
+        }
+        
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }

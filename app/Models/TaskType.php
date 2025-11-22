@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperTaskType
+ */
 class TaskType extends Model
 {
     use HasFactory;
@@ -15,6 +18,10 @@ class TaskType extends Model
         'notification_template',
         'departemen',
         'priority_level',
+        'asset_condition_on_create',
+        'asset_status_on_create',
+        'asset_condition_on_complete',
+        'asset_status_on_complete',
     ];
 
     /**

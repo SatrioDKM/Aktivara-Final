@@ -103,7 +103,8 @@ class PackingListController extends Controller
                 $assets = Asset::find($request->input('asset_ids'));
                 foreach ($assets as $asset) {
                     if ($asset->asset_type == 'fixed_asset') {
-                        $asset->update(['status' => 'in_use']);
+                        // PERBAIKAN: Ubah status menjadi 'disposed' karena Packing List = Barang Keluar Permanen
+                        $asset->update(['status' => 'disposed']);
                     } else {
                         if ($asset->current_stock > 0) {
                             $asset->decrement('current_stock');
@@ -131,9 +132,15 @@ class PackingListController extends Controller
     {
         $search = $request->input('q');
 
+        // DEBUG: Log parameter pencarian
+        Log::info('PackingList - Asset Search', [
+            'search' => $search,
+            'request_all' => $request->all()
+        ]);
+
         $assets = Asset::query()
             ->where('status', 'available')
-            ->where('asset_type', 'consumable') // Hanya ambil barang habis pakai
+            // Filter sudah dihapus agar Fixed Asset juga muncul
             ->where('current_stock', '>', 0)   // yang stoknya lebih dari 0
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -145,9 +152,29 @@ class PackingListController extends Controller
             ->limit(20)
             ->get(['id', 'name_asset', 'serial_number', 'asset_type', 'current_stock']);
 
+        // DEBUG: Log hasil query
+        Log::info('PackingList - Assets Found', [
+            'total' => $assets->count(),
+            'fixed_assets' => $assets->where('asset_type', 'fixed_asset')->count(),
+            'consumables' => $assets->where('asset_type', 'consumable')->count(),
+            'assets' => $assets->map(fn($a) => [
+                'id' => $a->id,
+                'name' => $a->name_asset,
+                'type' => $a->asset_type,
+                'stock' => $a->current_stock
+            ])->toArray()
+        ]);
+
         $formattedAssets = $assets->map(function ($asset) {
-            // Format teks tidak perlu diubah karena sudah menangani consumable
-            $text = $asset->name_asset . ' (Stok: ' . $asset->current_stock . ')';
+            // Format berbeda untuk Fixed Asset dan Consumable
+            if ($asset->asset_type === 'fixed_asset') {
+                // Fixed Asset: tampilkan dengan Serial Number
+                $text = $asset->name_asset . ' [SN: ' . ($asset->serial_number ?? 'N/A') . ']';
+            } else {
+                // Consumable: tampilkan dengan Stok
+                $text = $asset->name_asset . ' (Stok: ' . $asset->current_stock . ')';
+            }
+            
             return ['id' => $asset->id, 'text' => $text];
         });
 

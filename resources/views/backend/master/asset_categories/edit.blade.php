@@ -32,6 +32,14 @@
                             <x-input-label for="name" :value="__('Nama Kategori')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name"
                                 value="{{ old('name', $assetCategory->name) }}" required autofocus />
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" id="name-error" />
+                        </div>
+
+                        <div class="mt-4">
+                            <x-input-label for="code" :value="__('Kode Kategori')" />
+                            <x-text-input id="code" class="block mt-1 w-full" type="text" name="code"
+                                value="{{ old('code', $assetCategory->code) }}" required />
+                            <x-input-error :messages="$errors->get('code')" class="mt-2" id="code-error" />
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
@@ -56,6 +64,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('edit-category-form');
             const saveButton = document.getElementById('save-button');
+            const codeError = document.getElementById('code-error');
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
@@ -76,6 +85,17 @@
 
                     if (!response.ok) {
                         const result = await response.json();
+                        if (result.errors) {
+                            if (result.errors.name) {
+                                const nameError = document.getElementById('name-error');
+                                nameError.textContent = result.errors.name[0];
+                                nameError.classList.remove('hidden');
+                            }
+                            if (result.errors.code) {
+                                codeError.textContent = result.errors.code[0];
+                                codeError.classList.remove('hidden');
+                            }
+                        }
                         alert(result.message || 'Terjadi kesalahan server.');
                         saveButton.disabled = false;
                         saveButton.textContent = 'Update';

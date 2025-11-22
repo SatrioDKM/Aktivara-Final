@@ -7,6 +7,9 @@ use App\Models\Floor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperRoom
+ */
 class Room extends Model
 {
     use HasFactory;

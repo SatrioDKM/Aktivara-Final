@@ -100,7 +100,7 @@
         </div>
 
         <!-- Modal Hapus -->
-        <div x-show="openModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-white rounded-lg shadow-lg w-96 p-6">
                 <h2 class="text-lg font-semibold mb-4">Konfirmasi Hapus</h2>
                 <p class="mb-4">Apakah Anda yakin ingin menghapus kategori ini?</p>

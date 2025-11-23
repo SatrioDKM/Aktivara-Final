@@ -107,7 +107,7 @@
                                                 x-text="task.title"></h3>
                                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                                 Dibuat oleh <strong class="text-gray-700 dark:text-gray-200"
-                                                    x-text="task.creator ? task.creator.name : 'Sistem'"></strong>
+                                                    x-text="task.complaint ? (task.complaint.reporter_name + ' (Tamu)') : (task.creator ? task.creator.name : 'Sistem')"></strong>
                                                 pada <span
                                                     x-text="task.created_at ? new Date(task.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanggal tidak valid'"></span>
                                             </p>

@@ -164,7 +164,7 @@ class DashboardController extends Controller
         else {
             // ... (logika untuk staff tidak berubah, sudah benar) ...
             $userDepartment = substr($roleId, 0, 2);
-            $query = Task::with(['creator:id,name', 'room.floor.building'])
+            $query = Task::with(['creator:id,name', 'room.floor.building', 'complaint'])
                 ->where('status', 'unassigned')
                 ->whereHas('taskType', fn($q) => $q->where('departemen', $userDepartment)->orWhere('departemen', 'UMUM'));
             $query->when($request->filled('search'), function ($q) use ($request) {

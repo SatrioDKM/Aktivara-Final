@@ -291,7 +291,7 @@
                                                         x-text="task.title"></p>
                                                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Dibuat
                                                         oleh: <span class="font-medium"
-                                                            x-text="task.creator.name"></span> | Prioritas: <span
+                                                            x-text="task.complaint ? (task.complaint.reporter_name + ' (Tamu)') : (task.creator ? task.creator.name : 'Sistem')"></span> | Prioritas: <span
                                                             class="font-medium capitalize"
                                                             x-text="task.priority"></span></p>
                                                 </div>

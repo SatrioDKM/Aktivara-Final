@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\User;
 use App\Models\Asset;
 use App\Models\TaskType;
+use App\Models\Complaint;
 use App\Models\AssetsMaintenance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -103,5 +104,13 @@ class Task extends Model
     public function reportHistories(): HasMany
     {
         return $this->hasMany(TaskReportHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relasi ke Complaint (jika tugas berasal dari keluhan tamu).
+     */
+    public function complaint(): HasOne
+    {
+        return $this->hasOne(Complaint::class, 'task_id');
     }
 }

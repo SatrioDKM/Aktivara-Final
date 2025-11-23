@@ -78,7 +78,8 @@ class TaskWorkflowController extends Controller
             'creator',
             'assignee',
             'reportHistories.submittedBy',
-            'reportHistories.reviewedBy'
+            'reportHistories.reviewedBy',
+            'complaint'
         ])->findOrFail($taskId);
 
         $this->authorizeTaskAccess($task);
@@ -420,7 +421,7 @@ class TaskWorkflowController extends Controller
     {
         $userDepartment = substr(Auth::user()->role_id, 0, 2);
 
-        $availableTasks = Task::with(['room.floor.building', 'creator:id,name', 'taskType', 'asset'])
+        $availableTasks = Task::with(['room.floor.building', 'creator:id,name', 'taskType', 'asset', 'complaint'])
             // --- PERBAIKAN QUERY DI SINI ---
             ->where('status', 'unassigned')
             ->whereNull('user_id') // Pastikan tugas belum dimiliki siapa pun

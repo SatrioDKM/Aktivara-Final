@@ -46,7 +46,7 @@
                                     <div class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
                                         <p class="flex items-center">
                                             <i class="fas fa-user-tie fa-fw mr-2 text-gray-400"></i>
-                                            Dibuat oleh: <strong class="ml-1 text-gray-700 dark:text-gray-200" x-text="task.creator ? task.creator.name : 'System'"></strong>
+                                            Dibuat oleh: <strong class="ml-1 text-gray-700 dark:text-gray-200" x-text="task.complaint ? (task.complaint.reporter_name + ' (Tamu)') : (task.creator ? task.creator.name : 'System')"></strong>
                                         </p>
                                         <p class="flex items-center">
                                             <i class="fas fa-calendar-alt fa-fw mr-2 text-gray-400"></i>

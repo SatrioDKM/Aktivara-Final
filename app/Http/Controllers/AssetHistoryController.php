@@ -43,8 +43,7 @@ class AssetHistoryController extends Controller
             DB::raw("NULL as document_number"), // Kolom packing list null
             DB::raw("NULL as recipient_name") // Kolom packing list null
         )
-            ->join('users', 'assets.created_by', '=', 'users.id') // Join ke user pembuat
-            ->where('assets.asset_type', 'consumable'); // Fokus pada barang habis pakai jika perlu
+            ->join('users', 'assets.created_by', '=', 'users.id'); // Join ke user pembuat
 
         // Query untuk Barang Keluar (dari tabel packing_lists)
         $outQuery = DB::table('asset_packing_list')
@@ -60,8 +59,7 @@ class AssetHistoryController extends Controller
             )
             ->join('packing_lists', 'asset_packing_list.packing_list_id', '=', 'packing_lists.id')
             ->join('assets', 'asset_packing_list.asset_id', '=', 'assets.id')
-            ->join('users', 'packing_lists.created_by', '=', 'users.id') // Join ke user pembuat packing list
-            ->where('assets.asset_type', 'consumable'); // Fokus pada barang habis pakai jika perlu
+            ->join('users', 'packing_lists.created_by', '=', 'users.id'); // Join ke user pembuat packing list
 
         // Terapkan filter tanggal jika ada
         if ($startDate) {

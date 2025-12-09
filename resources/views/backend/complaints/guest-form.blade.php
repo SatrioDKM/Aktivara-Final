@@ -5,148 +5,269 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Lapor Keluhan - ManproApp</title>
+    <title>Lapor Keluhan - {{ config('app.name') }}</title>
+    
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    {{-- Aset dimuat dari Vite (app.js & app.css) --}}
+    {{-- Scripts & Styles --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    {{-- Select2 CSS (Jika belum ada di app.css) --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{{-- Select2 CSS --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Custom Select2 Styling agar Perfect Match dengan Tailwind Input */
+        .select2-container--classic .select2-selection--single {
+            height: 42px !important; /* Samakan tinggi dengan input text lain */
+            border: 1px solid #d1d5db !important; /* gray-300 */
+            border-radius: 0.5rem !important; /* rounded-lg (biar sama lengkungnya) */
+            display: flex !important;
+            align-items: center !important; /* KUNCI: Biar teks pas di tengah vertikal */
+            padding-left: 0.75rem !important; /* Padding kiri standar */
+            background-color: #fff !important;
+        }
 
-    {{-- Hapus semua link CDN karena sudah di-bundle di app.js/app.css --}}
+        /* Teks di dalam Select2 */
+        .select2-container--classic .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            padding: 0 !important;
+            color: #374151 !important; /* text-gray-700 */
+            width: 100%;
+        }
+
+        /* Panah Dropdown */
+        .select2-container--classic .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            border-left: none !important;
+            background: transparent !important;
+            top: 1px !important;
+            right: 5px !important;
+        }
+
+        /* Support Dark Mode (Opsional, jaga-jaga) */
+        @media (prefers-color-scheme: dark) {
+            .select2-container--classic .select2-selection--single {
+                background-color: #111827 !important; /* gray-900 */
+                border-color: #374151 !important; /* gray-700 */
+            }
+            .select2-container--classic .select2-selection--single .select2-selection__rendered {
+                color: #9a0000ff !important; /* text-gray-300 */
+            }
+        }
+
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
-<body class="antialiased bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+<body class="antialiased bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans">
+    
     <div class="min-h-screen flex flex-col" x-data="guestComplaintForm">
-        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('welcome') }}">
-                            <x-application-logo
-                                class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                        </a>
-                        <span class="font-semibold text-lg">ManproApp</span>
+        
+        {{-- HEADER / NAVBAR --}}
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    
+                    {{-- AREA 3 LOGO --}}
+                    <div class="flex items-center gap-4">
+                        {{-- Grup Institusi --}}
+                        <div class="flex items-center gap-3">
+                            <img src="{{ asset('logo/sasmita.png') }}" alt="Yayasan" 
+                                 class="h-10 w-auto md:h-12 hover:scale-105 transition duration-300" title="Yayasan Sasmita Jaya">
+                            <img src="{{ asset('logo/UNPAM_logo1.png') }}" alt="Kampus" 
+                                 class="h-10 w-auto md:h-12 hover:scale-105 transition duration-300" title="Universitas Pamulang">
+                        </div>
+
+                        {{-- Divider --}}
+                        <div class="h-10 w-[1.5px] bg-gray-300 dark:bg-gray-600 rounded-full hidden sm:block"></div>
+
+                        {{-- Logo Aplikasi --}}
+                        <div class="flex items-center gap-2">
+                            <img src="{{ asset('logo/logoRounded.png') }}" alt="Aktivara" 
+                                 class="h-9 w-auto md:h-10 hover:rotate-12 transition duration-300">
+                            <span class="hidden md:block font-bold text-xl text-gray-800 dark:text-gray-100 tracking-tight">
+                                Aktivara
+                            </span>
+                        </div>
                     </div>
+
+                    {{-- Tombol Kembali --}}
                     <div>
                         <a href="{{ route('welcome') }}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-arrow-left me-2"></i> Kembali
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="fas fa-home me-2 text-indigo-500"></i> Beranda
                         </a>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-grow flex items-center justify-center py-12 px-4">
-            <div class="w-full max-w-2xl">
-                <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg">
-                    <div class="text-center mb-8">
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Form Laporan Keluhan</h1>
-                        <p class="text-gray-600 dark:text-gray-400 mt-2">Sampaikan keluhan atau laporan Anda melalui
-                            form di bawah ini.</p>
-                    </div>
+        {{-- MAIN CONTENT --}}
+        <main class="flex-grow">
+            
+            {{-- Hero Section Mini --}}
+            <div class="bg-indigo-900 text-white py-12 px-4 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-20">
+                    {{-- Pattern Background --}}
+                    <svg class="h-full w-full" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+                    </svg>
+                </div>
+                <div class="max-w-3xl mx-auto text-center relative z-10">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold mb-2">Layanan Pengaduan & Keluhan</h1>
+                    <p class="text-indigo-200 text-lg">Sampaikan laporan kerusakan sarana & prasarana kampus secara cepat dan mudah.</p>
+                </div>
+            </div>
 
-                    {{-- Form sekarang memanggil fungsi Alpine.js --}}
-                    <form @submit.prevent="submitForm" class="space-y-6">
-                        @csrf
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div>
-                                <label for="reporter_name"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Anda
-                                    <span class="text-red-500">*</span></label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
-                                            class="fas fa-user text-gray-400"></i></div>
-                                    <input type="text" x-model="formData.reporter_name" id="reporter_name"
-                                        class="block w-full ps-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Contoh: John Doe" required>
+            {{-- Form Container --}}
+            <div class="max-w-3xl mx-auto px-4 -mt-8 pb-12 relative z-20">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    
+                    {{-- Form Header Line --}}
+                    <div class="h-1.5 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+
+                    <div class="p-6 sm:p-10">
+                        <form @submit.prevent="submitForm" class="space-y-6" novalidate>
+                            @csrf
+                            
+                            {{-- Baris 1: Nama & Kategori --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {{-- Nama Pelapor --}}
+                                <div>
+                                    <label for="reporter_name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                        Nama Lengkap <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-user text-gray-400"></i>
+                                        </div>
+                                        <input type="text" x-model="formData.reporter_name" id="reporter_name"
+                                            class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 dark:border-gray-600 sm:text-sm py-2.5"
+                                            placeholder="Nama Anda / Identitas" required>
+                                    </div>
+                                    <template x-if="errors.reporter_name">
+                                        <p x-text="errors.reporter_name[0]" class="text-xs text-red-500 mt-1"></p>
+                                    </template>
                                 </div>
-                                <template x-if="errors.reporter_name">
-                                    <p x-text="errors.reporter_name[0]" class="text-xs text-red-500 mt-1"></p>
+
+                                {{-- Kategori --}}
+                                <div wire:ignore>
+                                    <label for="task_type_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                        Kategori Masalah <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="task_type_id" class="block w-full" required>
+                                        <option value=""></option>
+                                        @foreach($data['taskTypes'] as $type)
+                                            <option value="{{ $type->id }}">{{ $type->name_task }}</option>
+                                        @endforeach
+                                    </select>
+                                    <template x-if="errors.task_type_id">
+                                        <p x-text="errors.task_type_id[0]" class="text-xs text-red-500 mt-1"></p>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Judul Laporan --}}
+                            <div>
+                                <label for="title" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Judul Laporan <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-heading text-gray-400"></i>
+                                    </div>
+                                    <input type="text" x-model="formData.title" id="title"
+                                        placeholder="Cth: AC Ruang V.301 Bocor / Lampu Koridor Mati"
+                                        class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 dark:border-gray-600 sm:text-sm py-2.5"
+                                        required>
+                                </div>
+                                <template x-if="errors.title">
+                                    <p x-text="errors.title[0]" class="text-xs text-red-500 mt-1"></p>
                                 </template>
                             </div>
-                            <div wire:ignore>
-                                <label for="task_type_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kategori
-                                    Laporan <span class="text-red-500">*</span></label>
-                                <select id="task_type_id" class="block w-full" required>
-                                    <option value=""></option>
-                                    @foreach($data['taskTypes'] as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name_task }}</option>
-                                    @endforeach
-                                </select>
-                                <template x-if="errors.task_type_id">
-                                    <p x-text="errors.task_type_id[0]" class="text-xs text-red-500 mt-1"></p>
+
+                            {{-- Lokasi --}}
+                            <div>
+                                <label for="location_text" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Lokasi Kejadian <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    </div>
+                                    <input type="text" x-model="formData.location_text" id="location_text"
+                                        placeholder="Cth: Gedung A, Lantai 3, Depan Lift"
+                                        class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 dark:border-gray-600 sm:text-sm py-2.5"
+                                        required>
+                                </div>
+                                <template x-if="errors.location_text">
+                                    <p x-text="errors.location_text[0]" class="text-xs text-red-500 mt-1"></p>
                                 </template>
                             </div>
-                        </div>
 
-                        <div>
-                            <label for="title"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Singkat
-                                Laporan <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
-                                        class="fas fa-heading text-gray-400"></i></div>
-                                <input type="text" x-model="formData.title" id="title"
-                                    placeholder="Contoh: AC tidak dingin, Keran kamar mandi bocor"
-                                    class="block w-full ps-10 rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                    required>
+                            {{-- Deskripsi --}}
+                            <div>
+                                <label for="description" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Rincian Masalah <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                                        <i class="fas fa-align-left text-gray-400"></i>
+                                    </div>
+                                    <textarea x-model="formData.description" id="description" rows="4"
+                                        class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 dark:border-gray-600 sm:text-sm"
+                                        required
+                                        placeholder="Jelaskan detail kerusakan atau keluhan yang Anda temukan..."></textarea>
+                                </div>
+                                <template x-if="errors.description">
+                                    <p x-text="errors.description[0]" class="text-xs text-red-500 mt-1"></p>
+                                </template>
                             </div>
-                            <template x-if="errors.title">
-                                <p x-text="errors.title[0]" class="text-xs text-red-500 mt-1"></p>
-                            </template>
-                        </div>
 
-                        <div>
-                            <label for="location_text"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Detail Lokasi
-                                <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none"><i
-                                        class="fas fa-map-marker-alt text-gray-400"></i></div>
-                                <input type="text" x-model="formData.location_text" id="location_text"
-                                    placeholder="Contoh: Kamar 501, Lobi dekat pintu masuk"
-                                    class="block w-full ps-10 sm:text-sm border-gray-300 rounded-md dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                    required>
+                            {{-- Tombol Submit --}}
+                            <div class="pt-4">
+                                <button type="submit" :disabled="loading"
+                                    class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200">
+                                    
+                                    <span x-show="!loading" class="flex items-center">
+                                        <i class="fas fa-paper-plane me-2"></i> Kirim Laporan
+                                    </span>
+                                    
+                                    <span x-show="loading" class="flex items-center" style="display: none;">
+                                        <i class="fas fa-circle-notch fa-spin me-2"></i> Sedang Mengirim...
+                                    </span>
+                                </button>
+                                <p class="text-center text-xs text-gray-500 mt-4">
+                                    Laporan Anda akan diteruskan ke tim Sarana Prasarana UNPAM untuk ditindaklanjuti.
+                                </p>
                             </div>
-                            <template x-if="errors.location_text">
-                                <p x-text="errors.location_text[0]" class="text-xs text-red-500 mt-1"></p>
-                            </template>
-                        </div>
 
-                        <div>
-                            <label for="description"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi
-                                Lengkap <span class="text-red-500">*</span></label>
-                            <textarea x-model="formData.description" id="description" rows="4"
-                                class="block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500"
-                                required
-                                placeholder="Jelaskan sedetail mungkin masalah yang Anda alami (minimal 10 karakter)."></textarea>
-                            <template x-if="errors.description">
-                                <p x-text="errors.description[0]" class="text-xs text-red-500 mt-1"></p>
-                            </template>
-                        </div>
-
-                        <div class="pt-2">
-                            <button type="submit" :disabled="loading"
-                                class="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed">
-                                <i class="fas fa-circle-notch fa-spin me-2" x-show="loading" style="display: none;"></i>
-                                <i class="fas fa-paper-plane me-2" x-show="!loading"></i>
-                                <span x-text="loading ? 'Mengirim...' : 'Kirim Laporan'"></span>
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </main>
 
-        <footer class="text-center py-6 px-4 text-sm text-gray-500 dark:text-gray-400">
-            <p>&copy; {{ date('Y') }} ManproApp. All rights reserved.</p>
+        {{-- FOOTER --}}
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 py-6 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    &copy; {{ date('Y') }} {{ config('app.name') }} - Universitas Pamulang. All rights reserved.
+                </p>
+            </div>
         </footer>
     </div>
 
-    {{-- Logika JavaScript dipindahkan ke @push('scripts') agar rapi --}}
+    {{-- SCRIPT ALPINE JS & SELECT2 --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- iziToast JS (Wajib jika menggunakan notifikasi toast) --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js" type="text/javascript"></script>
+
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('guestComplaintForm', () => ({
@@ -162,10 +283,13 @@
 
                 init() {
                     const self = this;
+                    
+                    // Inisialisasi Select2
                     $('#task_type_id').select2({
                         theme: "classic",
                         width: '100%',
-                        placeholder: '-- Pilih Kategori --'
+                        placeholder: '-- Pilih Kategori Masalah --',
+                        allowClear: true
                     }).on('change', function() {
                         self.formData.task_type_id = $(this).val();
                     });
@@ -175,37 +299,45 @@
                     this.loading = true;
                     this.errors = {};
 
-                    // Axios akan menangani CSRF token secara otomatis (via bootstrap.js)
-                    // Panggil rute API yang baru
                     axios.post('{{ route("api.guest.complaint.store") }}', this.formData)
                         .then(response => {
-                            // Tampilkan notifikasi sukses
-                            window.iziToast.success({
+                            // Sukses
+                            iziToast.success({
                                 title: 'Berhasil!',
                                 message: response.data.message,
-                                position: 'topRight'
+                                position: 'topCenter',
+                                timeout: 5000,
+                                icon: 'fas fa-check-circle'
                             });
-                            // Reset form
-                            this.formData.reporter_name = '';
-                            this.formData.title = '';
-                            this.formData.location_text = '';
-                            this.formData.description = '';
+
+                            // Reset Form
+                            this.formData = {
+                                reporter_name: '',
+                                task_type_id: '',
+                                title: '',
+                                location_text: '',
+                                description: ''
+                            };
                             $('#task_type_id').val(null).trigger('change');
                         })
                         .catch(error => {
-                            let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-                            if (error.response && error.response.status === 422) {
-                                // Tampilkan error validasi
-                                this.errors = error.response.data.errors;
-                                errorMessage = 'Harap periksa kembali isian form Anda.';
-                            } else if (error.response && error.response.data.message) {
-                                errorMessage = error.response.data.message;
+                            // Error Handling
+                            let errorMessage = 'Terjadi kesalahan pada server.';
+                            
+                            if (error.response) {
+                                if (error.response.status === 422) {
+                                    this.errors = error.response.data.errors;
+                                    errorMessage = 'Mohon lengkapi formulir dengan benar.';
+                                } else if (error.response.data && error.response.data.message) {
+                                    errorMessage = error.response.data.message;
+                                }
                             }
-                            // Tampilkan notifikasi error
-                            window.iziToast.error({
-                                title: 'Oops!',
+
+                            iziToast.error({
+                                title: 'Gagal!',
                                 message: errorMessage,
-                                position: 'topRight'
+                                position: 'topCenter',
+                                icon: 'fas fa-exclamation-triangle'
                             });
                         })
                         .finally(() => {
@@ -216,5 +348,4 @@
         });
     </script>
 </body>
-
 </html>

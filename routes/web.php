@@ -52,6 +52,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile/signature', [App\Http\Controllers\ProfileController::class, 'updateSignature'])
         ->name('profile.signature.update');
 
+    // --- Integrasi Telegram (Polling Method) ---
+    Route::get('/telegram/connect', [App\Http\Controllers\TelegramController::class, 'connect'])->name('telegram.connect');
+    Route::post('/telegram/verify', [App\Http\Controllers\TelegramController::class, 'verify'])->name('telegram.verify');
+    Route::delete('/telegram/disconnect', [App\Http\Controllers\TelegramController::class, 'disconnect'])->name('telegram.disconnect');
+
     // --- Fitur Spesifik dengan Hak Akses ---
 
     // NOTE: Rute untuk fitur Gudang (Packing List, Stok, Riwayat Aset)

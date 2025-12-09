@@ -1,73 +1,136 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ManproApp - Manajemen Properti & Operasional</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
+    <title>{{ config('app.name', 'Aktivara') }} - Sistem Manajemen Aset</title>
+
+    <linkpreconnect href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,600,800&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+<body class="antialiased bg-gray-900 text-white font-sans selection:bg-indigo-500 selection:text-white">
 
-<body class="antialiased bg-gray-100 text-gray-700">
-    <div class="min-h-screen flex flex-col">
-        <header class="bg-white/80 backdrop-blur-md shadow-sm fixed top-0 w-full z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div class="flex items-center space-x-2">
-                        <a href="{{ route('welcome') }}">
-                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                        </a>
-                        <span class="font-semibold text-lg text-gray-800">ManproApp</span>
-                    </div>
-                    <div>
-                        <a href="{{ route('login') }}"
-                            class="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition duration-150">
-                            Log in
-                        </a>
-                    </div>
+    <div class="relative min-h-screen flex flex-col justify-center items-center overflow-hidden">
+        
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('background_gedung.jpeg') }}"
+                 alt="Background" 
+                 class="w-full h-full object-cover opacity-30">
+            <div class="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-indigo-900/50 to-gray-900"></div>
+        </div>
+
+        @if (Route::has('login'))
+            <div class="absolute top-0 right-0 p-6 z-50">
+                @auth
+                    <a href="{{ url('/dashboard') }}" 
+                       class="font-semibold text-white hover:text-indigo-400 transition flex items-center gap-2 border border-white/20 px-6 py-2 rounded-full hover:bg-white/10 backdrop-blur-sm">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" 
+                       class="font-semibold text-white hover:text-indigo-300 transition flex items-center gap-2 border border-white/20 px-6 py-2 rounded-full hover:bg-white/10 backdrop-blur-sm group">
+                        <i class="fas fa-sign-in-alt"></i> Masuk Sistem <span class="group-hover:translate-x-1 transition-transform">→</span>
+                    </a>
+                @endauth
+            </div>
+        @endif
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            
+            <div class="inline-flex items-center justify-center gap-4 sm:gap-8 p-6 sm:p-8 bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl shadow-2xl mb-10 animate-fade-in-down">
+                
+                {{-- Logo Yayasan --}}
+                <div class="group relative">
+                    <div class="absolute -inset-2 bg-white/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                    <img src="{{ asset('logo/sasmita.png') }}" alt="Yayasan" 
+                         class="relative block h-16 sm:h-24 w-auto object-contain bg-white rounded-full p-2 shadow-lg" 
+                         title="Yayasan Sasmita Jaya">
+                </div>
+
+                {{-- Divider --}}
+                <div class="h-12 sm:h-20 w-[1px] bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+
+                {{-- Logo Kampus --}}
+                <div class="group relative">
+                    <div class="absolute -inset-2 bg-white/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                    <img src="{{ asset('logo/UNPAM_logo1.png') }}" alt="Kampus" 
+                         class="relative block h-16 sm:h-24 w-auto object-contain bg-white rounded-full p-2 shadow-lg" 
+                         title="Universitas Pamulang">
+                </div>
+
+                {{-- Divider --}}
+                <div class="h-12 sm:h-20 w-[1px] bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+
+                {{-- Logo Aplikasi --}}
+                <div class="group relative">
+                    <div class="absolute -inset-2 bg-indigo-500/40 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                    <img src="{{ asset('logo/logoRounded.png') }}" alt="Aktivara" 
+                         class="relative block h-16 sm:h-24 w-auto object-contain bg-white rounded-full p-2 shadow-lg hover:scale-110 transition duration-300" 
+                         title="Aktivara App">
                 </div>
             </div>
-        </header>
 
-        <main class="flex-grow">
-            <div class="relative isolate px-6 pt-14 lg:px-8 bg-white">
-                <div class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-                    aria-hidden="true">
-                    <div class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-                        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)">
+            <h1 class="text-5xl sm:text-7xl font-extrabold tracking-tight text-white mb-6 drop-shadow-lg">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-white">AKTIVARA</span>
+            </h1>
+            
+            <p class="mt-4 text-lg sm:text-2xl text-indigo-100 max-w-3xl mx-auto font-light leading-relaxed">
+                Sistem Informasi Manajemen Aset & Inventaris <br class="hidden sm:block">
+                <span class="font-semibold text-white">Universitas Pamulang</span>
+            </p>
+
+            <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                @auth
+                    <a href="{{ url('/dashboard') }}" 
+                       class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-indigo-500/30 transition transform hover:-translate-y-1">
+                        Buka Dashboard
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" 
+                       class="px-8 py-4 bg-white text-indigo-900 hover:bg-gray-100 rounded-xl font-bold text-lg shadow-lg hover:shadow-white/20 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                        <i class="fas fa-key"></i> Login Pegawai
+                    </a>
+                    
+                    {{-- Tombol Lapor Tamu (Opsional, jika fitur ini aktif) --}}
+                    <a href="{{ route('guest.complaint.create') }}" 
+                       class="px-8 py-4 bg-transparent border border-white/30 hover:bg-white/10 text-white rounded-xl font-semibold text-lg backdrop-blur-sm transition flex items-center justify-center gap-2">
+                        <i class="fas fa-bullhorn"></i> Lapor Kerusakan
+                    </a>
+                @endauth
+            </div>
+
+        </div>
+
+        <div class="absolute bottom-0 w-full bg-black/20 backdrop-blur-md border-t border-white/5 py-6 hidden md:block">
+            <div class="max-w-7xl mx-auto px-6 grid grid-cols-3 gap-8 text-center text-sm text-indigo-200">
+                <div class="flex flex-col items-center gap-2">
+                    <div class="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-300">
+                        <i class="fas fa-boxes"></i>
                     </div>
+                    <span class="font-medium">Manajemen Aset & Stok</span>
                 </div>
-                <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-                    <div class="text-center">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Manajemen Properti &
-                            Operasional Terintegrasi</h1>
-                        <p class="mt-6 text-lg leading-8 text-gray-600">Laporkan keluhan dengan mudah atau masuk ke
-                            sistem untuk mengelola tugas, aset, dan laporan secara efisien.</p>
-                        <div class="mt-10 flex items-center justify-center gap-x-6">
-                            <a href="{{ route('guest.complaint.create') }}"
-                                class="rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-transform transform hover:scale-105">
-                                Lapor Keluhan Sekarang
-                            </a>
-                            <a href="{{ route('login') }}"
-                                class="group text-sm font-semibold leading-6 text-gray-900 flex items-center">
-                                Masuk ke Dashboard <span
-                                    class="transition-transform transform group-hover:translate-x-1"
-                                    aria-hidden="true"><i class="fas fa-arrow-right ms-2"></i></span>
-                            </a>
-                        </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-300">
+                        <i class="fas fa-tools"></i>
                     </div>
+                    <span class="font-medium">Monitoring & Maintenance</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-300">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <span class="font-medium">Pelaporan Real-time</span>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <footer class="bg-white border-t">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-                &copy; {{ date('Y') }} ManproApp. All Rights Reserved.
-            </div>
-        </footer>
+        <div class="absolute bottom-2 text-xs text-white/30 md:hidden">
+            &copy; {{ date('Y') }} Aktivara. UNPAM.
+        </div>
     </div>
 </body>
-
 </html>

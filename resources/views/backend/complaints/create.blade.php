@@ -108,7 +108,7 @@
                                     <div wire:ignore>
                                         <label for="asset_id"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset
-                                            Terkait</label>
+                                            Terkait <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <select id="asset_id" class="mt-1 block w-full">
                                             <option value="">-- Pilih Aset --</option>
                                             @foreach($data['assets'] as $asset)

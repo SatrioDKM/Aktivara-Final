@@ -38,9 +38,8 @@ class NewTaskAvailable extends Notification
         $channels = ['database']; // Selalu kirim ke database
         
         // Hanya tambahkan Telegram jika:
-        // 1. User punya telegram_chat_id
-        // 2. Telegram bot token dikonfigurasi
-        if ($notifiable->telegram_chat_id && config('telegram-notification.telegram_bot_token')) {
+        // Hanya tambahkan Telegram jika User punya telegram_chat_id
+        if ($notifiable->telegram_chat_id) {
             $channels[] = 'telegram';
         }
         

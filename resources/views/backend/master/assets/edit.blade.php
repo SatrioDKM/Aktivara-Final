@@ -32,7 +32,7 @@
                                 </div>
                                 <div>
                                     <label for="room_id"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lokasi</label>
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lokasi <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                     {{-- Select2 akan di-render di sini oleh Alpine --}}
                                     <select id="room_id" class="mt-1 block w-full">
                                         <option value="">-- Gudang --</option>
@@ -45,7 +45,7 @@
                                 <div>
                                     <label for="purchase_date"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal
-                                        Pembelian</label>
+                                        Pembelian <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                     <input type="date" x-model="formData.purchase_date"
                                         class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
@@ -80,7 +80,7 @@
                                     </div>
                                     <div x-show="formData.asset_type === 'consumable'" style="display: none;">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stok
-                                            Min.</label>
+                                            Min. <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <input type="number" x-model.number="formData.minimum_stock" min="0"
                                             class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
@@ -98,7 +98,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <label for="description"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi</label>
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                 <textarea x-model="formData.description" rows="3"
                                     class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                             </div>

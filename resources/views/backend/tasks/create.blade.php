@@ -98,7 +98,10 @@
 
                             {{-- Detail Lokasi & Aset (Opsional) --}}
                             <div class="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-6">
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Detail Lokasi & Aset (Opsional)</p>
+                                <x-input-label for="description">
+    {{ __('Detail Lokasi & Aset') }} 
+    <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span>
+</x-input-label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {{-- Gedung --}}
                                     <div>
@@ -127,7 +130,7 @@
                                     {{-- Ruangan --}}
                                     <div>
                                         <label for="room_id"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ruangan</label>
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ruangan <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <div class="mt-1" wire:ignore>
                                             <select id="room_id" class="block w-full" :disabled="!selected.floor">
                                                 <option></option>
@@ -138,7 +141,7 @@
                                     <div>
                                         <label for="asset_id"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aset
-                                            Terkait</label>
+                                            Terkait <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <div class="mt-1" wire:ignore>
                                             <select id="asset_id" class="block w-full">
                                                 <option></option>
@@ -156,7 +159,7 @@
                             <div>
                                 <label for="description"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi Tugas
-                                    (Opsional)</label>
+                                    <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                 <div class="mt-1 relative rounded-md shadow-sm">
                                     <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none"><i
                                             class="fas fa-align-left text-gray-400"></i></div>

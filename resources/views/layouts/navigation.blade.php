@@ -2,12 +2,48 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
-                </div>
+                <div class="shrink-0 flex items-center"> {{-- Wadah Utama Logo --}}
+                    <div class="ms-1">
+                        <div class="shrink-0 flex items-center gap-4">
+                            
+                            {{-- GRUP 1: INSTITUSI (Yayasan & Kampus) --}}
+                            <div class="flex items-center gap-2">
+                                
+                                {{-- 1. LOGO YAYASAN (Induk) --}}
+                                <img src="{{ asset('logo/sasmita.png') }}" 
+                                     alt="Logo Yayasan" 
+                                     class="block h-10 w-auto object-contain hover:scale-105 transition" 
+                                     title="Yayasan" />
 
+                                {{-- 2. LOGO KAMPUS (Institusi) --}}
+                                <img src="{{ asset('logo/UNPAM_logo1.png') }}" 
+                                     alt="Logo Kampus" 
+                                     class="block h-10 w-auto object-contain hover:scale-105 transition" 
+                                     title="Kampus" />
+                                    
+                            </div>
+
+                            {{-- PEMISAH (Divider Vertikal) --}}
+                            <div class="h-8 w-[1.5px] bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+
+                            {{-- GRUP 2: IDENTITAS APLIKASI (Logo Kamu) --}}
+                            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 group">
+                                
+                                {{-- 3. LOGO APLIKASI --}}
+                                <img src="{{ asset('logo/logoRounded.png') }}" 
+                                     alt="Aktivara" 
+                                     class="block h-9 w-auto object-contain group-hover:rotate-6 transition" 
+                                     title="Aktivara App" />
+                                
+                                {{-- Teks Nama Aplikasi (Muncul di Laptop) --}}
+                                <span class="hidden lg:block font-bold text-lg text-gray-800 dark:text-gray-200 tracking-tight leading-none">
+                                    Aktivara
+                                </span>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         <i class="fas fa-tachometer-alt w-4 text-center me-2"></i>
@@ -21,7 +57,7 @@
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('complaints.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -53,13 +89,15 @@
                         </x-dropdown>
                     </div>
                     @endrole
+                    {{-- Dropdown Keluhan (Leader+) --}}
 
+                    @role('SA00', 'MG00', 'HK01', 'HK02', 'TK01', 'TK02', 'SC01', 'SC02', 'PK01', 'PK02')
                     {{-- Dropdown Alur Kerja Tugas (Semua user internal) --}}
                     <div class="hidden sm:flex sm:items-center sm:ms-6">
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                         {{ request()->routeIs('tasks.*', 'history.tasks')
                                             ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -126,14 +164,15 @@
                             </x-slot>
                         </x-dropdown>
                     </div>
-
+                    @endrole
+                    
                     {{-- Dropdown Gudang (Gudang+) --}}
                     @role('SA00', 'MG00', 'WH01', 'WH02')
                     <div class="hidden sm:flex sm:items-center sm:ms-6">
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('stock.*', 'packing_lists.*', 'asset_history.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -172,17 +211,17 @@
                     @endrole
 
                     {{-- Dropdown Administrasi (Admin/SA00) --}}
-                    @role('SA00', 'MG00', 'WH01')
+                    @role('SA00', 'MG00', 'WH01' , 'WH02')
                     <div class="hidden sm:flex sm:items-center sm:ms-6">
                         <x-dropdown align="right" width="56"> {{-- Lebar w-56 --}}
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('master.*', 'users.*', 'export.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
                                     <i class="fas fa-cogs w-4 text-center me-2"></i>
-                                    <div>Administrasi</div>
+                                    <div>Master Data</div>
                                     <div class="ms-1">
                                         <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 20 20">
@@ -202,10 +241,6 @@
                                 </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 @endrole
-
-                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                    {{ __('Master Data') }}
-                                </div>
                                 <x-dropdown-link :href="route('master.assets.index')"
                                     :active="request()->routeIs('master.assets.*')">
                                     {{ __('Master Aset') }}
@@ -218,6 +253,7 @@
                                     :active="request()->routeIs('master.maintenances.*')">
                                     {{ __('Master Maintenance') }}
                                 </x-dropdown-link>
+                                @role('SA00', 'MG00')
                                 <x-dropdown-link :href="route('master.buildings.index')"
                                     :active="request()->routeIs('master.buildings.*')">
                                     {{ __('Master Gedung') }}
@@ -234,6 +270,7 @@
                                     :active="request()->routeIs('master.task_types.*')">
                                     {{ __('Master Jenis Tugas') }}
                                 </x-dropdown-link>
+                                @endrole
 
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <x-dropdown-link :href="route('export.index')"
@@ -256,7 +293,7 @@
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button @click="toggle()"
-                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                                 <i class="fas fa-bell w-4 text-center"></i>
                                 <span x-show="unreadCount > 0"
                                     class="ms-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
@@ -271,7 +308,7 @@
 
                             <template x-for="notification in unread" :key="notification.id">
                                 <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
-                                    class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                    class="block w-full px-4 py-2 text-start text-xs leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
                                     <p class="font-bold" x-text="notification.data.message"></p>
                                     <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
                                 </a>
@@ -286,7 +323,7 @@
                             <div class="border-t border-gray-200 dark:border-gray-600" x-show="unreadCount > 0"></div>
 
                             <button @click="markAllAsRead()" x-show="unreadCount > 0"
-                                class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                class="block w-full px-4 py-2 text-start text-xs leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
                                 Tandai semua sudah dibaca
                             </button>
                         </x-slot>
@@ -296,7 +333,7 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
@@ -373,11 +410,13 @@
         {{-- Responsive Menu Alur Kerja Tugas --}}
         <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
+                @role('SA00', 'MG00', 'HK', 'TK', 'SC', 'PK')
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">Alur Kerja Tugas</div>
+                @endrole
             </div>
             <div class="mt-3 space-y-1">
                 {{-- Menu Leader --}}
-                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01')
                 <x-responsive-nav-link :href="route('tasks.create')" :active="request()->routeIs('tasks.create')">
                     <i class="fas fa-plus-circle w-4 text-center me-2"></i>
                     {{ __('Buat Tugas Baru') }}
@@ -399,7 +438,7 @@
                 @endrole
                 {{-- Menu Staff --}}
                 @role('HK02', 'TK02', 'SC02', 'PK02', 'WH02')
-                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01', 'WH01')
+                @role('SA00', 'MG00', 'HK01', 'TK01', 'SC01', 'PK01')
                 <div class="my-2 border-t border-gray-200 dark:border-gray-600"></div>
                 @endrole
                 <x-responsive-nav-link :href="route('tasks.available')" :active="request()->routeIs('tasks.available')">
@@ -448,7 +487,7 @@
         @role('SA00', 'MG00', 'WH01')
         <div class="pt-2 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Administrasi</div>
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">Master Data</div>
             </div>
             <div class="mt-3 space-y-1">
                 @role('SA00')
@@ -457,10 +496,6 @@
                     {{ __('Manajemen Pengguna') }}
                 </x-responsive-nav-link>
                 @endrole
-
-                <div class="block px-4 py-2 text-xs text-gray-400">
-                    {{ __('Master Data') }}
-                </div>
                 <x-responsive-nav-link :href="route('master.assets.index')"
                     :active="request()->routeIs('master.assets.*')">
                     {{ __('Master Aset') }}
@@ -473,6 +508,7 @@
                     :active="request()->routeIs('master.maintenances.*')">
                     {{ __('Master Maintenance') }}
                 </x-responsive-nav-link>
+                @role('SA00', 'MG00')
                 <x-responsive-nav-link :href="route('master.buildings.index')"
                     :active="request()->routeIs('master.buildings.*')">
                     {{ __('Master Gedung') }}
@@ -489,6 +525,7 @@
                     :active="request()->routeIs('master.task_types.*')">
                     {{ __('Master Jenis Tugas') }}
                 </x-responsive-nav-link>
+                @endrole
 
                 <div class="my-2 border-t border-gray-200 dark:border-gray-600"></div>
                 <x-responsive-nav-link :href="route('export.index')" :active="request()->routeIs('export.index')">
@@ -515,7 +552,7 @@
                     <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
                         class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:text-gray-800 dark:focus:text-gray-200 focus:bg-gray-50 dark:focus:bg-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition duration-150 ease-in-out">
                         <p class="font-bold" x-text="notification.data.message"></p>
-                        <p class="text-sm text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                        <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
                     </a>
                 </template>
                 <x-responsive-nav-link :href="route('notifications.index')">
@@ -527,7 +564,7 @@
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-xs text-gray-500">{{ Auth::user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">

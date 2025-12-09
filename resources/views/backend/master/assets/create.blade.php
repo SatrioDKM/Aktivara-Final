@@ -67,7 +67,7 @@
                                     {{-- PERBAIKAN: Input Tanggal Beli --}}
                                     <div class="col-span-8 md:col-span-2">
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Tgl.
-                                            Beli</label>
+                                            Beli <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <input type="date" x-model="asset.purchase_date"
                                             class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
@@ -85,7 +85,7 @@
                                     {{-- PERBAIKAN: Input Lokasi (Select2) --}}
                                     <div class="col-span-12 md:col-span-4">
                                         <label
-                                            class="block text-xs font-medium text-gray-600 dark:text-gray-300">Lokasi</label>
+                                            class="block text-xs font-medium text-gray-600 dark:text-gray-300">Lokasi <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <select :id="'room_id_' + index" x-init="initSelect2($el, index)"
                                             class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
                                             <option value="">-- Gudang --</option>
@@ -112,7 +112,7 @@
                                     <div class="col-span-6 md:col-span-3" x-show="asset.asset_type === 'consumable'"
                                         style="display: none;">
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Stok
-                                            Min.</label>
+                                            Min. <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                         <input type="number" x-model.number="asset.minimum_stock" min="0"
                                             class="mt-1 w-full rounded-md text-sm border-gray-300 dark:bg-gray-900 dark:border-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                                             placeholder="e.g. 5">

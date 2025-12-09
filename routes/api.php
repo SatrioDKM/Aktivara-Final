@@ -17,6 +17,7 @@ use App\Http\Controllers\TaskWorkflowController;
 use App\Http\Controllers\GuestComplaintController;
 use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\AssetMaintenanceController;
+use App\Http\Controllers\Api\ApiAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,7 @@ use App\Http\Controllers\AssetMaintenanceController;
 // --- RUTE PUBLIK ---
 // Rute ini tidak memerlukan login
 Route::post('/guest-complaints', [GuestComplaintController::class, 'store'])->name('api.guest.complaint.store');
+Route::post('/login', [ApiAuthController::class, 'login']);
 
 // --- RUTE TERAUTENTIKASI ---
 // Semua rute di bawah ini memerlukan login (auth:sanctum)
@@ -39,6 +41,7 @@ Route::post('/guest-complaints', [GuestComplaintController::class, 'store'])->na
 Route::middleware(['auth:sanctum'])->name('api.')->group(function () {
 
     // === Endpoint Umum ===
+    Route::post('/logout', [ApiAuthController::class, 'logout']);
     Route::get('/dashboard-stats', [DashboardController::class, 'getStats'])->name('dashboard.stats');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read.all');

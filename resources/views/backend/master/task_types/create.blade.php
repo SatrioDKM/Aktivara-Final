@@ -120,7 +120,7 @@
                             <div>
                                 <label for="description"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi
-                                    (Opsional)</label>
+                                    <span class="text-gray-400 text-xs font-normal italic ml-1">(Opsional)</span></label>
                                 <div class="relative mt-1">
                                     <div class="absolute top-3 left-0 ps-3 flex items-start pointer-events-none">
                                         <i class="fas fa-align-left text-gray-400"></i>

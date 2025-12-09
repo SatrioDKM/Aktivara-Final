@@ -11,11 +11,8 @@ class NotificationController extends Controller
 {
     public function viewPage()
     {
-        $user = Auth::user();
-        $unreadNotifications = $user->unreadNotifications()->paginate(10);
-        $readNotifications = $user->readNotifications()->paginate(10);
-
-        return view('notifications.index', compact('unreadNotifications', 'readNotifications'));
+        $notifications = Auth::user()->notifications()->paginate(15);
+        return view('notifications.index', compact('notifications'));
     }
 
     /**

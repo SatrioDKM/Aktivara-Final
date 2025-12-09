@@ -267,6 +267,26 @@
                                 </div>
                             </div>
 
+                            {{-- Tombol Aksi Staff (Ambil Tugas) --}}
+                            <template x-if="task.status === 'unassigned' && currentUser.role_id && currentUser.role_id.endsWith('02')">
+                                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-lg">
+                                    <div class="p-6">
+                                        <h3
+                                            class="text-lg font-bold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center">
+                                            <i class="fas fa-hand-holding-heart mr-3 text-gray-400"></i> Ambil Tugas
+                                        </h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                            Tugas ini belum ada yang mengerjakan. Klik tombol di bawah untuk mengambil tugas ini.
+                                        </p>
+                                        <button @click="claimTask" :disabled="isSubmitting"
+                                            class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-indigo-700 disabled:opacity-50">
+                                            <i class="fas fa-briefcase mr-2"></i>
+                                            <span x-text="isSubmitting ? 'Memproses...' : 'Ambil Tugas Ini'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
                             {{-- Form Laporan (Hanya untuk Staff yang ditugaskan) --}}
                             <template
                                 x-if="(task.status === 'in_progress' || task.status === 'revised') && currentUser.id === task.user_id">
@@ -584,7 +604,43 @@
                                             this.showNotification(msg, 'error');
                                         })
                                         .finally(() => this.isSubmitting = false);
-                                    },    
+                                    },
+                                    
+                                    claimTask() {
+                                        Swal.fire({
+                                            title: 'Ambil Tugas Ini?',
+                                            text: "Anda akan ditugaskan untuk mengerjakan tugas ini.",
+                                            icon: 'question',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#3085d6',
+                                            cancelButtonColor: '#d33',
+                                            confirmButtonText: 'Ya, Ambil!',
+                                            cancelButtonText: 'Batal'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                this.isSubmitting = true;
+                                                axios.post(`/api/tasks/${this.task.id}/claim`)
+                                                    .then(response => {
+                                                        Swal.fire(
+                                                            'Berhasil!',
+                                                            'Tugas berhasil diambil. Silakan kerjakan laporan.',
+                                                            'success'
+                                                        ).then(() => {
+                                                            this.getTaskDetails(); // Refresh data to show report form
+                                                        });
+                                                    })
+                                                    .catch(error => {
+                                                        let msg = 'Gagal mengambil tugas.';
+                                                        if (error.response?.data?.message) {
+                                                            msg = error.response.data.message;
+                                                        }
+                                                        this.showNotification(msg, 'error');
+                                                    })
+                                                    .finally(() => this.isSubmitting = false);
+                                            }
+                                        });
+                                    },
+
                     showNotification(message, type) {
                         window.iziToast[type.toLowerCase()]({ 
                             title: type === 'success' ? 'Berhasil' : 'Error',
@@ -622,4 +678,8 @@
                 }));
             });
         </script>
-        @endpush</x-app-layout>
+        @endpush
+    @push('scripts')
+    {{-- SweetAlert2 CDN --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @endpush</x-app-layout>

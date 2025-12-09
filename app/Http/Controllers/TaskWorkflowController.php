@@ -905,25 +905,41 @@ class TaskWorkflowController extends Controller
         if ($user->id === $task->created_by) return; // Pembuat tugas bisa lihat
         if ($user->id === $task->user_id) return; // Pengerja tugas bisa lihat
 
-        // Jika user adalah Leader (role_id berakhir dengan '01'), cek departemen
-        if (str_ends_with($user->role_id, '01')) {
-            $departmentCode = substr($user->role_id, 0, 2);
-            // Muat relasi taskType dan assignee jika belum dimuat
-            if (!$task->relationLoaded('taskType')) {
-                $task->load('taskType');
-            }
-            if (!$task->relationLoaded('assignee')) {
-                $task->load('assignee');
-            }
+        // Muat relasi taskType dan assignee jika belum dimuat
+        if (!$task->relationLoaded('taskType')) {
+            $task->load('taskType');
+        }
+        if (!$task->relationLoaded('assignee')) {
+            $task->load('assignee');
+        }
 
+        $userDepartment = substr($user->role_id, 0, 2);
+
+        // Jika user adalah Leader (role_id berakhir dengan '01')
+        if (str_ends_with($user->role_id, '01')) {
             // Leader bisa lihat tugas di departemennya ATAU tugas UMUM yang ditugaskan ke staff di departemennya
             if (
-                ($task->taskType && $task->taskType->departemen === $departmentCode) ||
-                ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $departmentCode))
+                ($task->taskType && $task->taskType->departemen === $userDepartment) ||
+                ($task->taskType && $task->taskType->departemen === 'UMUM' && $task->assignee && str_starts_with($task->assignee->role_id, $userDepartment))
             ) {
                 return;
             }
         }
+
+        // --- TAMBAHAN: Jika user adalah Staff (role_id berakhir dengan '02') ---
+        if (str_ends_with($user->role_id, '02')) {
+            // Staff bisa melihat tugas jika:
+            // 1. Tugas bertipe sesuai departemen staff
+            // 2. Tugas bertipe UMUM (biasanya bisa diklaim siapa saja)
+            // 3. Tugas belum diambil (unassigned) - sehingga mereka bisa melihat detail sebelum ambil
+            if (
+                ($task->taskType && $task->taskType->departemen === $userDepartment) ||
+                ($task->taskType && $task->taskType->departemen === 'UMUM')
+            ) {
+                return;
+            }
+        }
+
         abort(403, 'AKSES DITOLAK');
     }
 }

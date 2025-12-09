@@ -57,7 +57,7 @@
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('complaints.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -97,7 +97,7 @@
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                         {{ request()->routeIs('tasks.*', 'history.tasks')
                                             ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -172,7 +172,7 @@
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('stock.*', 'packing_lists.*', 'asset_history.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -213,10 +213,10 @@
                     {{-- Dropdown Administrasi (Admin/SA00) --}}
                     @role('SA00', 'MG00', 'WH01' , 'WH02')
                     <div class="hidden sm:flex sm:items-center sm:ms-6">
-                        <x-dropdown align="right" width="56"> {{-- Lebar w-56 --}}
+                        <x-dropdown align="right" width="w-60">
                             <x-slot name="trigger">
                                 <button
-                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
+                                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out
                                             {{ request()->routeIs('master.*', 'users.*', 'export.*')
                                                 ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700' }}">
@@ -241,33 +241,47 @@
                                 </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 @endrole
+                                
                                 <x-dropdown-link :href="route('master.assets.index')"
                                     :active="request()->routeIs('master.assets.*')">
+                                    <i class="fas fa-cube w-4 text-center me-2"></i>
                                     {{ __('Master Aset') }}
                                 </x-dropdown-link>
+                                
                                 <x-dropdown-link :href="route('master.asset_categories.index')"
                                     :active="request()->routeIs('master.asset_categories.*')">
+                                    <i class="fas fa-tags w-4 text-center me-2"></i>
                                     {{ __('Master Kategori Aset') }}
                                 </x-dropdown-link>
+                                
                                 <x-dropdown-link :href="route('master.maintenances.index')"
                                     :active="request()->routeIs('master.maintenances.*')">
+                                    <i class="fas fa-wrench w-4 text-center me-2"></i>
                                     {{ __('Master Maintenance') }}
                                 </x-dropdown-link>
+                                
                                 @role('SA00', 'MG00')
                                 <x-dropdown-link :href="route('master.buildings.index')"
                                     :active="request()->routeIs('master.buildings.*')">
+                                    <i class="fas fa-building w-4 text-center me-2"></i>
                                     {{ __('Master Gedung') }}
                                 </x-dropdown-link>
+                                
                                 <x-dropdown-link :href="route('master.floors.index')"
                                     :active="request()->routeIs('master.floors.*')">
+                                    <i class="fas fa-layer-group w-4 text-center me-2"></i>
                                     {{ __('Master Lantai') }}
                                 </x-dropdown-link>
+                                
                                 <x-dropdown-link :href="route('master.rooms.index')"
                                     :active="request()->routeIs('master.rooms.*')">
+                                    <i class="fas fa-door-open w-4 text-center me-2"></i>
                                     {{ __('Master Ruangan') }}
                                 </x-dropdown-link>
+                                
                                 <x-dropdown-link :href="route('master.task_types.index')"
                                     :active="request()->routeIs('master.task_types.*')">
+                                    <i class="fas fa-list-ul w-4 text-center me-2"></i>
                                     {{ __('Master Jenis Tugas') }}
                                 </x-dropdown-link>
                                 @endrole
@@ -293,24 +307,24 @@
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button @click="toggle()"
-                                class="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                                 <i class="fas fa-bell w-4 text-center"></i>
                                 <span x-show="unreadCount > 0"
-                                    class="ms-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
+                                    class="ms-1 px-2 py-1 text-sm font-bold leading-none text-red-100 bg-red-600 rounded-full"
                                     x-text="unreadCount"></span>
                             </button>
                         </x-slot>
 
                         <x-slot name="content">
-                            <div class="block px-4 py-2 text-xs text-gray-400">
+                            <div class="block px-4 py-2 text-sm text-gray-400">
                                 Notifikasi (<span x-text="unreadCount"></span> belum dibaca)
                             </div>
 
                             <template x-for="notification in unread" :key="notification.id">
                                 <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
-                                    class="block w-full px-4 py-2 text-start text-xs leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                    class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
                                     <p class="font-bold" x-text="notification.data.message"></p>
-                                    <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                    <p class="text-sm text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
                                 </a>
                             </template>
 
@@ -323,7 +337,7 @@
                             <div class="border-t border-gray-200 dark:border-gray-600" x-show="unreadCount > 0"></div>
 
                             <button @click="markAllAsRead()" x-show="unreadCount > 0"
-                                class="block w-full px-4 py-2 text-start text-xs leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
                                 Tandai semua sudah dibaca
                             </button>
                         </x-slot>
@@ -333,7 +347,7 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
@@ -543,7 +557,7 @@
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">
                     Notifikasi
                     <span x-show="unreadCount > 0"
-                        class="ms-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
+                        class="ms-1 px-2 py-1 text-sm font-bold leading-none text-red-100 bg-red-600 rounded-full"
                         x-text="unreadCount"></span>
                 </div>
             </div>
@@ -552,7 +566,7 @@
                     <a :href="notification.data.url ? notification.data.url : '#'" @click.prevent="markAsRead(notification.id)"
                         class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:text-gray-800 dark:focus:text-gray-200 focus:bg-gray-50 dark:focus:bg-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition duration-150 ease-in-out">
                         <p class="font-bold" x-text="notification.data.message"></p>
-                        <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                        <p class="text-sm text-gray-500" x-text="new Date(notification.created_at).toLocaleString()"></p>
                     </a>
                 </template>
                 <x-responsive-nav-link :href="route('notifications.index')">
@@ -564,7 +578,7 @@
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-xs text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
